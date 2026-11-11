@@ -31,6 +31,7 @@ button:disabled{cursor:not-allowed;opacity:.5}
 .side .foot button{color:#fff;display:flex;gap:6px;align-items:center;padding:8px 10px;border-radius:10px}
 .side .foot button:hover{background:#ffffff14}
 .main{flex:1;min-width:0;overflow:auto;padding:24px 28px;position:relative;display:flex;flex-direction:column}
+.main>*{flex-shrink:0}
 h1{font-size:22px;margin:0 0 16px}
 h2{font-size:17px;margin:0 0 10px}
 .muted{color:var(--t2)}
@@ -156,6 +157,12 @@ td.tot{background:#E3F5EA !important}
 .vis{max-width:900px;margin:0 auto;padding:20px 16px;display:flex;flex-direction:column;gap:16px}
 .note{font-size:13px;color:var(--t2)}
 .cfg{max-width:630px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+[hidden]{display:none!important}
+.pick{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.pk{border:1px solid #C9D3CD;border-radius:999px;padding:8px 14px;background:#fff;font-size:14px}
+.pk:hover{border-color:var(--g1)}
+.pk.on{background:var(--g1);color:#fff;border-color:var(--g1);font-weight:600}
+.neg{color:var(--err)}
 .scrim{display:none}
 @media(max-width:900px){
  .top .burger{display:flex}
@@ -219,6 +226,7 @@ layers:ic('<path d="m12 2 10 6-10 6L2 8z"/><path d="m2 14 10 6 10-6"/>'),
 logout:ic('<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>'),
 order:ic('<path d="M7 4v16M3 8l4-4 4 4M17 20V4M13 16l4 4 4-4"/>'),
 back:ic('<path d="m15 18-6-6 6-6"/>'),
+cash:ic('<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9v.01M18 15v.01"/>'),
 flag:ic('<path d="M4 22V4M4 4h13l-2 4 2 4H4"/>')};
 
 /* ===================== Dados ===================== */
@@ -227,9 +235,11 @@ const ui={pSort:'az',selP:new Set(),selT:new Set(),phase:{},round:{},rk:{season:
 /* ----- banco (Supabase). Com ?local=1 no endereço, o sistema usa só este navegador. ----- */
 const SB=Object.assign({url:'https://wevourgmybqckzarhynq.supabase.co',key:'sb_publishable_0x8t_1nyPNA9Y3_MTQngBg_LvgYnd6K'},window.GC_SB||{});
 const CLOUD=!!SB.url&&!new URLSearchParams(location.search).has('local');
+const cashNorm=k=>{k=Object.assign({cota:{},items:[],seq:0},k);k.items.filter(i=>!i.n).sort((a,b)=>(a.at||0)-(b.at||0)).forEach(i=>i.n=++k.seq);k.seq=Math.max(k.seq||0,...k.items.map(i=>i.n));return k};
 function setDb(d){db=Object.assign({players:[],teams:[],champs:[],user:{name:'Organizador',email:''}},d||{});
  db.settings=Object.assign({ppw:3,pct:30,slots:8,minT:0},db.settings);
  db.teams.forEach(t=>{t.transfers=t.transfers||[];t.players=t.players||[]});
+ db.caixa=cashNorm(db.caixa);
  eachM(m=>{m.sets=m.sets||[];m.history=m.history||[];m.rev=m.rev||0;m.pending=m.pending||null})}
 const eachM=fn=>db.champs.forEach(c=>c.phases.forEach(p=>p.rounds.forEach(r=>r.matches.forEach(m=>fn(m,r,p,c)))));
 function load(){let d=null;try{d=JSON.parse(localStorage.getItem(KEY))}catch(e){}setDb(d)}
@@ -238,14 +248,14 @@ function save(){if(CLOUD){if(!visitor)pushWs();return}
 
 let sess=null;try{sess=JSON.parse(localStorage.getItem('gc_sess'))}catch(e){}
 const setSess=x=>{sess=x;try{x?localStorage.setItem('gc_sess',JSON.stringify(x)):localStorage.removeItem('gc_sess')}catch(e){}};
-const keepSess=j=>setSess({access_token:j.access_token,refresh_token:j.refresh_token,exp:Date.now()+j.expires_in*1000,email:j.user&&j.user.email});
-async function http(path,opt={}){const h={apikey:SB.key,'Content-Type':'application/json'};if(opt.token)h.Authorization='Bearer '+opt.token;
+const keepSess=j=>setSess({kind:'master',access_token:j.access_token,refresh_token:j.refresh_token,exp:Date.now()+j.expires_in*1000,email:j.user&&j.user.email});
+async function http(path,opt={}){const h=Object.assign({apikey:SB.key,'Content-Type':'application/json'},opt.headers);if(opt.token)h.Authorization='Bearer '+opt.token;
  let r;try{r=await fetch(SB.url+path,{method:opt.method||'GET',headers:h,body:opt.body===undefined?undefined:JSON.stringify(opt.body)})}catch(e){throw new Error('offline')}
  const t=await r.text();let j=null;try{j=t?JSON.parse(t):null}catch(e){}
  if(!r.ok){const e=new Error((j&&(j.message||j.msg||j.error_description))||'HTTP '+r.status);e.status=r.status;e.code=j&&(j.error_code||j.code);throw e}
  return j}
 let refreshing=null;
-async function accessToken(){if(!sess)return null;
+async function accessToken(){if(!sess||sess.kind==='member')return null;
  try{const o=JSON.parse(localStorage.getItem('gc_sess'));if(o&&o.exp>sess.exp)sess=o}catch(e){}
  if(Date.now()>sess.exp-60000){refreshing=refreshing||http('/auth/v1/token?grant_type=refresh_token',{method:'POST',body:{refresh_token:sess.refresh_token}}).then(keepSess).finally(()=>refreshing=null);
   try{await refreshing}catch(e){if(e.status){setSess(null);loaded=null;setDb({});render()}throw e}}
@@ -254,21 +264,35 @@ async function api(path,opt={},anon){const token=anon?null:await accessToken();
  if(!anon&&!token)throw Object.assign(new Error('nao_autenticado'),{status:401});
  try{return await http(path,{...opt,token})}
  catch(e){if(e.status===401&&!anon&&sess&&/jwt|token/i.test(e.message)){sess.exp=0;return http(path,{...opt,token:await accessToken()})}throw e}}
-const rpc=(fn,args,anon)=>api('/rest/v1/rpc/'+fn,{method:'POST',body:args},anon);
+const isMember=()=>!!sess&&sess.kind==='member';
+const rpc=(fn,args,anon)=>!anon&&isMember()?http('/rest/v1/rpc/'+fn,{method:'POST',body:{...args,p_session:sess.token}}):api('/rest/v1/rpc/'+fn,{method:'POST',body:args},anon);
 async function getAll(path){const out=[];for(let o=0;;o+=1000){const page=await api(path+'&limit=1000&offset='+o);out.push(...page);if(page.length<1000)return out}}
 
+let me={role:CLOUD?null:'master',caixa:true},members=[];const cx={rev:0,busy:false,again:false};
+const ROLE={master:'Master',organizador:'Organizador',placar:'Lançador de placares',leitura:'Somente leitura'};
+const isMaster=()=>me.role==='master',canEdit=()=>me.role==='master'||me.role==='organizador',canScore=()=>canEdit()||me.role==='placar',canCash=()=>!!me.role&&!!me.caixa,canCashEdit=()=>canEdit()&&!!me.caixa;
+const userName=()=>isMaster()?db.user.name:(me.name||me.email||'Usuário');
 const ws={rev:0,last:'',busy:false,again:false,state:'ok',empty:false};let srvRev=new Map(),mut=0,loaded=null,loading=null,shSig='';
 const syncTxt=()=>!CLOUD?'Modo local (dados só neste navegador)':({ok:'Salvo',saving:'Salvando…',err:'Sem conexão — tentando salvar'})[ws.state];
 function setSync(x){ws.state=x;const e=document.getElementById('sync');if(e)e.textContent=syncTxt()}
-function wsData(){const d=JSON.parse(JSON.stringify(db));d.champs.forEach(c=>c.phases.forEach(p=>p.rounds.forEach(r=>r.matches.forEach(m=>{delete m.sets;delete m.pending;delete m.rev;delete m.history}))));return d}
+function wsData(){const d=JSON.parse(JSON.stringify(db));delete d.caixa;d.champs.forEach(c=>c.phases.forEach(p=>p.rounds.forEach(r=>r.matches.forEach(m=>{delete m.sets;delete m.pending;delete m.rev;delete m.history}))));return d}
 const pendObj=x=>x?(typeof x==='object'?x:{sets:[]}):null;
 function applyRemote(m,r){m.sets=r.sets||[];m.rev=r.rev||0;m.pending=pendObj(r.pending);srvRev.set(m.id,m.rev)}
 function mergeResults(rows){let ch=false;const map=new Map(rows.map(r=>[r.match_id,r]));rows.forEach(r=>srvRev.set(r.match_id,r.rev));
  eachM(m=>{const x=map.get(m.id);if(x&&x.rev>(m.rev||0)){applyRemote(m,x);ch=true}});return ch}
-async function loadCloud(){const[w,res,hist]=await Promise.all([api('/rest/v1/workspaces?select=data,rev'),getAll('/rest/v1/match_results?select=match_id,sets,pending,rev'),getAll('/rest/v1/match_history?select=match_id,sets,origin,at&order=at.asc')]);
- const row=w[0],has=!!(row&&row.data&&row.data.players);ws.rev=row?row.rev:0;ws.empty=!has;srvRev=new Map();setDb(has?row.data:{});mergeResults(res);
- const hm={};hist.forEach(h=>(hm[h.match_id]=hm[h.match_id]||[]).push({at:Date.parse(h.at),by:h.origin,sets:h.sets}));eachM(m=>m.history=hm[m.id]||[]);
+async function loadCloud(){const L=await rpc('gc_load',{});me=(L&&L.me)||{};
+ if(!me.role){if(isMember()){setSess(null);throw Object.assign(new Error('nao_autenticado'),{status:401})}throw Object.assign(new Error('sem_acesso'),{noaccess:true})}
+ const row=L.ws,has=!!(row&&row.data&&row.data.players);ws.rev=row?row.rev:0;ws.empty=!has;srvRev=new Map();setDb(has?row.data:{});mergeResults(L.results||[]);
+ db.caixa=cashNorm(L.cash&&L.cash.data);cx.rev=L.cash?L.cash.rev:0;members=L.accounts||[];
+ const hm={};(L.history||[]).forEach(h=>(hm[h.match_id]=hm[h.match_id]||[]).push({at:Date.parse(h.at),by:h.origin,sets:h.sets}));eachM(m=>m.history=hm[m.id]||[]);
  ws.last=has?JSON.stringify(wsData()):'';setSync('ok')}
+async function saveCash(){if(!CLOUD)return save();if(cx.busy){cx.again=true;return}cx.busy=true;setSync('saving');
+ try{const r=await rpc('gc_save_cash',{p_data:db.caixa,p_expected_rev:cx.rev});
+  if(r.ok){cx.rev=r.rev;cx.err=false;setSync(ws.state==='err'&&ws.t?'err':'ok')}
+  else{cx.again=false;cx.busy=false;while(stack.length)closeModal(true);await loadCloud();render();
+   return toast('O caixa foi alterado em outro aparelho. Seu último lançamento não foi gravado; confira e lance de novo.','err')}}
+ catch(e){cx.busy=false;if(e.status){setSync('ok');return toast(errTxt(e),'err')}cx.err=true;setSync('err');clearTimeout(cx.t);cx.t=setTimeout(saveCash,5000);return}
+ cx.busy=false;if(cx.again){cx.again=false;return saveCash()}}
 async function loadShared(tok){let j;try{j=await rpc('gc_get_shared',{p_token:tok},true)}catch(e){if(e.status&&/link_invalido/.test(e.message)){setDb({});shSig='invalido';return}throw e}
  shSig=JSON.stringify(j);setDb({players:j.players,teams:j.teams,champs:[j.champ],settings:j.settings||{},user:{name:j.organizer||'Organizador'}});mergeResults(j.results)}
 async function pushWs(){if(ws.busy){ws.again=true;return}const body=JSON.stringify(wsData());if(body===ws.last){setSync('ok');return}
@@ -283,6 +307,7 @@ async function importData(d){const sc=new Map();(d.champs||[]).forEach(c=>(c.pha
  setDb(d);eachM(m=>{m.sets=[];m.pending=null;m.history=[];m.rev=srvRev.get(m.id)||0});
  while(ws.busy)await new Promise(r=>setTimeout(r,100));await pushWs();
  if(ws.state!=='ok'){render();return toast('Não foi possível enviar os dados. Verifique a conexão.','err')}
+ if(d.caixa&&canCashEdit())await saveCash();
  const ms=[];eachM(m=>ms.push(m));let fail=0;
  for(const m of ms){const x=sc.get(m.id)||[];if(x.length||m.rev){try{if(!await scoreAdmin(m,x,'importação'))fail++}catch(e){fail++}}}
  render();toast(fail?`Dados enviados, mas ${fail} placar(es) não puderam ser gravados.`:'Dados enviados para o banco.',fail?'err':'')}
@@ -290,7 +315,7 @@ let migAsked=false;
 async function offerMigration(){if(migAsked||!ws.empty)return;migAsked=true;let d=null;try{d=JSON.parse(localStorage.getItem(KEY))}catch(e){}
  if(!d||!((d.players||[]).length+(d.champs||[]).length))return;
  if(await confirmBox({title:'Enviar dados para o banco?',msg:`Encontrei dados salvos neste navegador (${(d.players||[]).length} jogadores, ${(d.teams||[]).length} equipes, ${(d.champs||[]).length} campeonatos) e o banco está vazio. Deseja enviar esses dados para o banco?`,ok:'Enviar'}))await importData(d)}
-const SRV={link_invalido:'Link inválido ou expirado.',campeonato_finalizado:'O campeonato está finalizado.',lancamento_nao_permitido:'O lançamento desta rodada está reservado ao organizador.',partida_sem_duplas:'Esta partida ainda não tem as duas duplas.',placar_invalido:'Placar inválido.',nao_autenticado:'Sessão expirada. Entre novamente.'};
+const SRV={link_invalido:'Link inválido ou expirado.',campeonato_finalizado:'O campeonato está finalizado.',lancamento_nao_permitido:'O lançamento desta rodada está reservado ao organizador.',partida_sem_duplas:'Esta partida ainda não tem as duas duplas.',placar_invalido:'Placar inválido.',nao_autenticado:'Sessão expirada. Entre novamente.',sem_permissao:'Seu perfil não permite esta ação.',usuario_invalido:'Nome de usuário inválido.',senha_curta:'A senha precisa ter pelo menos 6 caracteres.',nome_obrigatorio:'Informe o nome.'};
 const errTxt=e=>SRV[(e.message||'').split(':')[0].trim()]||(e.status?'Não foi possível concluir ('+e.message+').':'Sem conexão com o servidor. Nada foi gravado.');
 const conflictMsg=m=>`Outra pessoa alterou esta partida enquanto você digitava. Placar atual: ${setsTxt(m.sets)||'sem placar'}${m.pending?' (há um resultado aguardando aprovação)':''}. Nada foi gravado: feche e abra a partida para conferir.`;
 async function scoreAdmin(m,sets,by){mut++;
@@ -303,16 +328,18 @@ function ensure(key,fn){const root=document.getElementById('root');
  if(loading===key)return;loading=key;
  fn().then(()=>{loading=null;loaded=key;render();if(key==='admin')offerMigration()},
   e=>{loading=null;if(!key.startsWith('s:')&&!sess)return render();const b=document.getElementById('ldg');
-   if(b)b.innerHTML=`<b>Não foi possível carregar os dados.</b><span class="muted">${esc(errTxt(e))}</span><button class="pill" data-a="retry">Tentar novamente</button>`})}
+   if(b&&e.noaccess)b.innerHTML=`<b>Este login não tem acesso a este sistema.</b><span class="muted">${esc((sess&&sess.email)||'')} — o sistema já tem um usuário master. Peça a ele um nome de usuário e senha.</span><button class="pill" data-a="sair2">Sair</button>`;
+   else if(b)b.innerHTML=`<b>Não foi possível carregar os dados.</b><span class="muted">${esc(errTxt(e))}</span><button class="pill" data-a="retry">Tentar novamente</button>`})}
 setInterval(async()=>{if(!CLOUD||document.hidden||ws.poll||loading||!loaded)return;ws.poll=true;const m0=mut;
- try{if(loaded==='admin'&&sess){const[w,res]=await Promise.all([api('/rest/v1/workspaces?select=rev'),getAll('/rest/v1/match_results?select=match_id,sets,pending,rev')]);
-   if(m0===mut&&loaded==='admin'){const sr=w[0]?w[0].rev:0;
-    if(sr>ws.rev&&!ws.busy&&JSON.stringify(wsData())===ws.last){if(!stack.length){await loadCloud();render()}}
-    else if(mergeResults(res)&&!stack.length)render()}}
+ try{if(loaded==='admin'&&sess){const P=await rpc('gc_poll',{});
+   if(!P.ok){loaded=null;ws.poll=false;while(stack.length)closeModal(true);return render()}
+   if(m0===mut&&loaded==='admin'){
+    if((P.ws_rev>ws.rev||(P.cash_rev!=null&&P.cash_rev>cx.rev&&!cx.busy&&!cx.err))&&!ws.busy&&JSON.stringify(wsData())===ws.last){if(!stack.length){await loadCloud();render()}}
+    else if(mergeResults(P.results||[])&&!stack.length)render()}}
   else if(loaded.startsWith('s:')&&visitor){const key=loaded,sig=shSig,j=await rpc('gc_get_shared',{p_token:key.slice(2)},true);
    if(m0===mut&&loaded===key&&JSON.stringify(j)!==sig){shSig=JSON.stringify(j);setDb({players:j.players,teams:j.teams,champs:[j.champ],settings:j.settings||{},user:{name:j.organizer||'Organizador'}});mergeResults(j.results);if(!stack.length)render()}}}
  catch(e){}ws.poll=false},4000);
-window.addEventListener('beforeunload',e=>{if(CLOUD&&(ws.busy||ws.state==='err')){e.preventDefault();e.returnValue=''}});
+window.addEventListener('beforeunload',e=>{if(CLOUD&&(ws.busy||cx.busy||ws.state==='err')){e.preventDefault();e.returnValue=''}});
 const P=id=>db.players.find(p=>p.id===id), T=id=>db.teams.find(t=>t.id===id), C=id=>db.champs.find(c=>c.id===id);
 const dl=t=>!t?'—':t.players.length?t.players.map(id=>P(id)?.name||'?').join(' / '):t.name;
 const DEFCOLS=[['pts',1],['j',1],['v',1],['d',1],['pg',1],['pc',1],['dp',1],['pe',0],['e',0]];
@@ -439,8 +466,8 @@ function download(blob,name){const a=document.createElement('a');a.href=URL.crea
 /* ===================== Acesso ===================== */
 const authed=()=>!CLOUD||!!sess;
 const vLogin=()=>`<header class="top">${I.trophy}<span>Gerenciamento de Campeonatos</span></header><div class="wrap"><form class="modal" data-f="login" style="margin-top:6vh;box-shadow:0 8px 30px #16473420">
- <span class="mico">${I.shield}</span><h3 style="margin:12px 0 2px;font-size:22px">Entrar</h3><p class="muted" style="margin:0 0 8px">Informe e-mail e senha para acessar o sistema.</p>
- <label class="field"><span>E-mail</span><input class="inp" name="u" type="email" autocomplete="username" autocapitalize="none" autofocus></label>
+ <span class="mico">${I.shield}</span><h3 style="margin:12px 0 2px;font-size:22px">Entrar</h3><p class="muted" style="margin:0 0 8px">Informe usuário e senha para acessar o sistema.</p>
+ <label class="field"><span>Usuário ou e-mail</span><input class="inp" name="u" autocomplete="username" autocapitalize="none" autofocus></label>
  <label class="field"><span>Senha</span><input class="inp" name="p" type="password" autocomplete="current-password"></label>
  <p class="err" role="alert"></p><div class="acts"><button class="pill big" style="width:100%">Entrar</button></div></form></div>`;
 
@@ -449,21 +476,21 @@ let cur={};
 function render(){const root=document.getElementById('root'),h=location.hash.replace(/^#\/?/,'').split('/');
  const sc=document.querySelector('.main')?.scrollTop||0;visitor=false;cur={};
  if(h[0]==='s'){visitor=true;if(CLOUD&&loaded!=='s:'+h[1])return ensure('s:'+h[1],()=>loadShared(h[1]));root.innerHTML=vVisitor(h[1]);return}
- if(!authed()){root.innerHTML=vLogin();const u=root.querySelector('[name=u]');u&&u.focus();return}
+ if(!authed()){if(CLOUD)me={role:null,caixa:false};root.innerHTML=vLogin();const u=root.querySelector('[name=u]');u&&u.focus();return}
  if(CLOUD&&loaded!=='admin')return ensure('admin',loadCloud);
  let side,main;
  if(h[0]==='c'){const c=C(h[1]);if(!c){location.hash='#/campeonatos';return}
-  const tab=['inicio','classificacao','config'].includes(h[2])?h[2]:'inicio';cur.c=c;
+  const tab=['inicio','classificacao','config'].includes(h[2])&&(h[2]!=='config'||isMaster())?h[2]:'inicio';cur.c=c;
   const it=(k,l,i)=>`<a href="#/c/${c.id}/${k}" class="${tab===k?'on':''}">${i}${l}</a>`;
-  side=`<div class="ctitle">${I.trophy}<span>${esc(c.name)}</span></div>${it('inicio','Início',I.home)}${it('classificacao','Classificação',I.list)}${it('config','Configurações',I.gear)}
-   <div class="foot"><span>${I.user}${esc(db.user.name)}</span><button data-a="sair">${I.logout}Sair</button></div>`;
+  side=`<a href="#/campeonatos">${I.back}Meus campeonatos</a><div class="ctitle" style="padding-top:14px">${I.trophy}<span>${esc(c.name)}</span></div>${it('inicio','Início',I.home)}${it('classificacao','Classificação',I.list)}${isMaster()?it('config','Configurações',I.gear):''}
+   <div class="foot"><span>${I.user}${esc(userName())}</span><button data-a="sair">${I.logout}Sair</button></div>`;
   const names={inicio:'Início',classificacao:'Classificação',config:'Configurações'};
-  main=`<div class="crumb"><a href="#/campeonatos">Meus Campeonatos</a>/<span>${esc(c.name)}</span>/<b>${names[tab]}</b><span class="sp"></span><button class="pill ghost" data-a="share" style="display:inline-flex;gap:6px;align-items:center">${I.share}Compartilhar</button></div>`+
+  main=`<div class="crumb"><a href="#/campeonatos">Meus Campeonatos</a>/<span>${esc(c.name)}</span>/<b>${names[tab]}</b><span class="sp"></span><button class="pill ghost" data-a="share" ${canEdit()?'':'hidden'} style="display:inline-flex;gap:6px;align-items:center">${I.share}Compartilhar</button></div>`+
    ({inicio:vHome,classificacao:vClass,config:vConfig})[tab](c)}
- else{const p=['campeonatos','jogadores','equipes','ranking','usuario'].includes(h[0])?h[0]:'campeonatos';
+ else{const p=['campeonatos','jogadores','equipes','ranking','caixa','usuario'].includes(h[0])&&(h[0]!=='caixa'||canCash())?h[0]:'campeonatos';
   const it=(k,l,i)=>`<a href="#/${k}" class="${p===k?'on':''}">${i}${l}</a>`;
-  side=`<h4>Organizar campeonatos</h4>${it('campeonatos','Meus campeonatos',I.trophy)}${it('jogadores','Cadastro de jogadores',I.user)}${it('equipes','Cadastro de equipes',I.users)}${it('ranking','Ranking Geral',I.chart)}<h4>Usuário</h4>${it('usuario','Meu usuário',I.shield)}<div class="foot"><span>${I.user}${esc(db.user.name)}</span><button data-a="sair">${I.logout}Sair</button></div>`;
-  main=({campeonatos:vChamps,jogadores:vPlayers,equipes:vTeams,ranking:vRank,usuario:vUser})[p]()}
+  side=`<h4>Organizar campeonatos</h4>${it('campeonatos','Meus campeonatos',I.trophy)}${it('jogadores','Cadastro de jogadores',I.user)}${it('equipes','Cadastro de equipes',I.users)}${it('ranking','Ranking Geral',I.chart)}${canCash()?it('caixa','Caixa',I.cash):''}<h4>Usuário</h4>${it('usuario','Meu usuário',I.shield)}<div class="foot"><span>${I.user}${esc(userName())}</span><button data-a="sair">${I.logout}Sair</button></div>`;
+  main=({campeonatos:vChamps,jogadores:vPlayers,equipes:vTeams,ranking:vRank,caixa:vCaixa,usuario:vUser})[p]()}
  root.innerHTML=`<header class="top"><button class="burger" data-a="nav" aria-label="Abrir menu">${I.menu}</button>${I.trophy}<span>Gerenciamento de Campeonatos</span><span id="sync" aria-live="polite" style="margin-left:auto;font-size:12px;font-weight:400;opacity:.85">${syncTxt()}</span></header>
  <div class="wrap"><div class="panel"><nav class="side" aria-label="Menu">${side}</nav><div class="scrim" data-a="nav"></div><main class="main">${main}</main></div></div>`;
  document.querySelector('.main').scrollTop=sc}
@@ -472,26 +499,30 @@ function render(){const root=document.getElementById('root'),h=location.hash.rep
 function vChamps(){const l=[...db.champs].sort((a,b)=>b.createdAt-a.createdAt);
  return`<h1>Meus campeonatos</h1>${l.length?`<div class="cards">${l.map(c=>{const ts=champTeams(c),ps=new Set(ts.flatMap(id=>T(id)?.players||[]));
   return`<div class="card"><button class="go" data-a="openC" data-id="${c.id}"><span class="trophy">${I.trophy}</span><span><b>${esc(c.name)}</b><small>${champStatus(c)} · Temporada ${esc(c.season)} · ${ts.length} equipe(s) · ${ps.size} jogador(es)${c.isFinal?' · Torneio final':''}</small></span></button>
-  <button class="ibtn" data-a="dupC" data-id="${c.id}" title="Duplicar campeonato" aria-label="Duplicar campeonato">${I.copy}</button><button class="ibtn" data-a="openC" data-id="${c.id}" aria-label="Abrir campeonato">${I.chev}</button></div>`}).join('')}</div>`
-  :'<p class="empty">Nenhum campeonato cadastrado.</p>'}<button class="fab" data-a="newC" aria-label="Novo campeonato" title="Novo campeonato">${I.plus}</button>`}
+  <button class="ibtn" data-a="dupC" ${canEdit()?'':'hidden'} data-id="${c.id}" title="Duplicar campeonato" aria-label="Duplicar campeonato">${I.copy}</button><button class="ibtn" data-a="openC" data-id="${c.id}" aria-label="Abrir campeonato">${I.chev}</button></div>`}).join('')}</div>`
+  :'<p class="empty">Nenhum campeonato cadastrado.</p>'}<button class="fab" data-a="newC" ${canEdit()?'':'hidden'} aria-label="Novo campeonato" title="Novo campeonato">${I.plus}</button>`}
 const WARN='<p class="warn">Atenção. Para alterar equipes que já estão em campeonatos é necessário alterar a equipe nas configurações do campeonato.</p>';
 function vPlayers(){const dir=ui.pSort,l=[...db.players].sort((a,b)=>cmpN(a.name,b.name)*(dir==='za'?-1:1));
- return`<div class="tools"><button class="ibtn" data-a="pSort" title="Alternar ordenação" aria-label="Ordenação ${dir==='za'?'Z a A':'A a Z'}">${dir==='za'?'Z–A ↑':'A–Z ↓'}</button><button class="ibtn" data-a="pDel" title="Excluir selecionado" aria-label="Excluir jogador selecionado">${I.trash}</button></div>
- <form data-f="pAdd"><div class="addrow"><input name="n" id="pName" placeholder="Nome do jogador" maxlength="60" autocomplete="off" aria-label="Nome do jogador"><button class="pill">Adicionar</button></div><p class="err" role="alert"></p></form>
+ return`<div class="tools"><button class="ibtn" data-a="pSort" title="Alternar ordenação" aria-label="Ordenação ${dir==='za'?'Z a A':'A a Z'}">${dir==='za'?'Z–A ↑':'A–Z ↓'}</button><button class="ibtn" data-a="pDel" ${canEdit()?'':'hidden'} title="Excluir selecionado" aria-label="Excluir jogador selecionado">${I.trash}</button></div>
+ <form data-f="pAdd" ${canEdit()?'':'hidden'}><div class="addrow"><input name="n" id="pName" placeholder="Nome do jogador" maxlength="60" autocomplete="off" aria-label="Nome do jogador"><button class="pill">Adicionar</button></div><p class="err" role="alert"></p></form>
  <div class="total">Total: ${db.players.length}</div>
  <ul class="rows">${l.map(p=>`<li class="${ui.selP.has(p.id)?'sel':''}"><input type="checkbox" data-a="pSel" data-id="${p.id}" ${ui.selP.has(p.id)?'checked':''} aria-label="Selecionar ${esc(p.name)}"><button class="name" data-a="pEdit" data-id="${p.id}" title="Clique para editar">${esc(p.name)}</button>${p.pending?`<span class="tag live" title="Pontos a transferir para a próxima dupla">+${fmt(p.pending.points)} pts a transferir</span>`:''}</li>`).join('')}</ul>${WARN}`}
-function vTeams(){const free=db.players.filter(p=>!db.teams.some(t=>t.active&&t.players.includes(p.id))).sort((a,b)=>norm(a.name).localeCompare(norm(b.name)));
- const l=[...db.teams].sort((a,b)=>(b.active-a.active)||cmpN(a.name,b.name));
- return`<div class="tools"><button class="ibtn" data-a="tDel" title="Excluir selecionada" aria-label="Excluir equipe selecionada">${I.trash}</button></div>
- <form data-f="tAdd"><div class="addrow"><input name="n" id="tName" placeholder="Nome da equipe" maxlength="60" autocomplete="off" aria-label="Nome da equipe"><button class="pill">Adicionar</button></div><p class="err" role="alert"></p></form>
- <div class="total">Total: ${db.teams.length}</div>
+function vTeams(){const free=db.players.filter(p=>!db.teams.some(t=>t.active&&t.players.includes(p.id))).sort((a,b)=>cmpN(a.name,b.name));
+ const l=[...db.teams].sort((a,b)=>(b.active-a.active)||cmpN(a.name,b.name)),ed=canEdit();
+ const pick=ui.pick=(ui.pick||[]).filter(id=>free.some(p=>p.id===id));
+ return`<div class="tools"><button class="ibtn" data-a="tDel" ${ed?'':'hidden'} title="Excluir selecionada" aria-label="Excluir equipe selecionada">${I.trash}</button></div>
+ <h2>Formar dupla</h2><p class="note" style="margin:0">Jogadores disponíveis (${free.length}). Selecione 2 para formar a dupla; o nome da dupla será o nome dos dois jogadores.</p>
+ <div class="pick">${free.map(p=>`<button class="pk ${pick.includes(p.id)?'on':''}" data-a="tPick" data-id="${p.id}" aria-pressed="${pick.includes(p.id)}">${esc(p.name)}${p.pending?` <small>(+${fmt(p.pending.points)} pts)</small>`:''}</button>`).join('')||`<span class="muted">${db.players.length?'Todos os jogadores já estão em duplas ativas.':'Nenhum jogador cadastrado. Cadastre em Cadastro de jogadores.'}</span>`}</div>
+ <div class="acts" style="justify-content:flex-start;margin-top:4px;align-items:center" ${ed?'':'hidden'}><button class="pill" data-a="tForm" id="tForm" ${pick.length===2?'':'disabled'}>Formar dupla</button><span class="muted">${pick.length===2?esc(pick.map(id=>P(id).name).join(' / ')):pick.length+' de 2 selecionados'}</span></div>
+ <div class="total" style="margin-top:18px">Total: ${db.teams.length}</div>
  <ul class="rows">${l.map(t=>`<li class="${ui.selT.has(t.id)?'sel':''}"><input type="checkbox" data-a="tSel" data-id="${t.id}" ${ui.selT.has(t.id)?'checked':''} aria-label="Selecionar ${esc(t.name)}">
   <button class="name" data-a="tEdit" data-id="${t.id}" title="Clique para editar">${esc(t.name)}</button>
   <span class="tag ${!t.active?'off':t.players.length===2?'ok':'live'}">${!t.active?'Inativa':t.players.length===2?'Ativa':'Incompleta'}</span>
-  ${t.players.map(id=>`<span class="chip">${esc(P(id)?.name)}${t.active?`<button data-a="tUnlink" data-id="${t.id}" data-p="${id}" aria-label="Desvincular ${esc(P(id)?.name)}">${I.x}</button>`:''}</span>`).join('')}
+  ${t.auto&&t.players.length===2?'':t.players.map(id=>`<span class="chip">${esc(P(id)?.name)}${t.active&&t.players.length<2?`<button data-a="tUnlink" data-id="${t.id}" data-p="${id}" aria-label="Desvincular ${esc(P(id)?.name)}">${I.x}</button>`:''}</span>`).join('')}
   ${t.active&&t.players.length<2?`<select class="sm" data-c="tLink" data-id="${t.id}" aria-label="Vincular jogador"><option value="">+ Vincular jogador…</option>${free.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select>`:''}
   ${(t.transfers||[]).length?`<span class="tag" title="Pontos recebidos por transferência">+${fmt(t.transfers.reduce((a,x)=>a+x.points,0))} transferidos</span>`:''}
-  ${t.active&&t.players.length===2?`<button class="pill ghost sm" style="margin-left:auto" data-a="tEnd" data-id="${t.id}">Encerrar dupla</button>`:''}</li>`).join('')}</ul>${WARN}`}
+  ${ed&&t.active&&t.players.length===2?`<button class="pill ghost sm" style="margin-left:auto" data-a="tEnd" data-id="${t.id}">Encerrar dupla</button>`:''}</li>`).join('')}</ul>
+ <p class="note">Para desfazer uma dupla sem partidas, marque-a e use a lixeira. Dupla com partidas é encerrada pelo botão “Encerrar dupla”.</p>${WARN}`}
 function seasons(){return[...new Set([String(new Date().getFullYear()),...db.champs.map(c=>String(c.season))])].sort().reverse()}
 function vRank(){const s=ui.rk;if(s.champ!=='all'&&!db.champs.some(c=>c.id===s.champ&&(s.season==='all'||String(c.season)===s.season)))s.champ='all';
  const ts=db.champs.filter(c=>!c.isFinal&&(s.season==='all'||String(c.season)===s.season)).sort((a,b)=>when(a)-when(b));
@@ -503,23 +534,55 @@ function vRank(){const s=ui.rk;if(s.champ!=='all'&&!db.champs.some(c=>c.id===s.c
  ${s.mode==='d'?`<label class="chk" style="flex-direction:row;margin-top:18px"><input type="checkbox" data-a="rkIna" ${s.inactive?'checked':''}>Mostrar duplas inativas</label>`:''}</div>
  <div id="rkBody">${rankHTML(s)}</div>
  <p class="note">${s.mode==='d'?`Vitória = ${db.settings.ppw} pontos. As ${db.settings.slots} melhores duplas ativas da temporada aparecem como “Classificada” para o torneio final. Clique em um valor para ver o detalhamento.`:'O ranking individual é informativo e não inclui pontos transferidos. Clique em um valor para ver o detalhamento.'}</p>`}
-function vUser(){const s=db.settings;return`<h1>Meu usuário</h1>
+function usersHTML(){if(!CLOUD)return'<h2 style="margin-top:26px">Usuários e permissões</h2><p class="note">Disponível quando o sistema está ligado ao banco.</p>';
+ return`<h2 style="margin-top:26px">Usuários e permissões</h2><p class="note">Cada pessoa entra com o nome de usuário e a senha que você definir aqui, sem precisar de e-mail. Você (master) continua entrando com o seu e-mail.</p>
+ <div class="tw"><table><thead><tr><th class="l">Nome</th><th class="l">Usuário</th><th>Perfil</th><th>Caixa</th><th></th></tr></thead><tbody>
+ <tr><td class="l">${esc(db.user.name)} <span class="tag ok">você</span></td><td class="l">${esc(me.email||'')}</td><td>Master</td><td>Sim</td><td></td></tr>
+ ${members.map(m=>`<tr><td class="l">${esc(m.name)}</td><td class="l">${esc(m.username)}</td><td>${ROLE[m.role]}</td><td>${m.caixa?'Sim':'Não'}</td><td><button class="ibtn" data-a="mbEdit" data-e="${esc(m.username)}" aria-label="Editar ${esc(m.name)}">${I.edit}</button><button class="ibtn" data-a="mbDel" data-e="${esc(m.username)}" aria-label="Remover ${esc(m.name)}">${I.trash}</button></td></tr>`).join('')}</tbody></table></div>
+ <div class="acts" style="justify-content:flex-start"><button class="pill" data-a="mbEdit" data-e="">Adicionar usuário</button></div>
+ <details class="note"><summary>O que cada perfil pode fazer</summary><p><b>Master</b> (você): tudo, incluindo Configurações do campeonato, usuários, regras do ranking e backup.<br><b>Organizador</b>: cadastra jogadores e duplas, cria campeonatos, monta fases e partidas, lança e corrige placares.<br><b>Lançador de placares</b>: consulta tudo e lança ou corrige placares.<br><b>Somente leitura</b>: apenas consulta.<br><b>Caixa</b>: marcado, a pessoa vê o Caixa; para lançar no Caixa também precisa ser Organizador.</p></details>`}
+function vUser(){const s=db.settings,who=`<p class="muted">${CLOUD?`Conectado como <b>${esc(me.username||me.email||(sess&&sess.email)||'')}</b> · Perfil: <b>${ROLE[me.role]||''}</b>`:'Modo local, sem login.'}</p>`;
+ if(!isMaster())return`<h1>Meu usuário</h1>${who}<p class="note">As regras do ranking, os usuários e a cópia de segurança são gerenciados pelo usuário master.</p>
+ ${isMember()?`<h2 style="margin-top:22px">Trocar minha senha</h2><form data-f="pwSave" style="max-width:420px"><label class="field"><span>Senha atual</span><input class="inp" name="o" type="password" autocomplete="current-password"></label><label class="field"><span>Nova senha (mínimo 6 caracteres)</span><input class="inp" name="n" type="password" autocomplete="new-password"></label><p class="err" role="alert"></p><div class="acts" style="justify-content:flex-start"><button class="pill">Trocar senha</button></div></form>`:''}`;
+ return`<h1>Meu usuário</h1>${who}
  <form data-f="uSave" style="max-width:520px"><label class="field"><span>Nome (aparece como organizador)</span><input class="inp" name="name" value="${esc(db.user.name)}" maxlength="60" required></label>
- <label class="field"><span>E-mail</span><input class="inp" name="email" type="email" value="${esc(db.user.email)}"></label>
+ <label class="field"><span>E-mail de contato</span><input class="inp" name="email" type="email" value="${esc(db.user.email)}"></label>
  <h2 style="margin-top:22px">Regras do ranking</h2>
  <label class="field"><span>Pontos por vitória</span><input class="inp" name="ppw" type="number" min="1" max="100" value="${s.ppw}" required></label>
  <label class="field"><span>Percentual transferido na troca de dupla (%)</span><input class="inp" name="pct" type="number" min="0" max="100" value="${s.pct}" required></label>
  <label class="field"><span>Vagas no torneio final (duplas)</span><input class="inp" name="slots" type="number" min="1" max="64" value="${s.slots}" required></label>
  <label class="field"><span>Mínimo de torneios disputados para classificar</span><input class="inp" name="minT" type="number" min="0" max="99" value="${s.minT}" required></label>
  <p class="err" role="alert"></p><div class="acts" style="justify-content:flex-start"><button class="pill">Salvar alterações</button></div></form>
+ ${usersHTML()}
  <h2 style="margin-top:26px">Cópia de segurança</h2><p class="note">${CLOUD?'Os dados ficam no banco (Supabase). Exportar um arquivo de vez em quando continua sendo uma boa garantia.':'Os dados ficam salvos apenas neste navegador. Exporte um arquivo regularmente.'}</p>
  <div class="acts" style="justify-content:flex-start"><button class="pill ghost" data-a="bkExp">Exportar dados (.json)</button><button class="pill ghost" data-a="bkImp">Importar dados</button><button class="pill red" data-a="wipe">Apagar todos os dados</button></div>`}
+
+/* ----- caixa ----- */
+const money=n=>(+n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const parseMoney=v=>{v=String(v).trim().replace(/[R$\s]/g,'');if(v.includes(','))v=v.replace(/\./g,'').replace(',','.');const n=Math.round(parseFloat(v)*100)/100;return isFinite(n)?n:NaN};
+const CXT={pag:'Pagamento de cota',pat:'Patrocínio',ent:'Outra entrada',gas:'Gasto'};
+const brDate=d=>d?d.split('-').reverse().join('/'):'—';
+function vCaixa(){const k=db.caixa,sc=ui.cxScope&&(ui.cxScope==='all'||C(ui.cxScope))?ui.cxScope:'all',key=sc==='all'?'geral':sc,ed=canCashEdit();ui.cxScope=sc;
+ const items=k.items.filter(i=>sc==='all'||i.champId===sc).sort((a,b)=>(b.date||'').localeCompare(a.date||'')||b.at-a.at);
+ const sum=t=>items.filter(i=>i.type===t).reduce((a,i)=>a+i.value,0),pag=sum('pag'),pat=sum('pat'),ent=sum('ent'),gas=sum('gas'),cota=+k.cota[key]||0;
+ const pl=(sc==='all'?db.players:[...new Set(champTeams(C(sc)).flatMap(id=>T(id)?.players||[]))].map(P).filter(Boolean)).slice().sort((a,b)=>cmpN(a.name,b.name));
+ const paid=id=>k.items.filter(i=>i.type==='pag'&&i.playerId===id&&(sc==='all'?!i.champId:i.champId===sc)).reduce((a,i)=>a+i.value,0);
+ const quit=pl.filter(p=>cota>0&&paid(p.id)>=cota).length,falta=cota>0?pl.reduce((a,p)=>a+Math.max(0,cota-paid(p.id)),0):0;
+ const kpi=(l,v,c)=>`<div class="kpi" style="min-width:150px"><small>${l}</small><b class="${c||''}">${money(v)}</b></div>`;
+ return`<h1>Caixa</h1><div class="filters"><label>Visão<select data-c="cxScope"><option value="all">Todos os lançamentos</option>${db.champs.map(c=>`<option value="${c.id}" ${sc===c.id?'selected':''}>${esc(c.name)}</option>`).join('')}</select></label>
+ <form data-f="cxCota" style="display:flex;gap:8px;align-items:flex-end"><label>Valor da cota ${sc==='all'?'geral':'deste campeonato'}<input class="inp" style="height:40px;width:150px" name="v" inputmode="decimal" value="${cota?String(cota.toFixed(2)).replace('.',','):''}" placeholder="0,00" ${ed?'':'disabled'}></label><button class="pill" ${ed?'':'hidden'}>Salvar cota</button></form></div>
+ <div class="kpis" style="margin-top:0">${kpi('COTAS RECEBIDAS',pag)}${kpi('PATROCÍNIOS',pat)}${kpi('OUTRAS ENTRADAS',ent)}${kpi('TOTAL GASTO',gas,gas?'neg':'')}${kpi('SALDO EM CAIXA',pag+pat+ent-gas,pag+pat+ent-gas<0?'neg':'')}</div>
+ <div class="acts" style="justify-content:flex-start;margin:0 0 20px" ${ed?'':'hidden'}><button class="pill" data-a="cxAdd" data-t="pag">+ Pagamento de cota</button><button class="pill ghost" data-a="cxAdd" data-t="pat">+ Patrocínio</button><button class="pill ghost" data-a="cxAdd" data-t="ent">+ Outra entrada</button><button class="pill ghost" data-a="cxAdd" data-t="gas">+ Gasto</button></div>
+ <h2>Cotas dos jogadores</h2><p class="note" style="margin-top:0">${sc==='all'?'Nesta visão contam os pagamentos de cota sem campeonato (cota geral). Escolha um campeonato para ver a cota dele.':'Jogadores das duplas inscritas neste campeonato.'}${cota>0?` ${quit} de ${pl.length} quitaram · falta receber ${money(falta)}.`:' Defina o valor da cota para ver quem está em dia.'}</p>
+ ${pl.length?`<div class="tw" style="margin-bottom:22px"><table><thead><tr><th class="l">Jogador</th><th>Pago</th><th>Cota</th><th>Falta</th><th>Situação</th><th></th></tr></thead><tbody>${pl.map(p=>{const v=paid(p.id),st=cota<=0?['—','']:v>=cota?['Pago','ok']:v>0?['Parcial','live']:['Pendente','off'];
+  return`<tr><td class="l">${esc(p.name)}</td><td>${money(v)}</td><td>${cota?money(cota):'—'}</td><td>${cota?money(Math.max(0,cota-v)):'—'}</td><td>${st[1]?`<span class="tag ${st[1]}">${st[0]}</span>`:st[0]}</td><td>${ed?`<button class="pill ghost sm" data-a="cxAdd" data-t="pag" data-p="${p.id}">Registrar pagamento</button>`:''}</td></tr>`}).join('')}</tbody></table></div>`:'<p class="empty">Nenhum jogador nesta visão.</p>'}
+ <h2>Lançamentos</h2>${items.length?`<div class="tw"><table><thead><tr><th>Nº</th><th>Data</th><th class="l">Tipo</th><th class="l">Descrição</th><th class="l">Campeonato</th><th>Valor</th><th></th></tr></thead><tbody>${items.map(i=>`<tr><td>${i.n||''}</td><td>${brDate(i.date)}</td><td class="l">${CXT[i.type]}</td><td class="l" style="white-space:normal">${esc([i.type==='pag'?(P(i.playerId)?.name||i.who):'',i.desc].filter(Boolean).join(' — '))}</td><td class="l">${i.champId&&C(i.champId)?esc(C(i.champId).name):'—'}</td><td class="${i.type==='gas'?'neg':''}"><b>${i.type==='gas'?'− ':''}${money(i.value)}</b></td><td>${ed?`<button class="ibtn" data-a="cxEdit" data-id="${i.id}" aria-label="Editar lançamento">${I.edit}</button><button class="ibtn" data-a="cxDel" data-id="${i.id}" aria-label="Excluir lançamento">${I.trash}</button>`:''}</td></tr>`).join('')}</tbody></table></div>`:'<p class="empty">Nenhum lançamento.</p>'}`}
 
 /* ===================== Telas do campeonato ===================== */
 function vHome(c){return`<div style="display:flex;gap:12px;align-items:center"><span class="trophy">${I.trophy}</span><h1 style="margin:0">${esc(c.name)}</h1></div>
  <div class="kpis"><div class="kpi"><small>STATUS</small><b>${champStatus(c)}</b></div><div class="kpi"><small>ORGANIZADOR</small><b>${esc(c.organizer||db.user.name)}</b></div>${c.result?.champion&&T(c.result.champion)?`<div class="kpi"><small>DUPLA CAMPEÃ</small><b>${esc(dl(T(c.result.champion)))}</b></div>`:''}</div>
  <h2>Mensagens</h2><div class="box">${(c.messages||[]).length?c.messages.map(m=>`<div class="msg"><b>${esc(m.author)}</b> <small>${dt(m.at)}</small><div>${esc(m.text)}</div></div>`).join(''):'<p class="muted" style="margin:0">Nenhuma mensagem publicada.</p>'}
- <form class="msgf" data-f="msg"><input class="inp" name="t" maxlength="500" placeholder="Envie uma mensagem para o campeonato..." aria-label="Mensagem" autocomplete="off"><button class="pill dark" style="height:46px;display:flex;align-items:center;gap:6px" aria-label="Enviar">${I.send}Enviar</button></form></div>`}
+ <form class="msgf" data-f="msg" ${canEdit()?'':'hidden'}><input class="inp" name="t" maxlength="500" placeholder="Envie uma mensagem para o campeonato..." aria-label="Mensagem" autocomplete="off"><button class="pill dark" style="height:46px;display:flex;align-items:center;gap:6px" aria-label="Enviar">${I.send}Enviar</button></form></div>`}
 function getPhase(c){return c.phases.find(p=>p.id===ui.phase[c.id])||c.phases[0]}
 function getRound(ph,ro){const rs=ro?ph.rounds.filter(r=>!r.hidden):ph.rounds;return rs.find(r=>r.id===ui.round[ph.id])||rs[0]}
 function standHTML(ph){const cols=ph.cols.filter(x=>x.on);
@@ -527,22 +590,22 @@ function standHTML(ph){const cols=ph.cols.filter(x=>x.on);
   s.rows.length?s.rows.map(r=>`<tr><td title="${r.tie?'Empatadas em todos os critérios':''}">${r.pos}º${r.tie?' =':''}</td><td class="l" style="white-space:normal">${esc(r.name)}</td>${cols.map(x=>`<td class="${x.k==='pts'?'tot':''}">${r.s[x.k]}</td>`).join('')}</tr>`).join(''):`<tr><td colspan="${cols.length+2}" class="muted">Sem duplas neste grupo.</td></tr>`}</tbody></table></div>`).join('')}
 function matchCard(m,r,ro){const st=mStatus(m),[sa,sb]=setsWon(m),has=hasSets(m);
  const nm=id=>id&&T(id)?esc(dl(T(id))):`<span class="ph">${I.trophy}</span>`;
- const can=ro?(r.allowLink&&statusKey(cur.c)!=='done'&&st!=='done'&&m.a&&m.b&&!m.pending):true;
- return`<div class="match"><button class="mt l" data-a="mOpen" data-id="${m.id}" ${ro?'disabled':''}>${nm(m.a)}</button>
+ const can=ro?(r.allowLink&&statusKey(cur.c)!=='done'&&st!=='done'&&m.a&&m.b&&!m.pending):canScore();
+ return`<div class="match"><button class="mt l" data-a="mOpen" data-id="${m.id}" ${ro||!canEdit()?'disabled':''}>${nm(m.a)}</button>
  <button class="score" data-a="mOpen" data-id="${m.id}" ${can?'':'disabled'} aria-label="Informar placar"><b>${has?sa+' : '+sb:'— : —'}</b><small>${esc(setsTxt(m.sets))}</small></button>
- <button class="mt r" data-a="mOpen" data-id="${m.id}" ${ro?'disabled':''}>${nm(m.b)}</button>
- <div class="mfoot"><span><span class="tag ${st}">${ST[st]}</span> ${m.pending?'<span class="tag pend">Aguardando aprovação</span>':''}</span>${ro?(can?`<button class="pill sm" data-a="mOpen" data-id="${m.id}">Informar placar</button>`:''):`<button class="ibtn" data-a="mDel" data-id="${m.id}" aria-label="Excluir partida" title="Excluir partida">${I.trash}</button>`}</div></div>`}
+ <button class="mt r" data-a="mOpen" data-id="${m.id}" ${ro||!canEdit()?'disabled':''}>${nm(m.b)}</button>
+ <div class="mfoot"><span><span class="tag ${st}">${ST[st]}</span> ${m.pending?'<span class="tag pend">Aguardando aprovação</span>':''}</span>${ro?(can?`<button class="pill sm" data-a="mOpen" data-id="${m.id}">Informar placar</button>`:''):`<button class="ibtn" data-a="mDel" ${canEdit()?'':'hidden'} data-id="${m.id}" aria-label="Excluir partida" title="Excluir partida">${I.trash}</button>`}</div></div>`}
 function jogosHTML(c,ph,ro){const r=getRound(ph,ro),rs=ro?ph.rounds.filter(x=>!x.hidden):ph.rounds;cur.r=r;
  const last=ph.rounds[ph.rounds.length-1],canNext=!ro&&ph.type==='elim'&&last&&last.matches.length&&last.matches.every(m=>mStatus(m)==='done')&&(last.byes||[]).length+last.matches.length>1;
  return`<section class="jg"><header>Jogos<select data-c="selPhase" aria-label="Fase">${c.phases.map(p=>`<option value="${p.id}" ${p===ph?'selected':''}>${esc(p.name)}</option>`).join('')}</select>
  ${rs.length?`<select data-c="selRound" aria-label="Rodada">${rs.map(x=>`<option value="${x.id}" ${x===r?'selected':''}>${esc(x.title)}</option>`).join('')}</select>`:''}</header>
- <div class="in">${ro?'':`<button class="sqb" data-a="jMenu" aria-label="Gerenciar jogos" title="Gerenciar jogos">${I.plus}</button>`}
- ${!rs.length?(ro?'<p class="empty">Ainda não há jogos disponíveis.</p>':`<div class="center" style="padding:14px 0"><button class="pill dark big" data-a="gen">GERAR PARTIDAS</button><span class="muted">Ou</span><button class="pill ghost big" data-a="addRound">ADICIONAR RODADA</button></div>`)
- :`${r.byes?.length?`<p class="note" style="margin:0">Avançam direto: ${r.byes.map(id=>esc(dl(T(id)))).join('; ')}</p>`:''}${r.matches.map(m=>matchCard(m,r,ro)).join('')||'<p class="empty" style="padding:8px">Nenhuma partida nesta rodada.</p>'}
-  ${ro?(r.allowLink&&statusKey(c)!=='done'?'':'<p class="note">O lançamento de placares está reservado ao organizador.</p>'):`<button class="pill ghost" data-a="addMatch">ADICIONAR PARTIDA</button>${!phMatches(ph).length?'<button class="pill dark" data-a="gen">GERAR PARTIDAS</button>':''}${canNext?'<button class="pill dark" data-a="gen">GERAR PRÓXIMA RODADA</button>':''}`}`}</div></section>`}
+ <div class="in">${ro||!canEdit()?'':`<button class="sqb" data-a="jMenu" aria-label="Gerenciar jogos" title="Gerenciar jogos">${I.plus}</button>`}
+ ${!rs.length?(ro||!canEdit()?'<p class="empty">Ainda não há jogos disponíveis.</p>':`<div class="center" style="padding:14px 0"><button class="pill dark big" data-a="gen">GERAR PARTIDAS</button><span class="muted">Ou</span><button class="pill ghost big" data-a="addRound">ADICIONAR RODADA</button></div>`)
+ :`${r.byes?.length?`<p class="note" style="margin:0">Avançam direto: ${r.byes.map(id=>esc(dl(T(id)))).join('; ')}</p>`:''}${r.rest?.length?`<p class="note" style="margin:0">Folga nesta rodada: ${r.rest.map(id=>esc(dl(T(id)))).join('; ')}</p>`:''}${r.matches.map(m=>matchCard(m,r,ro)).join('')||'<p class="empty" style="padding:8px">Nenhuma partida nesta rodada.</p>'}
+  ${ro||!canEdit()?(!ro||(r.allowLink&&statusKey(c)!=='done')?'':'<p class="note">O lançamento de placares está reservado ao organizador.</p>'):`<button class="pill ghost" data-a="addMatch">ADICIONAR PARTIDA</button>${!phMatches(ph).length?'<button class="pill dark" data-a="gen">GERAR PARTIDAS</button>':''}${canNext?'<button class="pill dark" data-a="gen">GERAR PRÓXIMA RODADA</button>':''}`}`}</div></section>`}
 function vClass(c){const ph=getPhase(c);cur.ph=ph;
- return`<div class="split"><section><div style="display:flex;gap:10px;align-items:center;margin-bottom:10px"><button class="sqb" data-a="cMenu" aria-label="Gerenciar classificação" title="Gerenciar classificação">${I.plus}</button><h2 style="margin:0">Classificação — ${esc(ph.name)} <small class="muted" style="font-weight:400">(${TYPE[ph.type]})</small></h2></div>
- ${ph.teamIds.length?standHTML(ph):`<div class="center"><span class="muted">Ainda não há duplas.</span><button class="pill dark big" data-a="cDuplas">ADICIONAR DUPLAS</button></div>`}</section>${jogosHTML(c,ph,false)}</div>`}
+ return`<div class="split"><section><div style="display:flex;gap:10px;align-items:center;margin-bottom:10px"><button class="sqb" data-a="cMenu" ${canEdit()?'':'hidden'} aria-label="Gerenciar classificação" title="Gerenciar classificação">${I.plus}</button><h2 style="margin:0">Classificação — ${esc(ph.name)} <small class="muted" style="font-weight:400">(${TYPE[ph.type]})</small></h2></div>
+ ${ph.teamIds.length?standHTML(ph):`<div class="center"><span class="muted">Ainda não há duplas.</span><button class="pill dark big" data-a="cDuplas" ${canEdit()?'':'hidden'}>ADICIONAR DUPLAS</button></div>`}</section>${jogosHTML(c,ph,false)}</div>`}
 function pendings(c){const out=[];c.phases.forEach(ph=>ph.rounds.forEach(r=>r.matches.forEach(m=>m.pending&&out.push({ph,r,m}))));return out}
 function vConfig(c){const ph=getPhase(c);cur.ph=ph;const pd=pendings(c),ts=champTeams(c),np=new Set(ts.flatMap(id=>T(id)?.players||[])).size,sk=statusKey(c);
  const row=(i,l,a,b='Editar')=>`<li><span style="color:var(--g1);display:flex">${i}</span><span style="flex:1">${l}</span><button class="pill ghost sm" data-a="${a}">${b}</button></li>`;
@@ -552,7 +615,7 @@ function vConfig(c){const ph=getPhase(c);cur.ph=ph;const pd=pendings(c),ts=champ
  <label class="field"><span>Data de término</span><input class="inp" name="end" type="date" value="${esc(c.endDate||'')}"></label>
  <p class="note">Temporada do ranking: ${esc(c.season)} (segue o ano da data de início).</p><p class="err" role="alert"></p><div class="acts"><button class="pill">Salvar alterações</button></div></form></section>
  <section class="box"><h2>Campeonato</h2>${c.phases.length>1?`<label class="field"><span>Fase em edição</span><select data-c="selPhase" style="width:100%">${c.phases.map(p=>`<option value="${p.id}" ${p===ph?'selected':''}>${esc(p.name)} — ${TYPE[p.type]}</option>`).join('')}</select></label>`:''}
- <ul class="rows">${row(I.users,`Duplas <small class="muted">(${ts.length} no campeonato · ${ph.teamIds.length} nesta fase)</small>`,'cDuplas')}${row(I.user,`Jogadores <small class="muted">(${np})</small>`,'cfgPlayers','Consultar')}${row(I.layers,'Grupos','cGrupos')}${row(I.list,'Fases','cFases')}${row(I.flag,'Critério de classificação','cCrit')}${row(I.edit,'Editar inscrições','cDuplas')}${row(I.chart,'Ranking de jogadores','cfgRank','Consultar')}${row(I.trophy,'Resultado do campeonato','cfgResult')}</ul></section>
+ <ul class="rows">${row(I.users,`Duplas <small class="muted">(${ts.length} no campeonato · ${ph.teamIds.length} nesta fase)</small>`,'cDuplas')}${row(I.user,`Jogadores <small class="muted">(${np})</small>`,'cfgPlayers','Editar')}${row(I.layers,'Grupos','cGrupos')}${row(I.list,'Fases','cFases')}${row(I.flag,'Critério de classificação','cCrit')}${row(I.edit,'Editar inscrições','cDuplas')}${row(I.chart,'Ranking de jogadores','cfgRank','Consultar')}${row(I.trophy,'Resultado do campeonato','cfgResult')}</ul></section>
  <section class="box"><h2>Situação do campeonato</h2><select data-c="cStatus" style="width:100%" aria-label="Situação do campeonato">${Object.keys(STL).map(k=>`<option value="${k}" ${sk===k?'selected':''}>${STL[k]}</option>`).join('')}</select>
  <p class="note">Finalizado: quem acessa pelo link não lança mais placares; correções do organizador continuam possíveis e ficam no histórico.</p></section>
  <section class="box"><h2>Opções avançadas</h2>
@@ -580,11 +643,15 @@ A.nav=()=>document.body.classList.toggle('nav');
 A.retry=()=>render();
 A.sair=async()=>{if(!await confirmBox({title:'Sair',msg:CLOUD?'Deseja encerrar a sessão?':'Esta é a versão local, sem login. Voltar para a lista de campeonatos?',ok:'Sair'}))return;
  if(!CLOUD){location.hash='#/campeonatos';return}
- try{await http('/auth/v1/logout',{method:'POST',token:sess.access_token})}catch(e){}
+ try{if(isMember())await http('/rest/v1/rpc/gc_logout',{method:'POST',body:{p_session:sess.token}});else await http('/auth/v1/logout',{method:'POST',token:sess.access_token})}catch(e){}
  setSess(null);loaded=null;setDb({});render()};
-F.login=async f=>{const b=f.querySelector('.pill');if(b.disabled)return;b.disabled=true;setErr(f,'');
- try{keepSess(await http('/auth/v1/token?grant_type=password',{method:'POST',body:{email:clean(f.u.value),password:f.p.value}}));render()}
- catch(e){b.disabled=false;f.p.value='';setErr(f,e.status===429?'Muitas tentativas. Aguarde alguns minutos.':e.status?'E-mail ou senha incorretos.':'Sem conexão com o servidor.')}};
+F.login=async f=>{const b=f.querySelector('.pill');if(b.disabled)return;const u=clean(f.u.value),pw=f.p.value;if(!u||!pw)return setErr(f,'Informe usuário e senha.');b.disabled=true;setErr(f,'');
+ try{if(u.includes('@'))keepSess(await http('/auth/v1/token?grant_type=password',{method:'POST',body:{email:u,password:pw}}));
+  else{const r=await http('/rest/v1/rpc/gc_login',{method:'POST',body:{p_username:norm(u).replace(/\s+/g,''),p_password:pw}});
+   if(!r.ok){b.disabled=false;f.p.value='';return setErr(f,r.reason==='bloqueado'?`Muitas tentativas. Aguarde ${Math.max(1,Math.ceil(r.seconds/60))} minuto(s).`:'Usuário ou senha incorretos.')}
+   setSess({kind:'member',token:r.token,username:r.username})}
+  render()}
+ catch(e){b.disabled=false;f.p.value='';setErr(f,e.status===429?'Muitas tentativas. Aguarde alguns minutos.':e.status?'Usuário ou senha incorretos.':'Sem conexão com o servidor.')}};
 A.openC=d=>{location.hash='#/c/'+d.id+'/inicio'};
 
 /* ----- jogadores ----- */
@@ -597,7 +664,7 @@ A.pSel=(d,el)=>{el.checked?ui.selP.add(d.id):ui.selP.delete(d.id);el.closest('li
 A.pEdit=d=>{const p=P(d.id);modal(`<form data-f="pEditSave">${mHead('Editar jogador')}<input type="hidden" name="id" value="${p.id}"><label class="field"><span>Nome do jogador</span><input class="inp" name="n" value="${esc(p.name)}" maxlength="60" autofocus></label><p class="err" role="alert"></p><div class="acts"><button type="button" class="pill ghost" data-a="closeM">Cancelar</button><button class="pill">Salvar alterações</button></div></form>`)};
 F.pEditSave=f=>{const p=P(f.id.value),n=clean(f.n.value);if(!n)return setErr(f,'O nome não pode ficar vazio.');
  if(dupP(n,p.id))return setErr(f,'Este jogador já está cadastrado. Verifique a lista antes de realizar uma nova inclusão.');
- p.name=n;save();closeModal(true);render();toast('Nome do jogador atualizado com sucesso.')};
+ p.name=n;db.teams.forEach(t=>{if(t.auto&&t.players.includes(p.id))t.name=autoName(t,t.id)});save();closeModal(true);render();toast('Nome do jogador atualizado com sucesso.')};
 A.pDel=async()=>{const ids=[...ui.selP].filter(P);if(!ids.length)return toast('Selecione um jogador para excluir.','err');
  const linked=ids.filter(id=>db.teams.some(t=>t.players.includes(id)));
  if(linked.length)return alertBox('Não é possível excluir o jogador.',`${linked.length>1||ids.length>1?'<b>'+linked.map(id=>esc(P(id).name)).join(', ')+'</b>: ':''}O jogador está vinculado a uma equipe. Para excluí-lo, acesse Cadastro de equipes e remova o vínculo com a equipe. Após a desvinculação, retorne ao Cadastro de jogadores para realizar a exclusão.`);
@@ -606,13 +673,16 @@ A.pDel=async()=>{const ids=[...ui.selP].filter(P);if(!ids.length)return toast('S
 
 /* ----- equipes / duplas ----- */
 const dupT=(name,except)=>db.teams.some(t=>t.id!==except&&norm(t.name)===norm(name));
-F.tAdd=f=>{const n=clean(f.n.value);if(!n)return setErr(f,'Informe o nome da equipe.');
- if(dupT(n))return setErr(f,'Esta equipe já está cadastrada. Verifique a lista antes de realizar uma nova inclusão.');
- db.teams.push({id:uid(),name:n,players:[],active:true,createdAt:Date.now(),transfers:[]});save();render();document.getElementById('tName').focus()};
+const autoName=(t,ex)=>{const base=t.players.map(id=>P(id)?.name).join(' / ');let n=base,i=2;while(dupT(n,ex))n=base+' ('+(i++)+')';return n};
+A.tPick=d=>{const a=ui.pick=ui.pick||[],i=a.indexOf(d.id);if(i>=0)a.splice(i,1);else{if(a.length>=2)a.shift();a.push(d.id)}render()};
+A.tForm=()=>{const ids=(ui.pick||[]).filter(id=>P(id)&&!db.teams.some(t=>t.active&&t.players.includes(id)));if(ids.length!==2)return toast('Selecione 2 jogadores disponíveis.','err');
+ const t={id:uid(),name:'',auto:true,players:ids,active:true,createdAt:Date.now(),transfers:[]};t.name=autoName(t);
+ ids.forEach(id=>{const p=P(id);if(p.pending){t.transfers.push({playerId:id,...p.pending});p.pending=null}});
+ db.teams.push(t);ui.pick=[];save();render();toast(t.transfers.length?`Dupla formada com ${fmt(t.transfers.reduce((a,x)=>a+x.points,0))} pontos transferidos.`:'Dupla formada: '+t.name)};
 A.tSel=(d,el)=>{el.checked?ui.selT.add(d.id):ui.selT.delete(d.id);el.closest('li').classList.toggle('sel',el.checked)};
 A.tEdit=d=>{const t=T(d.id);modal(`<form data-f="tEditSave">${mHead('Editar equipe')}<input type="hidden" name="id" value="${t.id}"><label class="field"><span>Nome da equipe</span><input class="inp" name="n" value="${esc(t.name)}" maxlength="60" autofocus></label><p class="err" role="alert"></p><div class="acts"><button type="button" class="pill ghost" data-a="closeM">Cancelar</button><button class="pill">Salvar alterações</button></div></form>`)};
 F.tEditSave=f=>{const t=T(f.id.value),n=clean(f.n.value);if(!n)return setErr(f,'O nome não pode ficar vazio.');
- if(dupT(n,t.id))return setErr(f,'Já existe uma equipe com este nome.');t.name=n;save();closeModal(true);render();toast('Nome da equipe atualizado com sucesso.')};
+ if(dupT(n,t.id))return setErr(f,'Já existe uma equipe com este nome.');if(n!==t.name)t.auto=false;t.name=n;save();closeModal(true);render();toast('Nome da equipe atualizado com sucesso.')};
 A.tLink=(d,el)=>{const t=T(d.id),pid=el.value;if(!pid)return;
  if(t.players.includes(pid))return toast('Este jogador já está vinculado a esta equipe.','err');
  if(t.players.length>=2)return toast('A dupla já possui dois jogadores.','err');
@@ -690,16 +760,72 @@ F.cNew=f=>{const n=clean(f.n.value),season=String(new Date().getFullYear());if(!
 A.dupC=d=>{const c=C(d.id);let n=c.name+' (cópia)',i=2;while(dupC(n,c.season))n=c.name+' (cópia '+(i++)+')';
  const k=JSON.parse(JSON.stringify(c));Object.assign(k,{id:uid(),name:n,createdAt:Date.now(),result:null,shareToken:mkToken(),messages:[]});delete k.status;
  k.phases.forEach(ph=>{ph.id=uid();ph.rounds=[];ph.groups.forEach(g=>g.id=uid())});db.champs.push(k);save();render();toast('Campeonato duplicado (sem partidas).')};
-F.msg=f=>{const t=clean(f.t.value);if(!t)return;cur.c.messages.push({id:uid(),author:db.user.name,text:t,at:Date.now()});save();render()};
+F.msg=f=>{const t=clean(f.t.value);if(!t)return;cur.c.messages.push({id:uid(),author:userName(),text:t,at:Date.now()});save();render()};
 F.cSave=f=>{const c=cur.c,n=clean(f.name.value),st=f.start.value,en=f.end.value,s=st?st.slice(0,4):String(c.season);if(!n)return setErr(f,'Informe o título do campeonato.');
  if(st&&en&&en<st)return setErr(f,'A data de término não pode ser anterior à data de início.');
  if(dupC(n,s,c.id))return setErr(f,'Já existe um campeonato com este nome nesta temporada.');
  Object.assign(c,{name:n,startDate:st,endDate:en,season:s});save();render();toast('Alterações salvas.')};
 A.cOpt=(d,el)=>{cur.c[d.k]=el.checked;save();render();toast('Opção salva.')};
 A.cStatus=(d,el)=>{cur.c.status=el.value;save();render();toast('Situação atualizada: '+STL[el.value]+'.')};
-A.cfgPlayers=()=>{const c=cur.c,l=champTeams(c).map(T).filter(Boolean).flatMap(t=>t.players.map(id=>({n:P(id)?.name||'?',t:dl(t)}))).sort((a,b)=>a.n.localeCompare(b.n));
- modal(`${mHead('Jogadores',l.length+' jogador(es) no campeonato')}${l.length?`<ul class="rows" style="max-height:50vh;overflow:auto">${l.map(x=>`<li><b style="flex:1">${esc(x.n)}</b><small class="muted">${esc(x.t)}</small></li>`).join('')}</ul>`:'<p class="muted">Nenhum jogador. Adicione duplas ao campeonato.</p>'}
- <p class="note">Os nomes vêm do Cadastro de jogadores e são atualizados automaticamente.</p><div class="acts"><button class="pill" data-a="closeM">Fechar</button></div>`)};
+A.cfgPlayers=()=>{const c=cur.c,inC=new Set(champTeams(c).flatMap(id=>T(id)?.players||[])),l=[...db.players].sort((a,b)=>cmpN(a.name,b.name));
+ modal(`${mHead('Jogadores',`${inC.size} no campeonato · ${l.length} cadastrados`)}<form data-f="cfgPAdd"><div class="addrow"><input name="n" placeholder="Nome do jogador" maxlength="60" autocomplete="off" aria-label="Nome do jogador" autofocus><button class="pill">Adicionar</button></div><p class="err" role="alert"></p></form>
+ <ul class="rows" style="max-height:44vh;overflow:auto;margin-top:8px">${l.map(p=>`<li><span style="flex:1">${esc(p.name)}</span>${inC.has(p.id)?'<span class="tag ok">No campeonato</span>':''}</li>`).join('')||'<li class="muted">Nenhum jogador cadastrado.</li>'}</ul>
+ <p class="note">O jogador entra no cadastro geral. Para colocá-lo no campeonato, forme a dupla em Cadastro de equipes e adicione-a em Duplas.</p><div class="acts"><button class="pill" data-a="closeM">Fechar</button></div>`,{cls:'wide'})};
+F.cfgPAdd=f=>{const n=clean(f.n.value);if(!n)return setErr(f,'Informe o nome do jogador.');
+ if(dupP(n))return setErr(f,'Este jogador já está cadastrado. Verifique a lista antes de realizar uma nova inclusão.');
+ db.players.push({id:uid(),name:n,pending:null});save();closeModal(true);render();A.cfgPlayers();toast('Jogador cadastrado.')};
+A.sair2=()=>{setSess(null);loaded=null;setDb({});render()};
+const mbReload=async()=>{members=((await rpc('gc_load',{}))||{}).accounts||[]};
+A.mbEdit=d=>{const m=members.find(x=>x.username===d.e)||{username:'',name:'',role:'organizador',caixa:false};
+ modal(`<form data-f="mbSave" autocomplete="off">${mHead(d.e?'Editar usuário':'Adicionar usuário')}<input type="hidden" name="old" value="${esc(m.username)}">
+ <label class="field"><span>Nome</span><input class="inp" name="name" value="${esc(m.name)}" maxlength="60" autofocus></label>
+ <label class="field"><span>Nome de usuário (para entrar)</span><input class="inp" name="user" value="${esc(m.username)}" maxlength="30" autocapitalize="none" autocomplete="off" placeholder="ex.: joao.silva"></label>
+ <label class="field"><span>${d.e?'Nova senha (deixe em branco para manter a atual)':'Senha (mínimo 6 caracteres)'}</span><input class="inp" name="pw" type="text" autocomplete="off" maxlength="72"></label>
+ <label class="field"><span>Perfil</span><select name="role" style="width:100%">${['organizador','placar','leitura'].map(r=>`<option value="${r}" ${m.role===r?'selected':''}>${ROLE[r]}</option>`).join('')}</select></label>
+ <label class="chk"><input type="checkbox" name="caixa" ${m.caixa?'checked':''}><span>Pode acessar o Caixa</span></label>
+ <p class="note">Usuário: de 3 a 30 caracteres, só letras sem acento, números, ponto, hífen e sublinhado. Anote a senha: ela não pode ser consultada depois, só trocada.</p>
+ <p class="err" role="alert"></p><div class="acts"><button type="button" class="pill ghost" data-a="closeM">Cancelar</button><button class="pill">Salvar</button></div></form>`,{guard:true})};
+F.mbSave=async f=>{const name=clean(f.name.value),user=norm(f.user.value).replace(/\s+/g,''),pw=f.pw.value,old=f.old.value,b=f.querySelector('.acts .pill:not(.ghost)');if(b.disabled)return;
+ if(!name)return setErr(f,'Informe o nome.');if(!/^[a-z0-9._-]{3,30}$/.test(user))return setErr(f,'Nome de usuário inválido: use de 3 a 30 letras sem acento, números, ponto, hífen ou sublinhado.');
+ if(!old&&pw.length<6||pw&&pw.length<6)return setErr(f,'A senha precisa ter pelo menos 6 caracteres.');
+ b.disabled=true;
+ try{if(ws.empty){while(ws.busy)await new Promise(r=>setTimeout(r,100));await pushWs()}
+  const r=await rpc('gc_account_save',{p_username:user,p_name:name,p_role:f.role.value,p_caixa:f.caixa.checked,p_password:pw||null,p_old_username:old||null});
+  if(!r.ok){b.disabled=false;return setErr(f,r.reason==='existe'?'Já existe um usuário com este nome de usuário.':'Não foi possível salvar o usuário.')}
+  await mbReload()}
+ catch(e){b.disabled=false;return setErr(f,errTxt(e))}
+ closeModal(true);render();toast(old?'Usuário atualizado.':`Usuário criado. Ele entra com "${user}" e a senha definida.`)};
+A.mbDel=async d=>{const m=members.find(x=>x.username===d.e);if(!m||!await confirmBox({title:'Remover usuário',msg:`<b>${esc(m.name)}</b> (${esc(m.username)}) deixará de ter acesso ao sistema imediatamente.`,ok:'Remover',danger:true}))return;
+ try{await rpc('gc_account_delete',{p_username:m.username});await mbReload()}catch(e){return toast(errTxt(e),'err')}render();toast('Usuário removido.')};
+F.pwSave=async f=>{const b=f.querySelector('.pill');if(b.disabled)return;if(f.n.value.length<6)return setErr(f,'A nova senha precisa ter pelo menos 6 caracteres.');b.disabled=true;
+ try{const r=await rpc('gc_change_password',{p_old:f.o.value,p_new:f.n.value});b.disabled=false;if(!r.ok)return setErr(f,'Senha atual incorreta.');f.reset();setErr(f,'');toast('Senha trocada.')}
+ catch(e){b.disabled=false;setErr(f,errTxt(e))}};
+A.cxScope=(d,el)=>{ui.cxScope=el.value;render()};
+F.cxCota=f=>{const raw=f.v.value.trim(),v=raw===''?0:parseMoney(raw);if(!(v>=0))return toast('Valor da cota inválido.','err');
+ db.caixa.cota[ui.cxScope==='all'?'geral':ui.cxScope]=v;saveCash();render();toast('Cota salva.')};
+A.cxAdd=d=>{const key=ui.cxScope&&ui.cxScope!=='all'?ui.cxScope:'geral',cota=+db.caixa.cota[key]||0;
+ const it=d.id?db.caixa.items.find(i=>i.id===d.id):{type:d.t||'pag',playerId:d.p||'',desc:'',value:(d.t||'pag')==='pag'?cota:'',date:new Date().toISOString().slice(0,10),champId:key==='geral'?'':key};if(!it)return;
+ const pls=[...db.players].sort((a,b)=>cmpN(a.name,b.name));
+ modal(`<form data-f="cxSave">${mHead(d.id?'Editar lançamento nº '+(it.n||''):'Novo lançamento')}<input type="hidden" name="id" value="${d.id||''}">
+ <label class="field"><span>Tipo</span><select name="type" style="width:100%">${Object.keys(CXT).map(t=>`<option value="${t}" ${it.type===t?'selected':''}>${CXT[t]}</option>`).join('')}</select></label>
+ ${d.id?`<label class="field"><span>Jogador (para pagamento de cota)</span><select name="p" style="width:100%"><option value="">—</option>${pls.map(p=>`<option value="${p.id}" ${it.playerId===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}</select></label>`
+  :`<div class="field"><span>Jogadores (para pagamento de cota) — marque um ou mais</span><ul class="rows" id="cxPl" style="max-height:170px;overflow:auto;border:1px solid var(--line);border-radius:10px">${pls.map(p=>`<li style="padding:6px 10px"><label style="display:flex;gap:10px;align-items:center;flex:1;cursor:pointer"><input type="checkbox" name="ps" value="${p.id}" ${it.playerId===p.id?'checked':''}>${esc(p.name)}</label></li>`).join('')||'<li class="muted">Nenhum jogador cadastrado.</li>'}</ul></div>`}
+ <label class="field"><span>Descrição (patrocinador, motivo do gasto, observação)</span><input class="inp" name="desc" value="${esc(it.desc)}" maxlength="120"></label>
+ <label class="field"><span>Valor (R$)${d.id?'':' — com vários jogadores marcados, é o valor de cada um'}</span><input class="inp" name="v" inputmode="decimal" placeholder="0,00" value="${it.value?String((+it.value).toFixed(2)).replace('.',','):''}"></label>
+ <label class="field"><span>Data</span><input class="inp" name="date" type="date" value="${esc(it.date||'')}"></label>
+ <label class="field"><span>Campeonato</span><select name="c" style="width:100%"><option value="">Nenhum (geral)</option>${db.champs.map(c=>`<option value="${c.id}" ${it.champId===c.id?'selected':''}>${esc(c.name)}</option>`).join('')}</select></label>
+ <p class="err" role="alert"></p><div class="acts"><button type="button" class="pill ghost" data-a="closeM">Cancelar</button><button class="pill">Salvar</button></div></form>`,{guard:true})};
+A.cxEdit=d=>A.cxAdd(d);
+F.cxSave=f=>{const k=db.caixa,type=f.type.value,desc=clean(f.desc.value),v=parseMoney(f.v.value),id=f.id.value;
+ const pids=type!=='pag'?[null]:id?[f.p.value].filter(Boolean):[...f.querySelectorAll('input[name=ps]:checked')].map(x=>x.value);
+ if(type==='pag'&&!pids.length)return setErr(f,id?'Selecione o jogador que pagou.':'Marque pelo menos um jogador que pagou.');if(type!=='pag'&&!desc)return setErr(f,'Informe a descrição.');
+ if(!(v>0))return setErr(f,'Informe um valor maior que zero.');if(!f.date.value)return setErr(f,'Informe a data.');
+ const mk=pid=>({type,playerId:pid,who:pid?P(pid).name:'',desc,value:v,date:f.date.value,champId:f.c.value||null,at:Date.now(),by:userName()});
+ if(id){const i=k.items.findIndex(x=>x.id===id);if(i<0)return setErr(f,'Este lançamento foi excluído.');k.items[i]={...mk(pids[0]),id,n:k.items[i].n}}
+ else pids.forEach((pid,j)=>k.items.push({...mk(pid),id:uid(),n:++k.seq,at:Date.now()+j}));
+ saveCash();closeModal(true);render();toast(pids.length>1?pids.length+' lançamentos salvos.':'Lançamento salvo.')};
+A.cxDel=async d=>{const it=db.caixa.items.find(i=>i.id===d.id);if(!it||!await confirmBox({title:'Excluir lançamento',msg:`Lançamento nº ${it.n||''}: ${CXT[it.type]} de <b>${money(it.value)}</b>. O número não é reaproveitado. Esta ação não poderá ser desfeita.`,ok:'Excluir',danger:true}))return;
+ db.caixa.items=db.caixa.items.filter(i=>i!==it);saveCash();render()};
 A.cfgRank=()=>{const c=cur.c;Object.assign(ui.rk,{season:String(c.season),champ:c.isFinal?'all':c.id,mode:'i',q:''});location.hash='#/ranking'};
 A.cfgResult=()=>{const c=cur.c,last=c.phases[c.phases.length-1];let sug=[];
  if(last.type==='elim'){const r=last.rounds[last.rounds.length-1];if(r&&r.matches.length===1&&mStatus(r.matches[0])==='done'){const m=r.matches[0],w=winner(m);sug=[w,w===m.a?m.b:m.a]}}
@@ -730,54 +856,70 @@ A.vTab=d=>{ui.v.tab=d.v;render()};A.vMode=d=>{ui.v.mode=d.v;render()};
 const menu=items=>modal(items.map(([a,l,i])=>`<button data-a="${a}" data-close="1">${i}${l}</button>`).join(''),{cls:'menu'});
 A.cMenu=()=>menu([['cDuplas','Duplas',I.users],['cGrupos','Grupos',I.layers],['cFases','Fases',I.list],['cExp','Exportar',I.down],['cTabela','Tabela',I.table],['cCrit','Critério de classificação',I.flag],['cReord','Reordenar',I.order]]);
 let dw;
-A.cDuplas=()=>{const ph=cur.ph,c=cur.c,idx=c.phases.indexOf(ph);dw={sel:new Set(ph.teamIds),q:''};
- const el=modal(`${mHead('Duplas','Selecione as duplas participantes de '+esc(ph.name)+'.')}<input class="inp" type="search" placeholder="Pesquisar pelo nome dos integrantes" data-i="dQ" data-nodirty aria-label="Pesquisar duplas">
+A.cDuplas=()=>{const ph=cur.ph,c=cur.c,idx=c.phases.indexOf(ph);dw={sel:new Set(ph.teamIds),q:'',grp:{},origin:{...(ph.origin||{})}};ph.groups.forEach(g=>g.teamIds.forEach(id=>dw.grp[id]=g.id));
+ const el=modal(`${mHead('Duplas','Selecione as duplas participantes de '+esc(ph.name)+'.'+(ph.groups.length?' O grupo de cada dupla aparece ao lado e pode ser alterado.':''))}<input class="inp" type="search" placeholder="Pesquisar pelo nome dos integrantes" data-i="dQ" data-nodirty aria-label="Pesquisar duplas">
  ${idx>0?`<div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap"><button class="pill ghost sm" data-a="dImport">Importar classificados da fase anterior</button><label class="note">por grupo: <input id="dN" type="number" min="1" max="64" value="2" style="width:60px;height:32px;border:1px solid #C9D3CD;border-radius:8px;text-align:center"></label></div>`:''}
  <ul class="rows" id="dList" style="margin-top:10px;max-height:44vh;overflow:auto"></ul><p class="err" role="alert"></p>
  <div class="acts"><button class="pill ghost" data-a="closeM">Cancelar</button><button class="pill" data-a="dSave">Salvar</button></div>`,{cls:'wide',guard:true});dDraw(el)};
 function dDraw(){const ph=cur.ph,q=norm(dw.q),l=db.teams.filter(t=>t.players.length===2&&(t.active||ph.teamIds.includes(t.id))).filter(t=>!q||norm(dl(t)+' '+t.name).includes(q)).sort((a,b)=>cmpN(dl(a),dl(b)));
- document.getElementById('dList').innerHTML=l.length?l.map(t=>`<li><label style="display:flex;gap:10px;align-items:center;flex:1;cursor:pointer"><input type="checkbox" data-a="dTog" data-id="${t.id}" ${dw.sel.has(t.id)?'checked':''}><span><b>${esc(dl(t))}</b> <small class="muted">${esc(t.name)}</small></span></label>${ph.teamIds.includes(t.id)?'<span class="tag ok">Na fase</span>':''}</li>`).join('')
-  :'<li class="muted">Nenhuma dupla disponível. Cadastre equipes com dois jogadores em Cadastro de equipes.</li>'}
-A.dQ=(d,el)=>{dw.q=el.value;dDraw()};A.dTog=(d,el)=>{el.checked?dw.sel.add(d.id):dw.sel.delete(d.id)};
+ const box=document.getElementById('dList'),st=box.scrollTop;
+ box.innerHTML=l.length?l.map(t=>`<li><label style="display:flex;gap:10px;align-items:center;flex:1;cursor:pointer"><input type="checkbox" data-a="dTog" data-id="${t.id}" ${dw.sel.has(t.id)?'checked':''}><span><b>${esc(dl(t))}</b>${t.auto?'':` <small class="muted">${esc(t.name)}</small>`}</span></label>${ph.groups.length&&dw.sel.has(t.id)?`<select class="sm" data-c="dGrp" data-id="${t.id}" aria-label="Grupo de ${esc(dl(t))}"><option value="">Sem grupo</option>${ph.groups.map(g=>`<option value="${g.id}" ${dw.grp[t.id]===g.id?'selected':''}>${esc(g.name)}</option>`).join('')}</select>`:''}${ph.teamIds.includes(t.id)?'<span class="tag ok">Na fase</span>':''}</li>`).join('')
+  :'<li class="muted">Nenhuma dupla disponível. Forme as duplas em Cadastro de equipes.</li>';box.scrollTop=st}
+A.dQ=(d,el)=>{dw.q=el.value;dDraw()};A.dTog=(d,el)=>{el.checked?dw.sel.add(d.id):dw.sel.delete(d.id);if(cur.ph.groups.length)dDraw()};
+A.dGrp=(d,el)=>{if(el.value)dw.grp[d.id]=el.value;else delete dw.grp[d.id]};
 A.dImport=()=>{const c=cur.c,prev=c.phases[c.phases.indexOf(cur.ph)-1],n=Math.max(1,+document.getElementById('dN').value||1);
  let ids;if(prev.type==='elim'){const last=prev.rounds[prev.rounds.length-1];ids=last?last.matches.map(winner).filter(Boolean):[]}
- else ids=standData(prev).flatMap(s=>s.rows.slice(0,n).map(r=>r.id));
+ else{ids=[];standData(prev).forEach((sec,gi)=>sec.rows.slice(0,n).forEach((r,pi)=>{ids.push(r.id);dw.origin[r.id]={g:gi,pos:pi+1}}))}
  if(!ids.length)return toast('A fase anterior ainda não possui classificados.','err');ids.forEach(id=>dw.sel.add(id));stack[stack.length-1].dirty=true;dDraw();toast(ids.length+' dupla(s) selecionada(s).')};
 A.dSave=()=>{const ph=cur.ph,el=stack[stack.length-1].ov,ids=[...dw.sel].filter(T),seen={};
  for(const id of ids)for(const p of T(id).players){if(seen[p])return setErr(el,`${P(p).name} está em duas duplas selecionadas (${dl(T(seen[p]))} e ${dl(T(id))}). Um jogador só pode participar de uma dupla por fase.`);seen[p]=id}
  const removed=ph.teamIds.filter(id=>!dw.sel.has(id)),blocked=removed.filter(id=>phMatches(ph).some(m=>m.a===id||m.b===id));
  if(blocked.length)return setErr(el,`Não é possível remover ${blocked.map(id=>dl(T(id))).join('; ')}: há partidas vinculadas nesta fase. Exclua as partidas antes.`);
- ph.teamIds=[...ph.teamIds.filter(id=>dw.sel.has(id)),...ids.filter(id=>!ph.teamIds.includes(id))];
- ph.groups.forEach(g=>g.teamIds=g.teamIds.filter(id=>ph.teamIds.includes(id)));save();closeModal(true);render()};
+ const fin=[...ph.teamIds.filter(id=>dw.sel.has(id)),...ids.filter(id=>!ph.teamIds.includes(id))],sig=gs=>JSON.stringify(gs.map(g=>[...g].sort()));
+ const before=ph.groups.map(g=>g.teamIds.filter(id=>fin.includes(id))),after=ph.groups.map(g=>fin.filter(id=>dw.grp[id]===g.id));
+ if(phMatches(ph).length&&sig(before)!==sig(after))return setErr(el,'Esta fase já possui partidas. Exclua as partidas antes de mudar o grupo de uma dupla.');
+ ph.origin={};fin.forEach(id=>{if(dw.origin[id])ph.origin[id]=dw.origin[id]});
+ ph.teamIds=fin;ph.groups.forEach((g,i)=>g.teamIds=after[i]);ph.seeds=(ph.seeds||[]).filter(id=>fin.includes(id));save();closeModal(true);render()};
 
 let gw;
-A.cGrupos=()=>{const ph=cur.ph;gw={n:Math.max(1,ph.groups.length),names:ph.groups.map(g=>g.name),asg:{},open:null};
- ph.groups.forEach((g,i)=>g.teamIds.forEach(id=>gw.asg[id]=i));const max=Math.max(1,Math.min(8,ph.teamIds.length));if(gw.n>max)gw.n=max;gFix();
- modal(`${mHead('Grupos',esc(ph.name))}<label class="field"><span>Quantidade de grupos: <b id="gNum">${gw.n}</b></span><input type="range" min="1" max="${max}" value="${gw.n}" data-i="gN" style="width:100%;accent-color:var(--g1)" aria-label="Quantidade de grupos"></label>
+A.cGrupos=()=>{const ph=cur.ph;gw={n:Math.max(1,ph.groups.length),names:ph.groups.map(g=>g.name),asg:{},open:null,seeds:new Set((ph.seeds||[]).filter(id=>ph.teamIds.includes(id))),sorted:false,redo:false};
+ ph.groups.forEach((g,i)=>g.teamIds.forEach(id=>gw.asg[id]=i));const max=8;if(gw.n>max)gw.n=max;gFix();
+ modal(`${mHead('Grupos',esc(ph.name))}<label class="field"><span>Quantidade de grupos: <b id="gNum">${gw.n}</b></span><span style="display:flex;gap:10px;align-items:center"><button type="button" class="sqb" data-a="gStep" data-v="-1" aria-label="Menos um grupo">−</button><input type="range" id="gRange" min="1" max="${max}" value="${gw.n}" data-i="gN" style="flex:1;accent-color:var(--g1)" aria-label="Quantidade de grupos"><button type="button" class="sqb" data-a="gStep" data-v="1" aria-label="Mais um grupo">+</button></span></label>
  <div id="gOpts"></div><p class="err" role="alert"></p><div class="acts"><button class="pill ghost" data-a="closeM">Cancelar</button><button class="pill" data-a="gSave">Salvar</button></div>`,{cls:'wide',guard:true});gDraw()};
-function gFix(){for(let i=0;i<gw.n;i++)if(!gw.names[i])gw.names[i]='Grupo '+String.fromCharCode(65+i);gw.names.length=gw.n;for(const k in gw.asg)if(gw.asg[k]>=gw.n)delete gw.asg[k]}
+function gFix(){for(let i=0;i<gw.n;i++)if(!gw.names[i])gw.names[i]='Grupo '+String.fromCharCode(65+i);gw.names.length=gw.n;for(const k in gw.asg)if(gw.asg[k]>=gw.n)delete gw.asg[k];while(gw.seeds.size>gw.n)gw.seeds.delete([...gw.seeds].pop())}
 function gDraw(){const ph=cur.ph,dis=gw.n<2?'disabled':'',o=gw.n<2?null:gw.open;
  const sel=id=>`<select class="sm" data-c="gSet" data-id="${id}" aria-label="Grupo de ${esc(dl(T(id)))}"><option value="">Sem grupo</option>${gw.names.map((n,i)=>`<option value="${i}" ${gw.asg[id]===i?'selected':''}>${esc(n)}</option>`).join('')}</select>`;
- document.getElementById('gOpts').innerHTML=`<button class="opt" data-a="gSort" ${dis}>${I.shuffle}Sortear duplas nos grupos</button>
- ${o==='sort'?`<div style="padding:4px 0 10px">${gw.names.map((n,i)=>`<p style="margin:6px 0"><b>${esc(n)}:</b> ${ph.teamIds.filter(id=>gw.asg[id]===i).map(id=>esc(dl(T(id)))).join('; ')||'—'}</p>`).join('')}<p class="note">Clique novamente para sortear outra vez. Use Salvar para confirmar ou Cancelar para descartar.</p></div>`:''}
+ const star=id=>gw.seeds.has(id)?'★ ':'';
+ document.getElementById('gOpts').innerHTML=`${ph.drawn?'<p class="note" style="margin:0 0 8px"><b>Os grupos desta fase já foram sorteados.</b></p>':''}<button class="opt" data-a="gOpen" data-v="seeds" ${dis}>${I.flag}<span style="flex:1">Cabeças de chave</span><small class="muted">${gw.n<2?'':gw.seeds.size+' de até '+gw.n}</small></button>
+ ${o==='seeds'?`<ul class="rows" style="max-height:220px;overflow:auto">${ph.teamIds.map(id=>`<li style="padding:6px 8px"><label style="display:flex;gap:10px;align-items:center;flex:1;cursor:pointer"><input type="checkbox" data-a="gSeed" data-id="${id}" ${gw.seeds.has(id)?'checked':''}>${esc(dl(T(id)))}</label></li>`).join('')||'<li class="muted">Adicione as duplas à fase para escolher os cabeças de chave.</li>'}</ul><p class="note">Cada cabeça de chave vai para um grupo diferente no sorteio. Marque no máximo ${gw.n} (um por grupo) antes de sortear.</p>`:''}
+ <button class="opt" data-a="gSort" ${dis}>${I.shuffle}Sortear duplas nos grupos</button>
+ ${o==='sort'?`<div style="padding:4px 0 10px">${gw.names.map((n,i)=>`<p style="margin:6px 0"><b>${esc(n)}:</b> ${ph.teamIds.filter(id=>gw.asg[id]===i).map(id=>star(id)+esc(dl(T(id)))).join('; ')||'—'}</p>`).join('')}<p class="note">★ = cabeça de chave. Clique novamente para sortear outra vez. Use Salvar para confirmar ou Cancelar para descartar.</p></div>`:''}
  <button class="opt" data-a="gOpen" data-v="def" ${dis}>${I.users}Definir grupo das duplas</button>
- ${o==='def'?`<ul class="rows">${ph.teamIds.map(id=>`<li><span style="flex:1">${esc(dl(T(id)))}</span>${sel(id)}</li>`).join('')||'<li class="muted">Adicione duplas à fase primeiro.</li>'}</ul>`:''}
+ ${o==='def'?`<ul class="rows">${ph.teamIds.map(id=>`<li><span style="flex:1">${star(id)}${esc(dl(T(id)))}</span>${sel(id)}</li>`).join('')||'<li class="muted">Ainda não há duplas nesta fase. Salve os grupos, adicione as duplas e volte aqui para distribuí-las.</li>'}</ul>`:''}
  <button class="opt" data-a="gOpen" data-v="names" ${dis}>${I.edit}Nome dos grupos</button>
  ${o==='names'?gw.names.map((n,i)=>`<input class="inp" style="margin:4px 0;height:40px" data-i="gName" data-k="${i}" value="${esc(n)}" maxlength="30" aria-label="Nome do grupo ${i+1}">`).join(''):''}`}
 A.gN=(d,el)=>{gw.n=+el.value;gFix();document.getElementById('gNum').textContent=gw.n;gDraw()};
+A.gStep=d=>{const r=document.getElementById('gRange'),v=Math.min(8,Math.max(1,gw.n+ +d.v));r.value=v;stack[stack.length-1].dirty=true;A.gN({},r)};
 A.gOpen=d=>{gw.open=gw.open===d.v?null:d.v;gDraw()};
-A.gSort=()=>{shuffle(cur.ph.teamIds).forEach((id,i)=>gw.asg[id]=i%gw.n);gw.open='sort';stack[stack.length-1].dirty=true;gDraw()};
+A.gSeed=(d,el)=>{if(el.checked){if(gw.seeds.size>=gw.n){el.checked=false;return toast(`No máximo ${gw.n} cabeças de chave (um por grupo).`,'err')}gw.seeds.add(d.id)}else gw.seeds.delete(d.id);stack[stack.length-1].dirty=true;gDraw()};
+A.gSort=async()=>{const ph=cur.ph,n=gw.n;if(!ph.teamIds.length)return toast('Adicione as duplas à fase antes de sortear.','err');
+ if(ph.drawn&&!gw.redo){if(!await confirmBox({title:'Grupos já sorteados',msg:'Os grupos desta fase já foram sorteados. Um novo sorteio substitui a distribuição atual das duplas.',ok:'Sortear novamente',danger:true}))return;gw.redo=true}
+ const cnt=Array(n).fill(0);gw.asg={};
+ shuffle([...gw.seeds]).forEach((id,i)=>{gw.asg[id]=i%n;cnt[i%n]++});
+ shuffle(ph.teamIds.filter(id=>!gw.seeds.has(id))).forEach(id=>{const mn=Math.min(...cnt),op=cnt.map((c,i)=>c===mn?i:-1).filter(i=>i>=0),g=op[Math.floor(Math.random()*op.length)];gw.asg[id]=g;cnt[g]++});
+ gw.sorted=true;gw.open='sort';stack[stack.length-1].dirty=true;gDraw()};
 A.gSet=(d,el)=>{if(el.value==='')delete gw.asg[d.id];else gw.asg[d.id]=+el.value};
 A.gName=(d,el)=>{gw.names[+d.k]=el.value};
 A.gSave=()=>{const ph=cur.ph,el=stack[stack.length-1].ov;let groups=[];
  if(gw.n>=2){const names=gw.names.map(clean);if(names.some(n=>!n))return setErr(el,'Todos os grupos precisam de um nome.');
   if(new Set(names.map(norm)).size!==names.length)return setErr(el,'Não é permitido repetir nomes de grupos na mesma fase.');
   groups=names.map((name,i)=>({id:ph.groups[i]?.id||uid(),name,teamIds:ph.teamIds.filter(id=>gw.asg[id]===i)}));
-  if(ph.teamIds.some(id=>gw.asg[id]==null))return setErr(el,'Há duplas ainda não distribuídas. Use “Sortear” ou “Definir grupo das duplas”.');
-  if(groups.some(g=>!g.teamIds.length))return setErr(el,'Há grupos vazios. Reduza a quantidade ou redistribua as duplas.')}
+  if(ph.teamIds.length&&ph.teamIds.length<gw.n)return setErr(el,`Há ${ph.teamIds.length} dupla(s) na fase e ${gw.n} grupos. Reduza a quantidade de grupos ou adicione mais duplas.`);
+  if(ph.teamIds.length&&ph.teamIds.some(id=>gw.asg[id]==null))return setErr(el,'Há duplas ainda não distribuídas. Use “Sortear” ou “Definir grupo das duplas”.');
+  if(ph.teamIds.length&&groups.some(g=>!g.teamIds.length))return setErr(el,'Há grupos vazios. Reduza a quantidade ou redistribua as duplas.')}
  const sig=g=>JSON.stringify(g.map(x=>[...x.teamIds].sort()));
  if(phMatches(ph).length&&sig(groups)!==sig(ph.groups))return setErr(el,'Esta fase já possui partidas. Exclua as partidas antes de alterar a distribuição dos grupos (os nomes podem ser alterados).');
- ph.groups=groups;save();closeModal(true);render();toast('Grupos salvos.')};
+ ph.groups=groups;ph.seeds=groups.length?[...gw.seeds].filter(id=>ph.teamIds.includes(id)):[];ph.drawn=groups.length>0&&ph.teamIds.length>0&&(gw.sorted||!!ph.drawn);save();closeModal(true);render();toast(groups.length&&!ph.teamIds.length?'Grupos salvos. Adicione as duplas e depois distribua-as nos grupos.':'Grupos salvos.')};
 
 function fasesModal(){const c=cur.c;modal(`${mHead('Fases')}<ul class="slist">${c.phases.map((p,i)=>`<li><span><b>${i+1}ª Fase${p.name!==(i+1)+'ª Fase'?' — '+esc(p.name):''}</b><br><small class="muted">${TYPE[p.type]}</small></span><button class="ibtn" data-a="fEdit" data-id="${p.id}" aria-label="Editar fase">${I.edit}</button></li>`).join('')}</ul>
  <div class="acts"><button class="pill" data-a="fEdit" data-id="">Nova fase</button></div>`,{cls:'gray'})}
@@ -822,23 +964,65 @@ A.jMenu=()=>menu([['addRound','Adicionar Rodada',I.plus],['addMatch','Adicionar 
 function roundTitle(ph){let n=ph.rounds.length+1;while(ph.rounds.some(r=>norm(r.title)===norm(n+'ª Rodada')))n++;return n+'ª Rodada'}
 A.addRound=()=>{const ph=cur.ph,r=newRound(roundTitle(ph));ph.rounds.push(r);ui.round[ph.id]=r.id;save();render();toast('Uma nova rodada foi adicionada.')};
 A.addMatch=()=>{const r=cur.r;if(!r)return toast('Adicione uma rodada antes de criar partidas.','err');const m=newMatch();r.matches.push(m);save();render();A.mOpen({id:m.id})};
+/* ----- geração dos confrontos -----
+   Pontos corridos: dentro da chave, contra outra chave, os dois, ou todos contra todos; com opção de ida e volta.
+   Eliminatórias: chave em formato de torneio; quando as duplas vêm de grupos, cruza 1º de um grupo com 2º de outro. */
+function genPlan(ph,mode,dbl){const G=ph.groups.map(g=>({name:g.name,ids:g.teamIds.filter(id=>ph.teamIds.includes(id))})),errs=[];
+ const un=ph.groups.length?ph.teamIds.filter(id=>!G.some(g=>g.ids.includes(id))):[];let rounds=[],rest=[];
+ const rr=ids=>{const L=shuffle(ids),out=[],rs=[];if(L.length%2)L.push(null);const n=L.length;
+  for(let r=0;r<n-1;r++){const ms=[];for(let i=0;i<n/2;i++){const a=L[i],b=L[n-1-i];if(a&&b)ms.push([a,b]);else if(a||b)rs[r]=(rs[r]||[]).concat(a||b)}out.push(ms);L.splice(1,0,L.pop())}return{out,rs}};
+ const merge=(x,off)=>{x.out.forEach((ms,i)=>rounds[off+i]=(rounds[off+i]||[]).concat(ms));(x.rs||[]).forEach((v,i)=>{if(v)rest[off+i]=(rest[off+i]||[]).concat(v)})};
+ if(mode==='all'){if(ph.teamIds.length<2)errs.push('A fase tem menos de 2 duplas. Adicione duplas em + → Duplas.');else merge(rr(ph.teamIds),0)}
+ else{if(G.length<2)errs.push('Esta fase não tem grupos. Crie pelo menos 2 grupos em + → Grupos.');
+  if(un.length)errs.push(`${un.length} dupla(s) ainda sem grupo (${un.map(id=>dl(T(id))).join('; ')}). Distribua em + → Grupos ou em + → Duplas.`);
+  if(G.length>=2&&mode!=='cross')G.filter(g=>g.ids.length<2).forEach(g=>errs.push(`${g.name} tem ${g.ids.length} dupla(s): precisa de pelo menos 2 para haver jogo dentro da chave. Mova uma dupla para ele ou reduza a quantidade de grupos.`));
+  if(G.length>=2&&mode!=='in'){
+   if(G.length%2)errs.push(`Há ${G.length} grupos. Para jogar contra outra chave é preciso um número par de grupos (A × B, C × D), senão um grupo fica sem adversário. Ajuste a quantidade em + → Grupos.`);
+   else for(let i=0;i<G.length;i+=2){const A=G[i],B=G[i+1];
+    if(A.ids.length!==B.ids.length){const big=A.ids.length>B.ids.length?A:B,sm=big===A?B:A,df=big.ids.length-sm.ids.length;
+     errs.push(`${A.name} tem ${A.ids.length} dupla(s) e ${B.name} tem ${B.ids.length}. Contra outra chave, as duas precisam ter a mesma quantidade; do contrário as duplas de ${sm.name} jogariam ${df} partida(s) a mais que as de ${big.name} e a classificação ficaria injusta. Para resolver: ${df%2===0?`mova ${df/2} dupla(s) de ${big.name} para ${sm.name}, ou `:''}adicione ${df} dupla(s) a ${sm.name}, ou retire ${df} de ${big.name} (+ → Duplas).`)}
+    else if(!A.ids.length)errs.push(`${A.name} e ${B.name} estão vazios. Distribua as duplas nos grupos.`)}}
+  if(!errs.length){if(mode!=='cross')G.forEach(g=>merge(rr(g.ids),0));const off=mode==='both'?rounds.length:0;
+   if(mode!=='in')for(let i=0;i<G.length;i+=2){const A=shuffle(G[i].ids),B=shuffle(G[i+1].ids),n=A.length;merge({out:[...Array(n)].map((_,r)=>A.map((a,k)=>[a,B[(k+r)%n]]))},off)}}}
+ if(errs.length)return{errs};
+ if(dbl){const n=rounds.length;for(let i=0;i<n;i++){rounds.push((rounds[i]||[]).map(([a,b])=>[b,a]));if(rest[i])rest[n+i]=rest[i]}}
+ const cnt={};rounds.flat().forEach(([a,b])=>{cnt[a]=(cnt[a]||0)+1;cnt[b]=(cnt[b]||0)+1});const v=ph.teamIds.map(id=>cnt[id]||0);
+ return{rounds,rest,matches:rounds.flat().length,min:Math.min(...v),max:Math.max(...v)}}
+let gen;
+const GENM={in:['Dentro da chave','Em cada grupo, todas as duplas jogam entre si.'],cross:['Contra outra chave','Cada dupla enfrenta todas as duplas da chave vizinha (A × B, C × D). Ninguém joga contra o próprio grupo.'],both:['Dentro da chave e contra outra chave','Primeiro as rodadas dentro do grupo, depois as rodadas contra a chave vizinha.'],all:['Todos contra todos','Todas as duplas da fase jogam entre si, sem considerar os grupos.']};
+function genDialog(){const ph=cur.ph;gen={mode:ph.groups.length?'in':'all',dbl:false};
+ modal(`${mHead('Gerar partidas',esc(ph.name)+' · '+ph.teamIds.length+' dupla(s)'+(ph.groups.length?' · '+ph.groups.length+' grupos':''))}<div id="genB"></div>
+ <div class="acts"><button class="pill ghost" data-a="closeM">Cancelar</button><button class="pill" data-a="genGo" id="genGo">Gerar partidas</button></div>`,{cls:'wide'});genDraw()}
+function genDraw(){const ph=cur.ph,ks=ph.groups.length?['in','cross','both','all']:['all'],plans={};ks.forEach(k=>plans[k]=genPlan(ph,k,gen.dbl));
+ if(plans[gen.mode].errs)gen.mode=ks.find(k=>!plans[k].errs)||gen.mode;
+ document.getElementById('genB').innerHTML=ks.map(k=>{const pl=plans[k],bad=!!pl.errs;
+  return`<label class="radio" style="align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)"><input type="radio" name="gm" value="${k}" data-c="genMode" ${gen.mode===k?'checked':''} ${bad?'disabled':''} style="margin-top:3px"><span style="flex:1"><b style="${bad?'color:#8A968F':''}">${GENM[k][0]}</b><br><small class="muted">${GENM[k][1]}</small>
+  ${bad?`<br><small class="err" style="display:block;margin-top:4px"><b>Não é possível agora:</b><br>${pl.errs.map(e=>'• '+esc(e)).join('<br>')}</small>`:`<br><small><b>${pl.rounds.length} rodada(s) · ${pl.matches} partida(s) · cada dupla joga ${pl.min===pl.max?pl.min:'de '+pl.min+' a '+pl.max} vez(es)</b>${pl.min!==pl.max?' <span class="muted">(os grupos têm tamanhos diferentes; a classificação é separada por grupo)</span>':''}${pl.rest.some(Boolean)?' <span class="muted">· com número ímpar de duplas, uma folga por rodada</span>':''}</small>`}</span></label>`}).join('')
+ +`<label class="chk" style="border-top:1px solid var(--line);padding-top:12px"><input type="checkbox" data-a="genDbl" ${gen.dbl?'checked':''}><span>Ida e volta <small class="muted">(cada confronto acontece duas vezes)</small></span></label>`;
+ document.getElementById('genGo').disabled=!!plans[gen.mode].errs}
+A.genMode=(d,el)=>{gen.mode=el.value;genDraw()};A.genDbl=(d,el)=>{gen.dbl=el.checked;genDraw()};
+A.genGo=()=>{const ph=cur.ph;if(phMatches(ph).length)return closeModal(true);const pl=genPlan(ph,gen.mode,gen.dbl);if(pl.errs)return genDraw();
+ ph.rounds=pl.rounds.map((ms,i)=>({...newRound((i+1)+'ª Rodada'),matches:ms.map(([a,b])=>newMatch(a,b)),rest:pl.rest[i]||[]}));ph.genMode=gen.mode;ph.dbl=gen.dbl;
+ ui.round[ph.id]=ph.rounds[0].id;save();closeModal(true);render();toast(`Partidas geradas: ${pl.rounds.length} rodada(s), ${pl.matches} partida(s).`)};
+const bracketOrder=p=>{let o=[1];while(o.length<p)o=o.flatMap(x=>[x,2*o.length+1-x]);return o};
 A.gen=()=>{const ph=cur.ph;
- if(ph.type==='pc'){if(phMatches(ph).length)return alertBox('Partidas já geradas','Esta fase já possui partidas. Para evitar duplicação ou perda de resultados, use “Adicionar Rodada” ou “Adicionar Partida”.');
-  const secs=ph.groups.length?ph.groups.map(g=>g.teamIds):[ph.teamIds];
-  if(ph.groups.length&&ph.teamIds.some(id=>!ph.groups.some(g=>g.teamIds.includes(id))))return toast('Há duplas sem grupo. Distribua todas antes de gerar.','err');
-  if(secs.some(s=>s.length<2))return toast(ph.groups.length?'Cada grupo precisa de pelo menos 2 duplas.':'Adicione pelo menos 2 duplas para gerar as partidas.','err');
-  const rounds=[];secs.forEach(ids=>{const L=shuffle(ids);if(L.length%2)L.push(null);const n=L.length;
-   for(let r=0;r<n-1;r++){rounds[r]=rounds[r]||[];for(let i=0;i<n/2;i++)if(L[i]&&L[n-1-i])rounds[r].push(newMatch(L[i],L[n-1-i]));L.splice(1,0,L.pop())}});
-  ph.rounds=rounds.map((ms,i)=>({...newRound((i+1)+'ª Rodada'),matches:ms}))}
- else{const nm=n=>({2:'Final',4:'Semifinal',8:'Quartas de final',16:'Oitavas de final'})[n]||roundTitle(ph);let parts,byes=[];
-  if(!phMatches(ph).length){ph.rounds=[];if(ph.teamIds.length<2)return toast('Adicione pelo menos 2 duplas para gerar as partidas.','err');
-   const L=shuffle(ph.teamIds);let p=1;while(p<L.length)p*=2;byes=L.splice(0,p-L.length);parts=L;
-   const r=newRound(nm(p));r.byes=byes;for(let i=0;i<parts.length;i+=2)r.matches.push(newMatch(parts[i],parts[i+1]));ph.rounds.push(r)}
-  else{const last=ph.rounds[ph.rounds.length-1];if(!last.matches.length||!last.matches.every(m=>mStatus(m)==='done'))return alertBox('Rodada em andamento','Finalize todas as partidas da rodada atual para gerar a próxima.');
-   parts=[...(last.byes||[]),...last.matches.map(winner)];if(parts.length<2)return alertBox('Fase encerrada',`Campeã: <b>${esc(dl(T(parts[0])))}</b>.`);
-   const r=newRound(nm(parts.length));if(ph.rounds.some(x=>norm(x.title)===norm(r.title)))r.title=roundTitle(ph);
-   if(parts.length%2)r.byes=[parts.shift()];for(let i=0;i<parts.length;i+=2)r.matches.push(newMatch(parts[i],parts[i+1]));ph.rounds.push(r)}}
- ui.round[ph.id]=ph.rounds[ph.type==='pc'?0:ph.rounds.length-1].id;save();render();toast('Partidas geradas.')};
+ if(ph.type==='pc'){if(phMatches(ph).length)return alertBox('Partidas já geradas','Esta fase já possui partidas. Para evitar duplicação ou perda de resultados, use “Adicionar Rodada” ou “Adicionar Partida”.');return genDialog()}
+ const nm=n=>({2:'Final',4:'Semifinal',8:'Quartas de final',16:'Oitavas de final'})[n]||roundTitle(ph);let msg='Partidas geradas.';
+ if(!phMatches(ph).length){ph.rounds=[];const n=ph.teamIds.length;if(n<2)return toast('Adicione pelo menos 2 duplas para gerar as partidas.','err');
+  const O=ph.origin||{},crossed=ph.teamIds.every(id=>O[id]),seedL=crossed?[...ph.teamIds].sort((a,b)=>O[a].pos-O[b].pos||O[a].g-O[b].g):shuffle(ph.teamIds);
+  let p=1;while(p<n)p*=2;const sl=bracketOrder(p).map(x=>seedL[x-1]||null),pairs=[];for(let i=0;i<p;i+=2)pairs.push(sl[i]?[sl[i],sl[i+1]]:[sl[i+1],null]);
+  if(crossed)pairs.forEach((x,i)=>{if(x[1]&&O[x[0]].g===O[x[1]].g){const j=pairs.findIndex((y,k)=>k!==i&&y[1]&&O[x[0]].g!==O[y[1]].g&&O[y[0]].g!==O[x[1]].g);if(j>=0){const t=x[1];x[1]=pairs[j][1];pairs[j][1]=t}}});
+  const r=newRound(nm(p));r.slots=pairs.map(([a,b])=>{if(!b)return{t:a};const m=newMatch(a,b);r.matches.push(m);return{m:m.id}});r.byes=pairs.filter(x=>!x[1]).map(x=>x[0]);ph.rounds.push(r);
+  const same=crossed?pairs.filter(x=>x[1]&&O[x[0]].g===O[x[1]].g).length:0;
+  msg=crossed?(same?`Chave montada cruzando os grupos. Atenção: ${same} confronto(s) entre duplas do mesmo grupo não puderam ser evitados.`:'Chave montada cruzando os grupos: melhores colocados contra piores, sem repetir grupo na primeira rodada.'):'Chave montada por sorteio.'+(r.byes.length?` ${r.byes.length} dupla(s) avançam direto.`:'')}
+ else{const last=ph.rounds[ph.rounds.length-1];if(!last.matches.length||!last.matches.every(m=>mStatus(m)==='done'))return alertBox('Rodada em andamento','Finalize todas as partidas da rodada atual para gerar a próxima.');
+  let parts=last.slots?last.slots.map(x=>x.t||(last.matches.find(m=>m.id===x.m)?winner(last.matches.find(m=>m.id===x.m)):null)):null;
+  if(!parts||parts.some(x=>!x)||parts.length!==(last.byes||[]).length+last.matches.length)parts=[...(last.byes||[]),...last.matches.map(winner)];
+  if(parts.length<2)return alertBox('Fase encerrada',`Campeã: <b>${esc(dl(T(parts[0])))}</b>.`);
+  const r=newRound(nm(parts.length));if(ph.rounds.some(x=>norm(x.title)===norm(r.title)))r.title=roundTitle(ph);r.slots=[];
+  if(parts.length%2){r.byes=[parts.shift()];r.slots.push({t:r.byes[0]})}
+  for(let i=0;i<parts.length;i+=2){const m=newMatch(parts[i],parts[i+1]);r.matches.push(m);r.slots.push({m:m.id})}ph.rounds.push(r)}
+ ui.round[ph.id]=ph.rounds[ph.rounds.length-1].id;save();render();toast(msg)};
 A.rEdit=()=>{const r=cur.r;if(!r)return toast('Nenhuma rodada selecionada.','err');
  modal(`<form data-f="rSave">${mHead('Editar Rodada')}<label class="field"><span>Título</span><input class="inp" name="n" value="${esc(r.title)}" maxlength="40" autofocus></label>
  <label class="chk"><input type="checkbox" name="h" ${r.hidden?'checked':''}><span>Ocultar jogos da rodada no link compartilhado</span></label>
@@ -860,7 +1044,7 @@ A.mOpen=d=>{const f=findMatch(d.id);if(!f)return;const{m,ph,r}=f,has=hasSets(m);
  const opts=cur=>`<option value="">Selecione…</option>${ph.teamIds.map(id=>`<option value="${id}" ${cur===id?'selected':''}>${esc(dl(T(id)))}</option>`).join('')}`;
  const s=i=>m.sets?.[i]||['',''];
  modal(`<form data-f="mSave">${mHead(visitor?'Informar placar':'Partida',esc(ph.name)+' · '+esc(r.title))}<input type="hidden" name="id" value="${m.id}"><input type="hidden" name="rev" value="${m.rev||0}">
- ${visitor?`<p><b>${esc(dl(T(m.a)))}</b> × <b>${esc(dl(T(m.b)))}</b></p>`:`<label class="field"><span>Dupla 1</span><select name="a" style="width:100%" ${has?'disabled':''}>${opts(m.a)}</select></label><label class="field"><span>Dupla 2</span><select name="b" style="width:100%" ${has?'disabled':''}>${opts(m.b)}</select></label>${has?'<p class="note">Para trocar as duplas, limpe o placar primeiro.</p>':''}`}
+ ${visitor?`<p><b>${esc(dl(T(m.a)))}</b> × <b>${esc(dl(T(m.b)))}</b></p>`:`<label class="field"><span>Dupla 1</span><select name="a" style="width:100%" ${has||!canEdit()?'disabled':''}>${opts(m.a)}</select></label><label class="field"><span>Dupla 2</span><select name="b" style="width:100%" ${has||!canEdit()?'disabled':''}>${opts(m.b)}</select></label>${has?'<p class="note">Para trocar as duplas, limpe o placar primeiro.</p>':''}`}
  <div class="sets">${[0,1,2].map(i=>`<span>${i+1}º set</span><input name="s${i}a" inputmode="numeric" maxlength="2" value="${s(i)[0]}" aria-label="${i+1}º set, dupla 1"><span>×</span><input name="s${i}b" inputmode="numeric" maxlength="2" value="${s(i)[1]}" aria-label="${i+1}º set, dupla 2">`).join('')}</div>
  <p class="note">Melhor de três sets. A partida só pontua quando uma dupla vence 2 sets.</p>
  ${!visitor&&m.pending?`<div class="box" style="margin:10px 0"><b>Resultado enviado pelo link:</b> ${esc(setsTxt(m.pending.sets))} <small class="muted">(${dt(m.pending.at)})</small><div class="acts" style="margin-top:8px"><button type="button" class="pill ghost sm" data-a="mReject" data-id="${m.id}">Rejeitar</button><button type="button" class="pill sm" data-a="mApprove" data-id="${m.id}">Aprovar</button></div></div>`:''}
@@ -885,7 +1069,7 @@ F.mSave=async f=>{const x=findMatch(f.id.value);if(!x)return setErr(f,'Esta part
  if(v.sets.length&&(!a||!b))return setErr(f,'Selecione as duas duplas antes de informar o placar.');
  const busy=id=>id&&r.matches.some(o=>o!==m&&(o.a===id||o.b===id));
  if(busy(a)||busy(b))return setErr(f,`${dl(T(busy(a)?a:b))} já possui outra partida nesta rodada.`);
- if(a&&b&&ph.type==='pc'&&phMatches(ph).some(o=>o!==m&&((o.a===a&&o.b===b)||(o.a===b&&o.b===a))))return setErr(f,'Este confronto já existe nesta fase.');
+ if(a&&b&&ph.type==='pc'&&!ph.dbl&&(a!==m.a||b!==m.b)&&phMatches(ph).some(o=>o!==m&&((o.a===a&&o.b===b)||(o.a===b&&o.b===a))))return setErr(f,'Este confronto já existe nesta fase.');
  const pa=new Set(T(a)?.players||[]);if(a&&b&&T(b).players.some(p=>pa.has(p)))return setErr(f,'As duplas têm um jogador em comum.');
  const changed=JSON.stringify(v.sets)!==JSON.stringify(m.sets||[]);
  if(elimLocked(ph,r)){const t={a,b,sets:v.sets},ow=mStatus(m)==='done'?winner(m):null,nw=mStatus(t)==='done'?winner(t):null;if(ow!==nw)return setErr(f,'A rodada seguinte já foi gerada com o vencedor desta partida. Para mudar o vencedor, exclua antes as partidas das rodadas seguintes.')}
@@ -948,14 +1132,21 @@ A.jExpGo=d=>{const c=cur.c,ph=cur.ph,r=cur.r,i=c.phases.indexOf(ph)+1,j=ph.round
   rows:r.matches.map((m,k)=>[k+1,dl(T(m.a)),hasSets(m)?setsWon(m).join(' × '):'—',setsTxt(m.sets)||'—',dl(T(m.b)),ST[mStatus(m)]])}]},`Jogos_${slug(c.name)}_${i}Fase_${j}Rodada`,d.v)};
 
 /* ===================== Eventos ===================== */
-function run(name,d,el,e){if(visitor&&!VIS.has(name))return;const fn=A[name];fn&&fn(d,el,e)}
+const READ=new Set([...VIS,'nav','sair','sair2','openC','rkSet','rkMode','rkIna','rkQ','pSort','crInfo','cxScope','cExp','jExp','cExpGo','jExpGo']);
+const SCORE=new Set(['mClear']),MASTER=new Set(['mbEdit','mbDel','cOpt','cStatus','cDel','cfgResult','cfgPlayers','cfgRank','wipe','bkImp','bkExp']),CASH=new Set(['cxAdd','cxEdit','cxDel']),MASTERF=new Set(['uSave','cSave','resSave','mbSave']);
+const DENY='Seu perfil não permite esta ação.';
+function run(name,d,el,e){if(visitor){if(!VIS.has(name))return}
+ else if(!READ.has(name)&&!(MASTER.has(name)?isMaster():CASH.has(name)?canCashEdit():SCORE.has(name)?canScore():canEdit())){if(el&&el.type==='checkbox')el.checked=!el.checked;return toast(DENY,'err')}
+ const fn=A[name];fn&&fn(d,el,e)}
 document.addEventListener('click',e=>{const el=e.target.closest('[data-a]');if(!el||el.disabled)return;
  if(el.tagName==='BUTTON')e.preventDefault();if(el.dataset.close)closeModal(true);
  if(el.closest('.side a'))document.body.classList.remove('nav');run(el.dataset.a,el.dataset,el,e)});
 document.addEventListener('click',e=>{if(e.target.closest('.side a'))document.body.classList.remove('nav')});
 document.addEventListener('change',e=>{const el=e.target.closest('[data-c]');el&&run(el.dataset.c,el.dataset,el,e)});
 document.addEventListener('input',e=>{const el=e.target.closest('[data-i]');el&&run(el.dataset.i,el.dataset,el,e)});
-document.addEventListener('submit',e=>{e.preventDefault();const k=e.target.dataset.f;if(visitor&&k!=='mSave')return;F[k]&&F[k](e.target)});
+document.addEventListener('submit',e=>{e.preventDefault();const k=e.target.dataset.f;if(visitor){if(k!=='mSave')return}
+ else if(k!=='login'&&!(k==='pwSave'?!!me.role:MASTERF.has(k)?isMaster():k==='mSave'?canScore():k==='cxSave'||k==='cxCota'?canCashEdit():canEdit()))return toast(DENY,'err');
+ F[k]&&F[k](e.target)});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(stack.length)closeModal();else document.body.classList.remove('nav')}
  if(e.key==='Tab'&&stack.length){const m=stack[stack.length-1].ov,fs=[...m.querySelectorAll('button,input:not([type=hidden]),select,textarea,a[href],summary')].filter(x=>!x.disabled&&x.offsetParent!==null);if(!fs.length)return;
   const a=document.activeElement,first=fs[0],last=fs[fs.length-1];if(!m.contains(a)||(!e.shiftKey&&a===last)){e.preventDefault();first.focus()}else if(e.shiftKey&&a===first){e.preventDefault();last.focus()}}});
