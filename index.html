@@ -320,6 +320,61 @@ tr.qt .posb{background:#FFE08A;color:#5C4300}
 .split.elim{grid-template-columns:minmax(0,1fr);grid-template-areas:"top" "body" "jg"}
 .br-svg{position:absolute;left:0;top:0;pointer-events:none;z-index:0}
 @media(max-width:520px){.br-col{width:204px}.br-in{gap:34px}}
+.offbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:#FFF1D6;color:#6B4700;border:1px solid #F0CF8A;border-radius:12px;padding:8px 12px;margin-bottom:12px;font-size:13px}
+
+/* ===== modo telão ===== */
+.tv{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;z-index:30}
+.tv-h{background:var(--g1);color:#fff;display:flex;align-items:center;gap:16px;padding:0 2vw;height:9vh;min-height:46px;flex:none;font-size:clamp(13px,2.4vh,28px)}
+.tv-h .ic{width:1.3em;height:1.3em}
+.tv-t{display:flex;align-items:center;gap:.5em;min-width:0;flex:1}
+.tv-t b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tv-t span{opacity:.8;white-space:nowrap}
+.tv-s{font-weight:700;font-size:1.15em;white-space:nowrap}
+.tv-c{flex:1;display:flex;gap:.4em;align-items:center;justify-content:flex-end;white-space:nowrap}
+.tv-stage{flex:1;min-height:0;overflow:hidden;padding:1.6vh 1.6vw}
+.tv-body{transform-origin:0 0;width:1280px}
+.tv-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+.tv-grid>.gcard{margin:0}
+.tv-grid>.gcard:only-child,.tv-grid>.match:only-child{grid-column:1/-1;max-width:900px;width:100%;margin:0 auto}
+.tv-grid>.note{grid-column:1/-1}
+.tv .match{min-width:0;background:#fff;padding:12px 14px}
+.tv .match .mt{font-size:19px}
+.tv .sbox{min-width:50px;height:44px;font-size:23px}
+.tv table.cls{font-size:18px}
+.tv .gcard .gt{font-size:21px}
+.tv .br-n{font-size:14px}
+.tv .mfoot .pill{display:none}
+.tv button{pointer-events:none}
+.tv .tv-ctl button{pointer-events:auto}
+.tv .bracket{overflow:visible;border:0;background:transparent;padding:0}
+.tv-f{height:5vh;min-height:32px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 2vw}
+.tv-dots i{display:inline-block;width:10px;height:10px;border-radius:50%;background:#C3CEC8;margin-right:6px}
+.tv-dots i.on{background:var(--g1)}
+.tv-ctl{opacity:.3;transition:opacity .2s;display:flex;gap:8px}
+.tv-f:hover .tv-ctl,.tv-ctl:focus-within{opacity:1}
+.tv-ctl button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 12px;font-size:13px;min-height:28px}
+.tvon .toasts{display:none}
+.tv-pod{max-width:820px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.tv-pl{display:flex;align-items:center;gap:16px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 18px;font-size:24px}
+.tv-pl.first{border-color:var(--g3);font-size:30px}
+.tv-pl .ic{width:32px;height:32px;color:var(--g1);margin-left:auto}
+.tv-pl .posb{min-width:52px;height:42px;font-size:20px}
+
+/* ===== cadastros em colunas, numeração azul e destaque do ranking ===== */
+.posb.blue{background:#DBEAFE;color:#1E3A8A}
+.cols3{column-count:3;column-gap:20px}
+.cols3 li{break-inside:avoid;-webkit-column-break-inside:avoid}
+.cols3 .name{flex:1;min-width:0;text-align:left;overflow-wrap:anywhere}
+.tacts{display:flex;gap:6px;flex-wrap:wrap;width:100%;justify-content:flex-end}
+.selbar{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:12px 0 8px}
+@media(max-width:1180px){.cols3{column-count:2}}
+@media(max-width:700px){.cols3{column-count:1}}
+table.rk tbody tr:nth-child(odd) td,table.rk tbody tr:nth-child(odd) td.tot{background:#fff!important}
+table.rk tbody tr:nth-child(even) td,table.rk tbody tr:nth-child(even) td.tot{background:#F3F5F4!important}
+table.rk tbody tr.q td,table.rk tbody tr.q td.tot{background:#DDF5E3!important}
+table.rk tbody tr:hover td,table.rk tbody tr:hover td.tot{background:var(--sel)!important}
+table.rk tr.q .posb{background:#DBEAFE;color:#1E3A8A;box-shadow:none}
+table.rk tr.qt .posb{background:#FFE08A;color:#5C4300}
 </style>
 </head>
 <body>
@@ -370,7 +425,7 @@ cal:ic('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4
 
 /* ===================== Dados ===================== */
 let db, visitor=false;
-const ui={pSort:'az',selP:new Set(),selT:new Set(),phase:{},round:{},rk:{season:String(new Date().getFullYear()),champ:'all',mode:'d',q:'',inactive:false},crk:{mode:'d',q:''},v:{tab:'jogos',mode:'d'}};
+const ui={tv:{i:0,pause:false},pSort:'az',selP:new Set(),selT:new Set(),phase:{},round:{},rk:{season:String(new Date().getFullYear()),champ:'all',mode:'d',q:'',inactive:false},crk:{mode:'d',q:''},v:{tab:'jogos',mode:'d'}};
 /* ----- banco (Supabase). Com ?local=1 no endereço, o sistema usa só este navegador. ----- */
 const SB=Object.assign({url:'https://wevourgmybqckzarhynq.supabase.co',key:'sb_publishable_0x8t_1nyPNA9Y3_MTQngBg_LvgYnd6K'},window.GC_SB||{});
 const CLOUD=!!SB.url&&!new URLSearchParams(location.search).has('local');
@@ -404,7 +459,7 @@ function setDb(d){d=d&&typeof d==='object'?d:{};db=Object.assign({},d);
  db.caixa=cashNorm(d.caixa)}
 const eachM=fn=>db.champs.forEach(c=>c.phases.forEach(p=>p.rounds.forEach(r=>r.matches.forEach(m=>fn(m,r,p,c)))));
 function load(){let d=null;try{d=JSON.parse(localStorage.getItem(KEY))}catch(e){}setDb(d);buildAll()}
-function save(){elimSyncAll();if(CLOUD){if(!visitor){ws.dirty=true;pushWs()}return}
+function save(){elimSyncAll();if(CLOUD){if(!visitor){if(ws.offline){off.wsDirty=true;offPersist();return}ws.dirty=true;pushWs()}return}
  try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){toast('Não foi possível salvar os dados neste navegador.','err')}}
 
 let sess=null;try{sess=JSON.parse(localStorage.getItem('gc_sess'))}catch(e){}
@@ -435,7 +490,7 @@ const ROLE={master:'Master',organizador:'Organizador',placar:'Lançador de placa
 const isMaster=()=>me.role==='master',canEdit=()=>me.role==='master'||me.role==='organizador',canScore=()=>canEdit()||me.role==='placar',canCash=()=>!!me.role&&!!me.caixa,canCashEdit=()=>canEdit()&&!!me.caixa;
 const userName=()=>isMaster()?db.user.name:(me.name||me.username||me.email||'Usuário');
 const ws={rev:0,last:'',busy:false,again:false,state:'ok',empty:false};let srvRev=new Map(),mut=0,loaded=null,loading=null,shSig='';
-const syncTxt=()=>!CLOUD?'Modo local (dados só neste navegador)':({ok:'Salvo',saving:'Salvando…',err:'Sem conexão — tentando salvar'})[ws.state];
+const syncTxt=()=>!CLOUD?'Modo local (dados só neste navegador)':({ok:'Salvo',saving:'Salvando…',err:'Sem conexão — tentando salvar',off:'Offline · '+(offCount()?offCount()+' placar(es) aguardando envio':'dados guardados neste aparelho')})[ws.state];
 function setSync(x){ws.state=x;document.querySelectorAll('.syncv').forEach(e=>e.textContent=syncTxt())}
 function wsData(){const d=JSON.parse(JSON.stringify(db));delete d.caixa;d.champs.forEach(c=>c.phases.forEach(p=>p.rounds.forEach(r=>r.matches.forEach(m=>{delete m.sets;delete m.pending;delete m.history;delete m.rev}))));return d}
 // No banco, a revisão de cada placar vem só da tabela de resultados: zera o que veio no cadastro antes de aplicar os resultados.
@@ -450,17 +505,45 @@ async function loadCloud(){const L=await rpc('gc_load',{});me=(L&&L.me)||{};
  db.caixa=cashNorm(L.cash&&L.cash.data);cx.rev=L.cash?L.cash.rev:0;members=L.accounts||[];
  const hm={};(L.history||[]).forEach(h=>(hm[h.match_id]=hm[h.match_id]||[]).push({at:Date.parse(h.at),by:h.origin,sets:h.sets}));eachM(m=>m.history=hm[m.id]||[]);
  ws.last=has?JSON.stringify(wsData()):'';setSync('ok');
- if(canEdit()){if(buildAll()){ws.dirty=true;setTimeout(()=>{if(ws.dirty)pushWs()},Math.random()*3000)}}else elimSyncAll()}
-async function saveCash(){if(!CLOUD)return save();if(cx.busy){cx.again=true;return}cx.busy=true;setSync('saving');
+ if(canEdit()){if(buildAll()){ws.dirty=true;setTimeout(()=>{if(ws.dirty)pushWs()},Math.random()*3000)}}else elimSyncAll();offPersist()}
+async function saveCash(){if(!CLOUD)return save();if(ws.offline){off.cxDirty=true;offPersist();return}if(cx.busy){cx.again=true;return}cx.busy=true;setSync('saving');
  try{const r=await rpc('gc_save_cash',{p_data:db.caixa,p_expected_rev:cx.rev});
   if(r.ok){cx.rev=r.rev;cx.err=false;setSync(ws.state==='err'&&ws.t?'err':'ok')}
   else{cx.again=false;cx.busy=false;while(stack.length)closeModal(true);await loadCloud();render();
    return toast('O caixa foi alterado em outro aparelho. Seu último lançamento não foi gravado; confira e lance de novo.','err')}}
- catch(e){cx.busy=false;if(e.status){setSync('ok');return toast(errTxt(e),'err')}cx.err=true;setSync('err');clearTimeout(cx.t);cx.t=setTimeout(saveCash,5000);return}
+ catch(e){cx.busy=false;if(e.status){setSync('ok');return toast(errTxt(e),'err')}goOffline();off.cxDirty=true;offPersist();return}
  cx.busy=false;if(cx.again){cx.again=false;return saveCash()}}
 async function loadShared(tok){let j;try{j=await rpc('gc_get_shared',{p_token:tok},true)}catch(e){if(e.status&&/link_invalido/.test(e.message)){setDb({});shSig='invalido';return}throw e}
  shSig=JSON.stringify(j);sharedDb(j)}
 function sharedDb(j){setCloudDb({players:j.players,teams:j.teams,champs:[j.champ],settings:j.settings||{},user:{name:j.organizer||'Organizador'}});const r=mergeResults(j.results);elimSyncAll();return r}
+/* ----- modo offline (contingência): tudo fica guardado neste aparelho e é enviado sozinho quando a internet volta ----- */
+let off=null;const OFFK='gc_off';
+const offUser=()=>sess?(sess.kind==='member'?'m:'+sess.username:'o:'+(sess.email||'')):'';
+const offCount=()=>off?Object.keys(off.q).length:0;
+function offPersist(){if(!CLOUD||visitor||!sess||!me.role)return;try{localStorage.setItem(OFFK,JSON.stringify({v:1,user:offUser(),me,members,db,revs:[...srvRev],wsRev:ws.rev,cxRev:cx.rev,off:off?{...off,busy:false}:null,at:Date.now()}))}catch(e){if(ws.offline)toast('Atenção: este aparelho não conseguiu guardar os dados offline (memória cheia). Não feche a página.','err')}}
+function goOffline(){if(ws.offline||!CLOUD||visitor)return;off={q:{},wsRev:ws.rev,cxRev:cx.rev,wsDirty:!!ws.dirty,cxDirty:!!cx.err,since:Date.now()};ws.offline=true;ws.busy=false;ws.again=false;ws.dirty=false;cx.busy=false;cx.err=false;clearTimeout(ws.t);clearTimeout(cx.t);ws.state='off';offPersist();
+ toast('Sem internet: pode continuar. Tudo fica guardado neste aparelho e será enviado sozinho quando a conexão voltar.');if(!stack.length)render();else setSync('off')}
+function offRestore(){let o=null;try{o=JSON.parse(localStorage.getItem(OFFK))}catch(e){}if(!o||o.v!==1||o.user!==offUser()||!o.db||!o.me||!o.me.role)return false;
+ setDb(o.db);me=o.me;members=o.members||[];srvRev=new Map(o.revs||[]);ws.rev=o.wsRev||0;cx.rev=o.cxRev||0;off=o.off||{q:{},wsRev:ws.rev,cxRev:cx.rev,wsDirty:false,cxDirty:false,since:Date.now()};ws.offline=true;ws.dirty=false;ws.busy=false;ws.state='off';if(canEdit()&&buildAll())off.wsDirty=true;return true}
+const offBar=()=>'<div class="offbar" role="status"><b>Você está offline.</b> <span>'+(offCount()?offCount()+' placar(es)':'')+(offCount()&&off.wsDirty?' e ':'')+(off.wsDirty?'alterações de cadastro/fase':'')+(offCount()||off.wsDirty||off.cxDirty?' guardados neste aparelho, aguardando envio.':'Nada pendente de envio.')+'</span><span style="flex:1"></span><button class="pill sm" data-a="offSync">Tentar enviar agora</button></div>';
+async function trySync(manual){if(!ws.offline||!off||off.busy)return;off.busy=true;const div=[];
+ try{let PL;try{PL=await rpc('gc_poll',{})}catch(e){if(manual)toast(e.status?errTxt(e):'Ainda sem conexão. Os dados continuam guardados neste aparelho.','err');return}
+  if(!PL||!PL.ok){if(manual||!off.warned){off.warned=true;toast('A conexão voltou, mas a sessão expirou. Saia e entre de novo com o mesmo usuário: os dados offline continuam guardados e serão enviados.','err')}return}
+  setSync('saving');
+  if(canEdit()&&off.wsDirty){let exp=off.wsRev;
+   if(PL.ws_rev!==exp){if(stack.length)return;if(!await confirmBox({title:'Cadastros alterados online',msg:'Enquanto este aparelho estava offline, os cadastros (duplas, fases ou partidas) foram alterados em outro aparelho.<br><br>Enviar os dados <b>deste aparelho</b> substitui o que está online. Os placares continuam sendo conferidos um a um.',ok:'Enviar os dados deste aparelho',cancel:'Agora não',danger:true})){off.hold=Date.now()+60000;return}exp=PL.ws_rev}
+   const r=await rpc('gc_save_workspace',{p_data:wsData(),p_expected_rev:exp});if(!r.ok){if(manual)toast('Os cadastros mudaram de novo durante o envio. Tente outra vez.','err');return}
+   ws.rev=r.rev;off.wsRev=r.rev;off.wsDirty=offCount()>0;offPersist()}
+  for(const id of Object.keys(off.q)){const q=off.q[id],x=findMatch(id);if(!x){delete off.q[id];continue}const nm=dl(T(x.m.a))+' × '+dl(T(x.m.b));let r;
+   try{r=await rpc('gc_save_score_admin',{p_match_id:id,p_sets:q.sets||[],p_expected_rev:q.base||0})}catch(e){if(!e.status)throw e;div.push('<li><b>'+esc(nm)+'</b>: '+esc(errTxt(e))+'</li>');delete off.q[id];offPersist();continue}
+   if(r.ok){x.m.rev=r.rev;x.m.stRev=r.rev;srvRev.set(id,r.rev)}else div.push('<li><b>'+esc(nm)+'</b>: neste aparelho '+esc(setsTxt(q.sets)||'sem placar')+'; online já estava '+esc(setsTxt(r.sets)||'sem placar')+'. <b>Valeu o que estava online.</b></li>');
+   delete off.q[id];offPersist()}
+  if(canEdit()&&(off.wsDirty||ws.rev===off.wsRev)){try{const r=await rpc('gc_save_workspace',{p_data:wsData(),p_expected_rev:ws.rev});if(r.ok){ws.rev=r.rev;off.wsRev=r.rev}}catch(e){if(!e.status)throw e}off.wsDirty=false}
+  if(off.cxDirty&&canCashEdit()){const r=await rpc('gc_save_cash',{p_data:db.caixa,p_expected_rev:off.cxRev});if(!r.ok)div.push('<li><b>Caixa</b>: foi alterado online enquanto você estava offline; os lançamentos de caixa feitos offline não foram enviados. Confira e lance de novo.</li>')}
+  ws.offline=false;off=null;ws.state='ok';try{localStorage.removeItem(OFFK)}catch(e){}while(stack.length)closeModal(true);await loadCloud();render();
+  if(div.length)alertBox('Envio concluído com divergências','A conexão voltou e os dados foram enviados, com exceção de:<ul>'+div.join('')+'</ul>Confira esses confrontos. Se uma fase foi finalizada offline com um resultado diferente, reabra a fase e finalize de novo.');else toast('Conexão restabelecida: tudo o que foi feito offline está salvo online.')}
+ catch(e){if(off){setSync('off');if(manual)toast('O envio foi interrompido. O que faltou continua guardado e será reenviado.','err')}}
+ finally{if(off)off.busy=false}}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 // Garante que os cadastros pendentes chegaram ao banco antes de gravar algo que depende deles (ex.: placar de partida recém-criada).
 async function flushWs(){for(let i=0;i<100&&ws.busy;i++)await sleep(100);if(ws.dirty&&!ws.busy)await pushWs();for(let i=0;i<100&&ws.busy;i++)await sleep(100)}
@@ -473,7 +556,7 @@ async function pushWs(){if(ws.busy){ws.again=true;return}const body=JSON.stringi
    toast('Os cadastros foram alterados em outro aparelho. Sua última alteração não foi gravada e os dados foram recarregados.','err');return}}
  catch(e){ws.busy=false;
   if(e.status){ws.again=false;ws.dirty=false;clearTimeout(ws.t);while(stack.length)closeModal(true);const msg=errTxt(e);try{await loadCloud()}catch(x){loaded=null}render();return toast('A alteração não foi gravada: '+msg+' Os dados foram recarregados.','err')}
-  setSync('err');clearTimeout(ws.t);ws.t=setTimeout(pushWs,5000);return}
+  ws.dirty=true;goOffline();return}
  ws.busy=false;if(ws.again){ws.again=false;return pushWs()}}
 async function importData(d){const sc=new Map();(d.champs||[]).forEach(c=>(c.phases||[]).forEach(p=>(p.rounds||[]).forEach(r=>(r.matches||[]).forEach(m=>sc.set(m.id,m.sets||[])))));
  setDb(d);eachM(m=>{m.sets=[];m.pending=null;m.history=[];m.rev=srvRev.get(m.id)||0});
@@ -492,17 +575,19 @@ const errTxt=e=>SRV[(e.message||'').split(':')[0].trim()]||(e.status?'Não foi p
 const conflictMsg=m=>`Outra pessoa alterou esta partida enquanto você digitava. Placar atual: ${setsTxt(m.sets)||'sem placar'}${m.pending?' (há um resultado aguardando aprovação)':''}. Nada foi gravado: feche e abra a partida para conferir.`;
 async function scoreAdmin(m,sets,by,status){mut++;const previousSets=(m.sets||[]).map(x=>x?[...x]:x),previousStatus=m.status||mStatus(m);
  if(!CLOUD){m.rev=(m.rev||0)+1;m.sets=sets;m.pending=null}
- else{if(canEdit())await flushWs();const r=await rpc('gc_save_score_admin',{p_match_id:m.id,p_sets:sets,p_expected_rev:m.rev||0});mut++;
-  if(!r.ok){applyRemote(m,r);return false}m.sets=sets;m.pending=null;m.rev=r.rev;srvRev.set(m.id,r.rev)}
- m.status=status||autoStatus(m,sets);m.stRev=m.rev;m.history.push({at:Date.now(),by:by||'organizador',previous:previousSets,sets,status:m.status});const x=findMatch(m.id);if(x)phaseAudit(x.c,x.ph,'update-result',{summary:'Resultado alterado.',roundId:x.r.id,matchId:m.id,previousSets,sets:sets.map(z=>z?[...z]:z),previousStatus,status:m.status});if(x)elimSync(x.ph);return true}
+ else{let r=null;if(!ws.offline){if(canEdit())await flushWs();if(!ws.offline){try{r=await rpc('gc_save_score_admin',{p_match_id:m.id,p_sets:sets,p_expected_rev:m.rev||0})}catch(e){if(e.status)throw e;goOffline()}}}
+  if(ws.offline){if(!off.q[m.id])off.q[m.id]={base:srvRev.get(m.id)||m.rev||0};off.q[m.id].sets=sets;m.sets=sets;m.pending=null}
+  else{mut++;if(!r.ok){applyRemote(m,r);return false}m.sets=sets;m.pending=null;m.rev=r.rev;srvRev.set(m.id,r.rev)}}
+ m.status=status||autoStatus(m,sets);m.stRev=m.rev;m.history.push({at:Date.now(),by:by||'organizador',previous:previousSets,sets,status:m.status});const x=findMatch(m.id);if(x)phaseAudit(x.c,x.ph,'update-result',{summary:'Resultado alterado.',roundId:x.r.id,matchId:m.id,previousSets,sets:sets.map(z=>z?[...z]:z),previousStatus,status:m.status});if(x)elimSync(x.ph);if(ws.offline){offPersist();setSync('off')}return true}
 function ensure(key,fn){const root=document.getElementById('root');
  root.innerHTML=`<header class="top">${I.trophy}<span>Gerenciamento de Campeonatos</span></header><div class="vis"><div class="box center" id="ldg">Carregando…</div></div>`;
  if(loading===key)return;loading=key;
  fn().then(()=>{loading=null;loaded=key;render();if(key==='admin')offerMigration()},
-  e=>{loading=null;if(!key.startsWith('s:')&&!sess)return render();const b=document.getElementById('ldg');
+  e=>{loading=null;if(!key.startsWith('s:')&&!sess)return render();
+   if(key==='admin'&&!e.status&&!e.noaccess&&offRestore()){loaded='admin';render();return toast('Sem internet: abrindo os dados guardados neste aparelho. O que você fizer será enviado quando a conexão voltar.')}const b=document.getElementById('ldg');
    if(b&&e.noaccess)b.innerHTML=`<b>Este login não tem acesso a este sistema.</b><span class="muted">${esc((sess&&sess.email)||'')} — o sistema já tem um usuário master. Peça a ele um nome de usuário e senha.</span><button class="pill" data-a="sair2">Sair</button>`;
    else if(b)b.innerHTML=`<b>Não foi possível carregar os dados.</b><span class="muted">${esc(errTxt(e))}</span><button class="pill" data-a="retry">Tentar novamente</button>`})}
-setInterval(async()=>{if(!CLOUD||document.hidden||ws.poll||loading||!loaded)return;ws.poll=true;const m0=mut;
+setInterval(async()=>{if(!CLOUD||document.hidden||ws.poll||loading||!loaded)return;if(ws.offline){if(!off.hold||Date.now()>off.hold)trySync();return}ws.pc=(ws.pc||0)+1;if(ws.pc%4===0&&loaded==='admin'&&!ws.dirty&&!ws.busy)offPersist();ws.poll=true;const m0=mut;
  try{if(loaded==='admin'&&sess){const PL=await rpc('gc_poll',{});
    if(!PL.ok){loaded=null;ws.poll=false;while(stack.length)closeModal(true);return render()}
    if(m0===mut&&loaded==='admin'){
@@ -612,13 +697,14 @@ function computeRanking(st){
  const srt=(a,b)=>b.total-a.total||b.v-a.v||b.pg-a.pg||a.j-b.j||a.name.localeCompare(b.name);
  const act=list.filter(r=>r.active).sort(srt),ina=list.filter(r=>!r.active).sort(srt);
  act.forEach((r,i)=>r.pos=i+1);ina.forEach(r=>r.pos=null);
- if(st.mode==='d'&&st.champ==='all'&&st.season!=='all'){let n=0;for(const r of act){if(n>=db.settings.slots)break;if(Object.keys(r.per).length>=db.settings.minT&&(r.j>0||r.tr>0)){r.q=true;n++}}}
+ if(st.mode==='d'&&st.champ==='all'&&st.season!=='all'){const E=act.filter(r=>Object.keys(r.per).length>=db.settings.minT&&(r.j>0||r.tr>0)),n=db.settings.slots,key=r=>[r.total,r.v,r.pg,r.j].join('|');
+  if(E.length<=n)E.forEach(r=>r.q=true);else{const k=key(E[n-1]);if(k===key(E[n]))E.forEach((r,i)=>{if(key(r)===k)r.qt=true;else if(i<n)r.q=true});else E.slice(0,n).forEach(r=>r.q=true)}}
  return{tours,list:st.inactive?[...act,...ina]:act}}
 function rankHTML(st){const{tours,list}=computeRanking(st),q=norm(st.q),rows=list.filter(r=>!q||norm(r.name).includes(q));
  const d=`data-mode="${st.mode}" data-season="${st.season}"`;
  if(!rows.length)return`<p class="empty">${st.mode==='d'?'Nenhuma dupla encontrada. Forme duplas com dois jogadores em Cadastro de equipes.':'Nenhum jogador encontrado.'}</p>`;
  return`<div class="tw"><table class="rk"><thead><tr><th>Pos.</th><th class="l">${st.mode==='d'?'Dupla':'Jogador'}</th><th>Partidas</th><th>Vitórias</th><th>Derrotas</th><th>Pontos ganhos</th><th>Pontos sofridos</th><th>Saldo</th>${tours.map(c=>`<th>${esc(c.name)}</th>`).join('')}<th>Total de pontos</th></tr></thead><tbody>${
- rows.map(r=>`<tr><td>${r.pos?r.pos+'º':'—'}</td><td class="l"><button class="name" data-a="rkTot" data-id="${r.id}" data-champ="${st.champ}" ${d} title="Ver o histórico de torneios">${esc(r.name)}</button> ${r.q?'<span class="tag ok">Classificada</span>':''}${r.active?'':'<span class="tag off">Inativa</span>'}</td><td>${r.j}</td><td>${r.v}</td><td>${r.d}</td><td>${r.pg}</td><td>${r.pc}</td><td>${r.dp}</td>${
+ rows.map(r=>`<tr class="${r.q?'q':r.qt?'qt':''}"><td><span class="posb blue">${r.pos?r.pos+'º':'—'}</span></td><td class="l"><button class="name" data-a="rkTot" data-id="${r.id}" data-champ="${st.champ}" ${d} title="Ver o histórico de torneios">${esc(r.name)}</button> ${r.q?'<span class="tag ok">Classificada</span>':''}${r.qt?'<span class="tag pend" title="Empate na última vaga: a definição depende do desempate">Empate na vaga</span>':''}${r.active?'':'<span class="tag off">Inativa</span>'}</td><td>${r.j}</td><td>${r.v}</td><td>${r.d}</td><td>${r.pg}</td><td>${r.pc}</td><td>${r.dp}</td>${
   tours.map(c=>`<td>${r.per[c.id]?`<button class="cellb" data-a="rkCell" data-id="${r.id}" data-cid="${c.id}" ${d}>${r.per[c.id].pts}</button>`:'—'}</td>`).join('')
  }<td class="tot"><button class="cellb" data-a="rkTot" data-id="${r.id}" data-champ="${st.champ}" ${d}>${fmt(r.total)}</button></td></tr>`).join('')}</tbody></table></div>`}
 
@@ -664,24 +750,25 @@ const vLogin=()=>`<header class="top">${I.trophy}<span>Gerenciamento de Campeona
 let cur={};
 function render(){const root=document.getElementById('root'),h=location.hash.replace(/^#\/?/,'').split('/');
  const sc=document.querySelector('.main')?.scrollTop||0,af=document.activeElement,fk=af&&af.dataset&&af.dataset.i&&af.closest('#root')?{k:af.dataset.i,p:af.selectionStart}:null;visitor=false;cur={};
- if(h[0]==='s'){visitor=true;if(CLOUD&&loaded!=='s:'+h[1])return ensure('s:'+h[1],()=>loadShared(h[1]));root.innerHTML=vVisitor(h[1]);return}
+ if(h[0]==='s'){visitor=true;if(CLOUD&&loaded!=='s:'+h[1])return ensure('s:'+h[1],()=>loadShared(h[1]));root.innerHTML=h[2]==='telao'&&db.champs[0]?vTelao(db.champs[0],true):vVisitor(h[1]);return}
  if(!authed()){if(CLOUD)me={role:null,caixa:false};root.innerHTML=vLogin();const u=root.querySelector('[name=u]');u&&u.focus();return}
  if(CLOUD&&loaded!=='admin')return ensure('admin',loadCloud);
  let side,main;
  if(h[0]==='c'){const c=C(h[1]);if(!c){location.hash='#/campeonatos';return}
+  if(h[2]==='telao'){root.innerHTML=vTelao(c,false);return}
   const tab=['inicio','classificacao','config'].includes(h[2])&&(h[2]!=='config'||isMaster())?h[2]:'inicio';cur.c=c;
   const it=(k,l,i)=>`<a href="#/c/${c.id}/${k}" class="${tab===k?'on':''}">${i}${l}</a>`;
   side=`<a href="#/campeonatos">${I.back}Meus campeonatos</a><div class="ctitle" style="padding-top:14px">${I.trophy}<span>${esc(c.name)}</span></div>${it('inicio','Início',I.home)}${it('classificacao','Classificação',I.list)}${isMaster()?it('config','Configurações',I.gear):''}
    <div class="foot"><span>${I.user}${esc(userName())}</span><button data-a="sair">${I.logout}Sair</button></div>`;
   const names={inicio:'Início',classificacao:'Classificação',config:'Configurações'};
-  main=`<div class="crumb"><a href="#/campeonatos">Meus Campeonatos</a>/<span>${esc(c.name)}</span>/<b>${names[tab]}</b><span class="sp"></span><button class="pill ghost" data-a="share" ${canEdit()?'':'hidden'} style="display:inline-flex;gap:6px;align-items:center">${I.share}Compartilhar</button></div>`+
+  main=`<div class="crumb"><a href="#/campeonatos">Meus Campeonatos</a>/<span>${esc(c.name)}</span>/<b>${names[tab]}</b><span class="sp"></span><button class="pill ghost" data-a="tvOpen" style="display:inline-flex;gap:6px;align-items:center;margin-right:8px" title="Exibir em uma TV ou projetor">${I.table}Telão</button><button class="pill ghost" data-a="share" ${canEdit()?'':'hidden'} style="display:inline-flex;gap:6px;align-items:center">${I.share}Compartilhar</button></div>`+
    ({inicio:vHome,classificacao:vClass,config:vConfig})[tab](c)}
- else{const p=['campeonatos','jogadores','equipes','ranking','caixa','usuario'].includes(h[0])&&(h[0]!=='caixa'||canCash())?h[0]:'campeonatos';
+ else{const p=['campeonatos','jogadores','equipes','ranking','caixa','usuario'].includes(h[0])&&(h[0]!=='caixa'||canCash())&&(!['jogadores','equipes'].includes(h[0])||canEdit())?h[0]:'campeonatos';
   const it=(k,l,i)=>`<a href="#/${k}" class="${p===k?'on':''}">${i}${l}</a>`;
-  side=`<h4>Organizar campeonatos</h4>${it('campeonatos','Meus campeonatos',I.trophy)}${it('jogadores','Cadastro de jogadores',I.user)}${it('equipes','Cadastro de equipes',I.users)}${it('ranking','Ranking Geral',I.chart)}${canCash()?it('caixa','Caixa',I.cash):''}<h4>Usuário</h4>${it('usuario','Meu usuário',I.shield)}<div class="foot"><span>${I.user}${esc(userName())}</span><button data-a="sair">${I.logout}Sair</button></div>`;
+  side=`<h4>${canEdit()?'Organizar campeonatos':'Campeonatos'}</h4>${it('campeonatos','Meus campeonatos',I.trophy)}${canEdit()?it('jogadores','Cadastro de jogadores',I.user)+it('equipes','Cadastro de equipes',I.users):''}${it('ranking','Ranking Geral',I.chart)}${canCash()?it('caixa','Caixa',I.cash):''}<h4>Usuário</h4>${it('usuario','Meu usuário',I.shield)}<div class="foot"><span>${I.user}${esc(userName())}</span><button data-a="sair">${I.logout}Sair</button></div>`;
   main=({campeonatos:vChamps,jogadores:vPlayers,equipes:vTeams,ranking:vRank,caixa:vCaixa,usuario:vUser})[p]()}
  root.innerHTML=`<header class="top app"><button class="burger" data-a="nav" aria-label="Abrir menu">${I.menu}</button><span id="sync" class="syncv" aria-live="polite" style="margin-left:auto;font-size:12px;font-weight:400;opacity:.85">${syncTxt()}</span></header>
- <div class="wrap"><div class="panel"><nav class="side" aria-label="Menu">${side}<div class="syncv sidesync" aria-live="polite">${syncTxt()}</div></nav><div class="scrim" data-a="nav"></div><main class="main">${main}</main></div></div>`;
+ <div class="wrap"><div class="panel"><nav class="side" aria-label="Menu">${side}<div class="syncv sidesync" aria-live="polite">${syncTxt()}</div></nav><div class="scrim" data-a="nav"></div><main class="main">${ws.offline&&off?offBar():''}${main}</main></div></div>`;
  document.querySelector('.main').scrollTop=sc;
  if(fk){const n=root.querySelector('[data-i="'+fk.k+'"]');if(n){n.focus();try{n.setSelectionRange(fk.p,fk.p)}catch(e){}}}}
 
@@ -693,26 +780,26 @@ function vChamps(){const l=[...db.champs].sort((a,b)=>b.createdAt-a.createdAt);
   :'<p class="empty">Nenhum campeonato cadastrado.</p>'}<button class="fab" data-a="newC" ${canEdit()?'':'hidden'} aria-label="Novo campeonato" title="Novo campeonato">${I.plus}</button>`}
 const WARN='<p class="warn">Atenção. Para alterar equipes que já estão em campeonatos é necessário alterar a equipe nas configurações do campeonato.</p>';
 function vPlayers(){const dir=ui.pSort,l=[...db.players].sort((a,b)=>cmpN(a.name,b.name)*(dir==='za'?-1:1));
- return`<div class="tools"><button class="ibtn" data-a="pSort" title="Alternar ordenação" aria-label="Ordenação ${dir==='za'?'Z a A':'A a Z'}">${dir==='za'?'Z–A ↑':'A–Z ↓'}</button><button class="ibtn" data-a="pDel" ${canEdit()?'':'hidden'} title="Excluir selecionado" aria-label="Excluir jogador selecionado">${I.trash}</button></div>
+ return`<div class="tools"><button class="ibtn" data-a="pSort" title="Alternar ordenação" aria-label="Ordenação ${dir==='za'?'Z a A':'A a Z'}">${dir==='za'?'Z–A ↑':'A–Z ↓'}</button></div>
  <form data-f="pAdd" ${canEdit()?'':'hidden'}><div class="addrow"><input name="n" id="pName" placeholder="Nome do jogador" maxlength="60" autocomplete="off" aria-label="Nome do jogador"><button class="pill">Adicionar</button></div><p class="err" role="alert"></p></form>
- <div class="total">Total: ${db.players.length}</div>
- <ul class="rows">${l.map(p=>`<li class="${ui.selP.has(p.id)?'sel':''}"><input type="checkbox" data-a="pSel" data-id="${p.id}" ${ui.selP.has(p.id)?'checked':''} aria-label="Selecionar ${esc(p.name)}"><button class="name" data-a="pEdit" data-id="${p.id}" title="Clique para editar">${esc(p.name)}</button>${p.pending?`<span class="tag live" title="Pontos a transferir para a próxima dupla">+${fmt(p.pending.points)} pts a transferir</span>`:''}</li>`).join('')}</ul>${WARN}`}
+ ${selBar('p',l.map(p=>p.id),ui.selP,false,'Excluir selecionados')}
+ <ul class="rows cols3">${l.map((p,i)=>`<li class="${ui.selP.has(p.id)?'sel':''}"><input type="checkbox" data-a="pSel" data-id="${p.id}" ${ui.selP.has(p.id)?'checked':''} aria-label="Selecionar ${esc(p.name)}"><span class="posb blue">${i+1}</span><button class="name" data-a="pEdit" data-id="${p.id}" title="Clique para editar">${esc(p.name)}</button>${p.pending?`<span class="tag live" title="Pontos a transferir para a próxima dupla">+${fmt(p.pending.points)} pts a transferir</span>`:''}</li>`).join('')}</ul>${WARN}`}
 function vTeams(){const free=db.players.filter(p=>!db.teams.some(t=>t.active&&t.players.includes(p.id))).sort((a,b)=>cmpN(a.name,b.name));
  const l=[...db.teams].sort((a,b)=>(b.active-a.active)||cmpN(a.name,b.name)),ed=canEdit();
  const pick=ui.pick=(ui.pick||[]).filter(id=>free.some(p=>p.id===id));
- return`<div class="tools"><button class="ibtn" data-a="tDel" ${ed?'':'hidden'} title="Excluir selecionada" aria-label="Excluir equipe selecionada">${I.trash}</button></div>
+ return`
  <h2>Formar dupla</h2><p class="note" style="margin:0">Jogadores disponíveis (${free.length}). Selecione 2 para formar a dupla; o nome da dupla será o nome dos dois jogadores.</p>
  <div class="pick">${free.map(p=>`<button class="pk ${pick.includes(p.id)?'on':''}" data-a="tPick" data-id="${p.id}" aria-pressed="${pick.includes(p.id)}">${esc(p.name)}${p.pending?` <small>(+${fmt(p.pending.points)} pts)</small>`:''}</button>`).join('')||`<span class="muted">${db.players.length?'Todos os jogadores já estão em duplas ativas.':'Nenhum jogador cadastrado. Cadastre em Cadastro de jogadores.'}</span>`}</div>
  <div class="acts" style="justify-content:flex-start;margin-top:4px;align-items:center" ${ed?'':'hidden'}><button class="pill" data-a="tForm" id="tForm" ${pick.length===2?'':'disabled'}>Formar dupla</button><span class="muted">${pick.length===2?esc(pick.map(id=>P(id).name).join(' / ')):pick.length+' de 2 selecionados'}</span></div>
- <div class="total" style="margin-top:18px">Total: ${db.teams.length}</div>
- <ul class="rows">${l.map(t=>`<li class="${ui.selT.has(t.id)?'sel':''}"><input type="checkbox" data-a="tSel" data-id="${t.id}" ${ui.selT.has(t.id)?'checked':''} aria-label="Selecionar ${esc(t.name)}">
+ <h2 style="margin-top:20px">Equipes cadastradas</h2>${selBar('t',l.map(t=>t.id),ui.selT,true,'Excluir selecionadas')}
+ <ul class="rows cols3">${l.map((t,i)=>`<li class="${ui.selT.has(t.id)?'sel':''}"><input type="checkbox" data-a="tSel" data-id="${t.id}" ${ui.selT.has(t.id)?'checked':''} aria-label="Selecionar ${esc(t.name)}"><span class="posb blue">${i+1}</span>
   <button class="name" data-a="tEdit" data-id="${t.id}" title="Clique para editar">${esc(t.name)}</button>
-  <span class="tag ${!t.active?'off':t.players.length===2?'ok':'live'}">${!t.active?'Inativa':t.players.length===2?'Ativa':'Incompleta'}</span>
+  <span class="tag ${!t.active?'off':t.players.length===2?'ok':'live'}">${!t.active?'Encerrada':t.players.length===2?'Ativa':'Incompleta'}</span>
   ${t.auto&&t.players.length===2?'':t.players.map(id=>`<span class="chip">${esc(P(id)?.name)}${t.active&&t.players.length<2?`<button data-a="tUnlink" data-id="${t.id}" data-p="${id}" aria-label="Desvincular ${esc(P(id)?.name)}">${I.x}</button>`:''}</span>`).join('')}
   ${t.active&&t.players.length<2?`<select class="sm" data-c="tLink" data-id="${t.id}" aria-label="Vincular jogador"><option value="">+ Vincular jogador…</option>${free.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select>`:''}
   ${(t.transfers||[]).length?`<span class="tag" title="Pontos recebidos por transferência">+${fmt(t.transfers.reduce((a,x)=>a+x.points,0))} transferidos</span>`:''}
-  ${ed&&t.active&&t.players.length===2?`<button class="pill ghost sm" style="margin-left:auto" data-a="tEnd" data-id="${t.id}">Encerrar dupla</button>`:''}</li>`).join('')}</ul>
- <p class="note">Para desfazer uma dupla sem partidas, marque-a e use a lixeira. Dupla com partidas é encerrada pelo botão “Encerrar dupla”.</p>${WARN}`}
+  ${ed&&t.active?`<span class="tacts"><button class="pill ghost sm" data-a="tUndo" data-id="${t.id}" title="Corrigir uma dupla formada por engano, sem mexer em pontos">Desfazer dupla</button>${t.players.length===2?`<button class="pill ghost sm" data-a="tEnd" data-id="${t.id}" title="Fim real da parceria: aplica a transferência de pontos">Encerrar dupla</button>`:''}</span>`:''}</li>`).join('')}</ul>
+ <p class="note"><b>Desfazer dupla</b>: corrige uma formação feita por engano, sem transferir nem descontar pontos. <b>Encerrar dupla</b>: fim real da parceria, com a transferência de ${db.settings.pct}% dos pontos para cada integrante. <b>Excluir selecionadas</b>: remove equipes sem vínculos; os jogadores continuam cadastrados e nenhum ponto é movimentado.</p>${WARN}`}
 function seasons(){return[...new Set([String(new Date().getFullYear()),...db.champs.map(c=>String(c.season))])].sort().reverse()}
 function vRank(){const s=ui.rk;if(s.champ!=='all'&&!db.champs.some(c=>c.id===s.champ&&(s.season==='all'||String(c.season)===s.season)))s.champ='all';
  const ts=db.champs.filter(c=>!c.isFinal&&(s.season==='all'||String(c.season)===s.season)).sort((a,b)=>when(a)-when(b));
@@ -800,6 +887,9 @@ function phaseCompletion(ph,c=db.champs.find(x=>x.phases.includes(ph))){const is
  if(ph.expectedPairs?.length){const expected={};ph.expectedPairs.forEach(p=>{const k=[...p].sort().join('::');expected[k]=(expected[k]||0)+1});for(const[k,n]of Object.entries(expected))if((pairCount[k]||0)<n)issues.push('A programação não contém todos os confrontos previstos pela geração confirmada.')}
  if(ph.type==='elim'&&rounds.length){const last=rounds[rounds.length-1];if(last.matches.filter(m=>!m.third).length!==1)issues.push('A fase mata-mata precisa ter uma única partida final.');const fm=finalOf(ph),tm=thirdOf(ph);if(fm&&mStatus(fm)!=='done')issues.push('Falta encerrar a Final.');if(tm&&mStatus(tm)!=='done')issues.push('Falta encerrar a Disputa de 3º lugar.');if((last.byes||[]).length)issues.push('A final da fase mata-mata não pode terminar com avanço direto.')}
  if(!ph.criteria?.length||new Set(ph.criteria).size!==ph.criteria.length||ph.criteria.some(k=>!CRIT[k]))issues.push('Os critérios de classificação estão inválidos.');let q=null;if(c){const i=c.phases.indexOf(ph),next=c.phases[i+1];if(next){q=phaseQualifiers(ph);issues.push(...q.errors);ties.push(...q.ties)}}if(c&&c.phases.indexOf(ph)===c.phases.length-1){const f=phaseFinalInfo(ph);if(f.error)issues.push(f.error);ties.push(...(f.ties||[]))}return{valid:issues.length===0&&ties.length===0,scheduleValid:issues.length===0,issues:[...new Set(issues)],ties,qualifiers:q?.ids||[]}}
+const logAudit=(operation,details={})=>{db.audit.push({id:uid(),at:Date.now(),by:userName(),operation,...details});if(db.audit.length>400)db.audit=db.audit.slice(-400)};
+// Barra de seleção usada nos cadastros de jogadores e de equipes (selecionar todos, contador e exclusão em lote).
+const selBar=(k,ids,set,fem,btn)=>{const n=ids.filter(id=>set.has(id)).length;return`<div class="selbar"><span class="total" style="margin:0">Total: ${ids.length}</span>${canEdit()?`<label class="chk" style="margin:0;align-items:center"><input type="checkbox" data-a="${k}All" ${ids.length&&n===ids.length?'checked':''} ${ids.length?'':'disabled'}><span>Selecionar ${fem?'todas':'todos'}</span></label><span class="muted" id="${k}Cnt">${n} selecionad${fem?'a':'o'}${n===1?'':'s'}</span><span style="flex:1"></span><button class="pill red sm" data-a="${k}Del" ${n?'':'disabled'}>${btn}</button>`:''}</div>`};
 function phaseAudit(c,ph,operation,details={}){const e={id:uid(),at:Date.now(),by:userName(),operation,champId:c.id,champName:c.name,phaseId:ph.id,phaseName:ph.name,...details};db.audit.push(e);if(db.audit.length>400)db.audit=db.audit.slice(-400);ph.audit=arr(ph.audit);ph.audit.push({id:e.id,at:e.at,by:e.by,operation,summary:details.summary||''});if(ph.audit.length>100)ph.audit=ph.audit.slice(-100);return e}
 function dependencySummary(ph){const ms=phMatches(ph);return{phaseId:ph.id,phaseName:ph.name,participants:[...ph.teamIds],status:ph.status,rounds:ph.rounds.map(r=>({id:r.id,title:r.title,byes:[...(r.byes||[])],rest:[...(r.rest||[])],matches:r.matches.map(m=>({...m,sets:[...(m.sets||[])],history:arr(m.history).map(h=>({...h}))}))})),groups:ph.groups.map(g=>({...g,teamIds:[...g.teamIds]})),expectedPairs:ph.expectedPairs||[],results:ms.filter(hasConfirmedResult).length}}
 function clearDependentPhases(c,fromIndex,qualified){const archived=[];for(let i=fromIndex+1;i<c.phases.length;i++){const p=c.phases[i];archived.push(dependencySummary(p));p.teamIds=i===fromIndex+1?[...qualified]:[];p.groups.forEach(g=>g.teamIds=[]);p.rounds=[];p.expectedPairs=[];p.status='prep';p.origin={};p.seeds=[];p.drawn=false;delete p.finalizedSnapshot;delete p.promptedSig;delete p.finalDecision;p.qualifierDecisions={}}return archived}
@@ -808,8 +898,8 @@ const qualTxt=ph=>{const a=ph.advance||{};if(a.mode==='total'||!ph.groups.length
 
 // Zona de classificação: sempre a mesma função da finalização (phaseQualifiers); vale igual em "Por grupo" e "Geral".
 function qualState(ph){const none={ok:new Set(),pend:new Set(),on:false};if(!hasNextPhase(ph)||!phMatches(ph).some(m=>mStatus(m)==='done'))return none;const q=phaseQualifiers(ph);if(q.errors.length)return none;return{ok:new Set(q.ids),pend:new Set(q.ties.flatMap(t=>t.candidates)),on:true}}
-function standHTML(ph){const cols=ph.cols.filter(x=>x.on),all=ui.cls==='all'||!ph.groups.length,Q=qualState(ph);
- return standData(ph,all).map(s=>`<div class="gcard">${s.title?`<h3 class="gt">${esc(s.title)}</h3>`:''}<div class="tw"><table class="cls"><thead><tr><th>Pos.</th><th class="l">Dupla</th>${cols.map(x=>`<th title="${COL[x.k][0]}">${COL[x.k][1]}</th>`).join('')}</tr></thead><tbody>${
+function standHTML(ph,pick){const cols=ph.cols.filter(x=>x.on),all=ui.cls==='all'||!ph.groups.length,Q=qualState(ph);
+ return standData(ph,all).filter((s,i)=>!pick||pick.includes(i)).map(s=>`<div class="gcard">${s.title?`<h3 class="gt">${esc(s.title)}</h3>`:''}<div class="tw"><table class="cls"><thead><tr><th>Pos.</th><th class="l">Dupla</th>${cols.map(x=>`<th title="${COL[x.k][0]}">${COL[x.k][1]}</th>`).join('')}</tr></thead><tbody>${
   s.rows.length?s.rows.map(r=>{const k=Q.ok.has(r.id)?'q':Q.pend.has(r.id)?'qt':'';return`<tr class="${k}"><td class="${k}" title="${k==='q'?'Classificada para a próxima fase':k==='qt'?'Empate na última vaga: aguarda decisão':r.tie?'Empatadas em todos os critérios':''}"><span class="posb">${r.pos}º${r.tie?'<small>=</small>':''}</span></td><td class="l" style="white-space:normal"><button class="name" data-a="tGames" data-id="${r.id}" data-ph="${ph.id}" title="Ver os confrontos desta dupla">${esc(r.name)}</button></td>${cols.map(x=>`<td class="${x.k==='pts'?'tot':''}">${r.s[x.k]}</td>`).join('')}</tr>`}).join(''):`<tr><td colspan="${cols.length+2}" class="muted">Sem duplas neste grupo.</td></tr>`}</tbody></table></div></div>`).join('')+(Q.pend.size?'<p class="note" style="margin:0 0 10px"><b>Posição em amarelo:</b> empate na última vaga de classificação. A definição só acontece na finalização da fase, com decisão registrada.</p>':'')}
 function bracketHTML(ph,ro){if(!ph.rounds.length)return'<div class="center"><span class="muted">O chaveamento aparece aqui depois de gerar as partidas.</span></div>';
  const R=ph.rounds.map(r=>({r,items:(arr(r.slots).length?r.slots:[...(r.byes||[]).map(t=>({t})),...r.matches.map(m=>({m:m.id}))]).map(s=>({s,m:s.m?r.matches.find(x=>x.id===s.m):null})).filter(it=>!it.s.m||it.m)}));
@@ -828,8 +918,8 @@ function bracketHTML(ph,ro){if(!ph.rounds.length)return'<div class="center"><spa
  const last=ph.rounds[ph.rounds.length-1],fm=finalOf(ph),fi=fm&&!(ro&&last.hidden)?phaseFinalInfo(ph):null,ch=fm&&winner(fm)&&!(ro&&last.hidden)?winner(fm):null;
  return'<div class="bracket" tabindex="0" aria-label="Chaveamento do mata-mata"><div class="br-in">'+cols+(ch?'<div class="br-col"><div class="br-title">Classificação final</div><div class="br-list"><div class="br-m champ" data-k="champ" data-f="m'+fm.id+'">'+[['1º',ch],['2º',ch===fm.a?fm.b:fm.a],...(tm&&winner(tm)?[['3º',winner(tm)],['4º',winner(tm)===tm.a?tm.b:tm.a]]:tm?[['3º',null],['4º',null]]:[])].map(([p,id],i)=>'<div class="br-t'+(i?'':' win')+'"><span class="posb">'+p+'</span><span class="br-n">'+name(id)+'</span>'+(i?'':'<span style="color:var(--g1);display:flex">'+I.trophy+'</span>')+'</div>').join('')+'</div></div></div>':'')+'<svg class="br-svg" aria-hidden="true"></svg></div></div>'}
 // Liga cada bloco aos blocos de onde vêm as duplas (medido na tela, por isso acompanha qualquer tamanho).
-function drawBracket(){document.querySelectorAll('.br-in').forEach(inn=>{const svg=inn.querySelector('.br-svg');if(!svg)return;const B=inn.getBoundingClientRect(),W=inn.scrollWidth,H=inn.scrollHeight;svg.setAttribute('width',W);svg.setAttribute('height',H);svg.setAttribute('viewBox','0 0 '+W+' '+H);let d='';const by={};inn.querySelectorAll('[data-k]').forEach(e=>by[e.dataset.k]=e);
-  inn.querySelectorAll('[data-f]').forEach(e=>{if(!e.dataset.f)return;const t=e.getBoundingClientRect(),x2=t.left-B.left,y2=t.top-B.top+t.height/2;e.dataset.f.split(' ').forEach(k=>{const s=by[k];if(!s)return;const q=s.getBoundingClientRect(),x1=q.right-B.left,y1=q.top-B.top+q.height/2,mx=Math.round((x1+x2)/2);d+='<path d="M'+Math.round(x1)+' '+Math.round(y1)+'H'+mx+'V'+Math.round(y2)+'H'+Math.round(x2)+'" fill="none" stroke="'+(s.classList.contains('done')?'#2ECD71':'#C3CEC8')+'" stroke-width="2"'+(e.dataset.dash?' stroke-dasharray="5 5"':'')+'/>'})});svg.innerHTML=d})}
+function drawBracket(){document.querySelectorAll('.br-in').forEach(inn=>{const svg=inn.querySelector('.br-svg');if(!svg)return;const B=inn.getBoundingClientRect(),K=(inn.offsetWidth&&B.width/inn.offsetWidth)||1,W=inn.scrollWidth,H=inn.scrollHeight;svg.setAttribute('width',W);svg.setAttribute('height',H);svg.setAttribute('viewBox','0 0 '+W+' '+H);let d='';const by={};inn.querySelectorAll('[data-k]').forEach(e=>by[e.dataset.k]=e);
+  inn.querySelectorAll('[data-f]').forEach(e=>{if(!e.dataset.f)return;const t=e.getBoundingClientRect(),x2=(t.left-B.left)/K,y2=(t.top-B.top+t.height/2)/K;e.dataset.f.split(' ').forEach(k=>{const s=by[k];if(!s)return;const q=s.getBoundingClientRect(),x1=(q.right-B.left)/K,y1=(q.top-B.top+q.height/2)/K,mx=Math.round((x1+x2)/2);d+='<path d="M'+Math.round(x1)+' '+Math.round(y1)+'H'+mx+'V'+Math.round(y2)+'H'+Math.round(x2)+'" fill="none" stroke="'+(s.classList.contains('done')?'#2ECD71':'#C3CEC8')+'" stroke-width="2"'+(e.dataset.dash?' stroke-dasharray="5 5"':'')+'/>'})});svg.innerHTML=d})}
 function classBlock(c,ph,manage){if(ph.type==='elim')return '<div class="cls-top"><div class="cls-ctl"><select data-c="selPhase" aria-label="Fase">'+c.phases.map(p=>'<option value="'+p.id+'" '+(p===ph?'selected':'')+'>'+esc(p.name)+' — '+TYPE[p.type]+'</option>').join('')+'</select><span class="muted" style="font-size:13px">Chaveamento · '+BOT[ph.bo]+'</span></div>'+(manage?'<div class="panel-plus-row"><button class="panel-plus" data-a="cMenu" aria-label="Gerenciar classificação" title="Gerenciar classificação">+</button></div>':'')+'</div><section class="cls-body" aria-label="Chaveamento">'+(ph.teamIds.length?bracketHTML(ph,!manage&&visitor):'<div class="center"><span class="muted">Ainda não há duplas.</span>'+(manage?'<button class="pill dark big" data-a="cDuplas">ADICIONAR DUPLAS</button>':'')+'</div>')+'</section>';const grp=ph.groups.length>0,all=ui.cls==='all'||!grp,Q=qualState(ph);
  return '<div class="cls-top"><div class="cls-ctl"><select data-c="selPhase" aria-label="Fase">'+c.phases.map(p=>'<option value="'+p.id+'" '+(p===ph?'selected':'')+'>'+esc(p.name)+' — '+TYPE[p.type]+'</option>').join('')+'</select><span class="seg" role="group" aria-label="Visualização"><button class="'+(all?'':'on')+'" data-a="clsView" data-v="g" '+(grp?'':'disabled title="Esta fase não tem grupos"')+'>Por grupo</button><button class="'+(all?'on':'')+'" data-a="clsView" data-v="all">Geral</button></span></div>'+
   (manage?'<div class="panel-plus-row"><button class="panel-plus" data-a="cMenu" aria-label="Gerenciar classificação" title="Gerenciar classificação">+</button></div>':'')+
@@ -885,7 +975,7 @@ function vConfig(c){const ph=getPhase(c);cur.ph=ph;const pd=pendings(c),ts=champ
 
 /* ===================== Acesso pelo link ===================== */
 function vVisitor(tk){const c=tk&&db.champs.find(x=>x.shareToken===tk);
- const top=`<header class="top">${I.trophy}<span>${c?esc(c.name):'Gerenciamento de Campeonatos'}</span></header>`;
+ const top=`<header class="top">${I.trophy}<span>${c?esc(c.name):'Gerenciamento de Campeonatos'}</span>${c?'<button class="pill sm" data-a="tvOpen" style="margin-left:auto">Telão</button>':''}</header>`;
  if(!c)return top+`<div class="vis"><div class="box center">${I.alert}<b>Link inválido ou expirado.</b><span class="muted">Peça um novo link ao organizador do campeonato.</span></div></div>`;
  cur.c=c;const ph=getPhase(c);cur.ph=ph;const v=ui.v;
  const tab=(k,l)=>`<button class="${v.tab===k?'on':''}" data-a="vTab" data-v="${k}">${l}</button>`;
@@ -896,7 +986,7 @@ function vVisitor(tk){const c=tk&&db.champs.find(x=>x.shareToken===tk);
 
 /* ===================== Ações ===================== */
 const A={},F={};
-const VIS=new Set(['tGames','clsView','retry','closeM','vTab','vMode','mOpen','rkCell','rkTot','selPhase','selRound']);
+const VIS=new Set(['tvOpen','tvExit','tvNext','tvPause','tGames','clsView','retry','closeM','vTab','vMode','mOpen','rkCell','rkTot','selPhase','selRound']);
 A.closeM=()=>closeModal();
 A.nav=()=>document.body.classList.toggle('nav');
 A.retry=()=>render();
@@ -919,16 +1009,19 @@ F.pAdd=f=>{const n=clean(f.n.value);if(!n)return setErr(f,'Informe o nome do jog
  if(dupP(n))return setErr(f,'Este jogador já está cadastrado. Verifique a lista antes de realizar uma nova inclusão.');
  db.players.push({id:uid(),name:n,pending:null});save();render();document.getElementById('pName').focus()};
 A.pSort=()=>{ui.pSort=ui.pSort==='az'?'za':'az';render()};
-A.pSel=(d,el)=>{el.checked?ui.selP.add(d.id):ui.selP.delete(d.id);el.closest('li').classList.toggle('sel',el.checked)};
+A.pSel=(d,el)=>{el.checked?ui.selP.add(d.id):ui.selP.delete(d.id);render()};
 A.pEdit=d=>{const p=P(d.id);modal(`<form data-f="pEditSave">${mHead('Editar jogador')}<input type="hidden" name="id" value="${p.id}"><label class="field"><span>Nome do jogador</span><input class="inp" name="n" value="${esc(p.name)}" maxlength="60" autofocus></label><p class="err" role="alert"></p><div class="acts"><button type="button" class="pill ghost" data-a="closeM">Cancelar</button><button class="pill">Salvar alterações</button></div></form>`)};
 F.pEditSave=f=>{const p=P(f.id.value),n=clean(f.n.value);if(!n)return setErr(f,'O nome não pode ficar vazio.');
  if(dupP(n,p.id))return setErr(f,'Este jogador já está cadastrado. Verifique a lista antes de realizar uma nova inclusão.');
  p.name=n;db.teams.forEach(t=>{if(t.auto&&t.players.includes(p.id))t.name=autoName(t,t.id)});save();closeModal(true);render();toast('Nome do jogador atualizado com sucesso.')};
-A.pDel=async()=>{const ids=[...ui.selP].filter(P);if(!ids.length)return toast('Selecione um jogador para excluir.','err');
- const linked=ids.filter(id=>db.teams.some(t=>t.players.includes(id)));
- if(linked.length)return alertBox('Não é possível excluir o jogador.',`${linked.length>1||ids.length>1?'<b>'+linked.map(id=>esc(P(id).name)).join(', ')+'</b>: ':''}O jogador está vinculado a uma equipe. Para excluí-lo, acesse Cadastro de equipes e remova o vínculo com a equipe. Após a desvinculação, retorne ao Cadastro de jogadores para realizar a exclusão.`);
- if(!await confirmBox({title:'Excluir jogador',msg:(ids.length>1?`<b>${ids.length} jogadores selecionados.</b> `:`<b>${esc(P(ids[0]).name)}</b> — `)+'Tem certeza de que deseja excluir este jogador? Esta ação não poderá ser desfeita.',ok:'Excluir jogador',danger:true}))return;
- db.players=db.players.filter(p=>!ids.includes(p.id));ui.selP.clear();save();render()};
+A.pAll=(d,el)=>{ui.selP=new Set(el.checked?db.players.map(p=>p.id):[]);render()};
+A.pDel=async()=>{const ids=[...ui.selP].filter(P);if(!ids.length)return toast('Selecione ao menos um jogador.','err');
+ if(!await confirmBox({title:'Excluir '+ids.length+' jogador'+(ids.length>1?'es selecionados':' selecionado')+'?',msg:'Esta operação removerá os jogadores selecionados que não possuem vínculos protegidos. Deseja continuar?',ok:'Sim, excluir',danger:true}))return;
+ const blocked=[],okIds=[];ids.forEach(id=>{const ts=db.teams.filter(t=>t.players.includes(id));if(!ts.length)return okIds.push(id);const t=ts.find(x=>teamHasMatches(x.id))||ts.find(x=>teamInUse(x.id))||ts[0];
+  blocked.push('<li><b>'+esc(P(id).name)+'</b>: '+(teamHasMatches(t.id)?'tem partidas registradas com a dupla '+esc(dl(t))+' (histórico preservado)':teamInUse(t.id)?'a dupla '+esc(dl(t))+' está inscrita em campeonato':'faz parte da dupla '+esc(dl(t))+' — use “Desfazer dupla” antes')+'.</li>')});
+ if(okIds.length){const names=okIds.map(id=>P(id).name);db.players=db.players.filter(p=>!okIds.includes(p.id));logAudit('delete-players',{summary:okIds.length+' jogador(es) excluído(s).',players:names})}
+ ui.selP.clear();save();render();
+ if(blocked.length)alertBox(okIds.length?okIds.length+' excluído(s) e '+blocked.length+' mantido(s)':'Nenhum jogador pôde ser excluído','Jogadores com vínculos protegidos não foram excluídos:<ul>'+blocked.join('')+'</ul>');else toast(okIds.length+' jogador(es) excluído(s).')};
 
 /* ----- equipes / duplas ----- */
 const dupT=(name,except)=>db.teams.some(t=>t.id!==except&&norm(t.name)===norm(name));
@@ -938,7 +1031,7 @@ A.tForm=()=>{const ids=(ui.pick||[]).filter(id=>P(id)&&!db.teams.some(t=>t.activ
  const t={id:uid(),name:'',auto:true,players:ids,active:true,createdAt:Date.now(),transfers:[]};t.name=autoName(t);
  ids.forEach(id=>{const p=P(id);if(p.pending){t.transfers.push({playerId:id,...p.pending});p.pending=null}});
  db.teams.push(t);ui.pick=[];save();render();toast(t.transfers.length?`Dupla formada com ${fmt(t.transfers.reduce((a,x)=>a+x.points,0))} pontos transferidos.`:'Dupla formada: '+t.name)};
-A.tSel=(d,el)=>{el.checked?ui.selT.add(d.id):ui.selT.delete(d.id);el.closest('li').classList.toggle('sel',el.checked)};
+A.tSel=(d,el)=>{el.checked?ui.selT.add(d.id):ui.selT.delete(d.id);render()};
 A.tEdit=d=>{const t=T(d.id);modal(`<form data-f="tEditSave">${mHead('Editar equipe')}<input type="hidden" name="id" value="${t.id}"><label class="field"><span>Nome da equipe</span><input class="inp" name="n" value="${esc(t.name)}" maxlength="60" autofocus></label><p class="err" role="alert"></p><div class="acts"><button type="button" class="pill ghost" data-a="closeM">Cancelar</button><button class="pill">Salvar alterações</button></div></form>`)};
 F.tEditSave=f=>{const t=T(f.id.value),n=clean(f.n.value);if(!n)return setErr(f,'O nome não pode ficar vazio.');
  if(dupT(n,t.id))return setErr(f,'Já existe uma equipe com este nome.');if(n!==t.name)t.auto=false;t.name=n;save();closeModal(true);render();toast('Nome da equipe atualizado com sucesso.')};
@@ -959,13 +1052,22 @@ A.tEnd=async d=>{const t0=T(d.id),open=t0?db.champs.filter(c=>statusKey(c)!=='do
  const row=computeRanking({season,champ:'all',mode:'d',q:'',inactive:true}).list.find(r=>r.id===t.id),base=row?row.total:0,each=Math.round(base*pct)/100;
  if(!await confirmBox({title:'Encerrar dupla',msg:`<b>${esc(dl(t))}</b> possui <b>${fmt(base)}</b> pontos na temporada ${season}.<br><br>Ao encerrar, a dupla fica inativa, sai da classificação para o torneio final e cada integrante leva <b>${pct}% = ${fmt(each)} pontos</b> para a próxima parceria. O histórico de partidas é preservado e esta ação não pode ser desfeita.${open?`<br><br><b class="neg">Atenção: esta dupla ainda tem ${open} partida(s) sem resultado em campeonato(s) em andamento.</b> Elas continuam na tabela; conclua ou exclua essas partidas.`:''}`,ok:'Encerrar dupla',danger:true}))return;
  t.active=false;t.endedAt=Date.now();t.dissolved={base,each,pct,season};
- t.players.forEach(id=>{const p=P(id);p.pending={fromTeamId:t.id,fromLabel:dl(t),base,pct,points:each,season}});save();render();toast('Dupla encerrada. Os jogadores estão livres para novas parcerias.')};
-A.tDel=async()=>{const ids=[...ui.selT].filter(T);if(!ids.length)return toast('Selecione uma equipe para excluir.','err');
- const used=ids.filter(teamInUse);
- if(used.length)return alertBox('Não é possível excluir a equipe.',`<b>${used.map(id=>esc(T(id).name)).join(', ')}</b> participa de campeonato(s). Remova a equipe dos campeonatos antes de excluí-la. Equipes com partidas disputadas ficam preservadas no histórico.`);
- if(!await confirmBox({title:'Excluir equipe',msg:`Tem certeza de que deseja excluir ${ids.length>1?ids.length+' equipes':'<b>'+esc(T(ids[0]).name)+'</b>'}? Os jogadores continuam cadastrados. Esta ação não poderá ser desfeita.`,ok:'Excluir equipe',danger:true}))return;
- ids.forEach(id=>{const t=T(id);(t.transfers||[]).forEach(x=>{const q=P(x.playerId);if(q){const{playerId,...rest}=x;q.pending=rest}})});
- db.teams=db.teams.filter(t=>!ids.includes(t.id));ui.selT.clear();save();render()};
+ t.players.forEach(id=>{const p=P(id);p.pending={fromTeamId:t.id,fromLabel:dl(t),base,pct,points:each,season}});logAudit('end-team',{summary:'Dupla encerrada com transferência de '+pct+'% para cada integrante.',teamId:t.id,teamLabel:dl(t),players:t.players.map(id=>P(id)?.name),base,pct,each,season});save();render();toast('Dupla encerrada. Os jogadores estão livres para novas parcerias.')};
+A.tAll=(d,el)=>{ui.selT=new Set(el.checked?db.teams.map(t=>t.id):[]);render()};
+const backPending=t=>(t.transfers||[]).forEach(x=>{const q=P(x.playerId);if(q){const{playerId,...rest}=x;q.pending=rest}}); // devolve ao jogador o crédito que ele já trazia antes desta formação
+A.tDel=async()=>{const ids=[...ui.selT].filter(T);if(!ids.length)return toast('Selecione ao menos uma equipe.','err');
+ if(!await confirmBox({title:'Excluir '+ids.length+' equipe'+(ids.length>1?'s selecionadas':' selecionada')+'?',msg:'Esta operação removerá as equipes selecionadas que não possuem vínculos protegidos. Os jogadores continuam cadastrados e nenhuma transferência de pontos é aplicada. Deseja continuar?',ok:'Sim, excluir',danger:true}))return;
+ const blocked=[],okIds=[];ids.forEach(id=>{const t=T(id);if(teamHasMatches(id))blocked.push('<li><b>'+esc(dl(t))+'</b>: possui partidas registradas (histórico preservado).</li>');else if(teamInUse(id))blocked.push('<li><b>'+esc(dl(t))+'</b>: está inscrita em campeonato. Retire-a da fase em + → Duplas.</li>');else okIds.push(id)});
+ if(okIds.length){const labels=okIds.map(id=>dl(T(id)));okIds.forEach(id=>backPending(T(id)));db.teams=db.teams.filter(t=>!okIds.includes(t.id));logAudit('delete-teams',{summary:okIds.length+' equipe(s) excluída(s), sem movimentar pontos.',teams:labels})}
+ ui.selT.clear();save();render();
+ if(blocked.length)alertBox(okIds.length?okIds.length+' excluída(s) e '+blocked.length+' mantida(s)':'Nenhuma equipe pôde ser excluída','Equipes com vínculos protegidos não foram excluídas:<ul>'+blocked.join('')+'</ul>');else toast(okIds.length+' equipe(s) excluída(s). Os jogadores continuam cadastrados.')};
+// Desfazer dupla: corrige formação errada. Nunca aplica a transferência de pontos; só conclui quando não há vínculos.
+const teamLinks=id=>{const regs=[],ms=[];db.champs.forEach(c=>c.phases.forEach(ph=>{if(ph.teamIds.includes(id))regs.push(c.name+' — '+ph.name);phMatches(ph).forEach(m=>{if(m.a===id||m.b===id)ms.push({c,ph,m})})}));return{regs,ms,res:ms.filter(x=>hasConfirmedResult(x.m)).length}};
+A.tUndo=d=>{const t=T(d.id);if(!t)return render();const L=teamLinks(t.id),row=computeRanking({season:'all',champ:'all',mode:'d',q:'',inactive:true}).list.find(r=>r.id===t.id),pts=row?row.total-row.tr:0;
+ if(L.ms.length||L.regs.length)return alertBox('Não é possível desfazer esta dupla agora','<b>'+esc(dl(t))+'</b> possui vínculos que precisam ser resolvidos antes:<ul>'+(L.regs.length?'<li>Inscrita em: '+L.regs.map(esc).join('; ')+'.</li>':'')+(L.ms.length?'<li>'+L.ms.length+' confronto(s), '+L.res+' com resultado registrado'+(pts?' e '+fmt(pts)+' ponto(s) conquistado(s)':'')+'.</li>':'')+'</ul>'+(L.ms.length?'Os confrontos e resultados são histórico e não são alterados automaticamente. Se a formação estava errada, corrija ou exclua esses confrontos no campeonato e retire a dupla da fase; depois volte aqui. Se a parceria existiu de fato e terminou, use <b>Encerrar dupla</b>.':'Retire a dupla dessas fases (no campeonato, + → Duplas) e volte aqui.')+'<br><br>Nenhum ponto foi movimentado.');
+ modal('<form data-f="tUndoGo">'+mHead('Desfazer formação da dupla?',esc(dl(t)))+'<input type="hidden" name="id" value="'+t.id+'"><p>Esta operação desfará a associação entre os jogadores, sem transferir ou redistribuir pontos. Deseja continuar?</p><label class="field"><span>Motivo (opcional)</span><input class="inp" name="why" maxlength="120" placeholder="Ex.: dupla formada por engano"></label><p class="err" role="alert"></p><div class="acts"><button type="button" class="pill ghost" data-a="closeM">Cancelar</button><button class="pill red">Sim, desfazer dupla</button></div></form>')};
+F.tUndoGo=f=>{const t=T(f.id.value);if(!t){closeModal(true);return render()}const L=teamLinks(t.id);if(L.ms.length||L.regs.length)return setErr(f,'Esta dupla passou a ter vínculos com campeonato. Feche e confira.');
+ const label=dl(t),names=t.players.map(id=>P(id)?.name);backPending(t);db.teams=db.teams.filter(x=>x!==t);ui.selT.delete(t.id);logAudit('undo-team',{summary:'Formação desfeita, sem movimentar pontos.',teamId:t.id,teamLabel:label,players:names,reason:clean(f.why.value)||null});save();closeModal(true);render();toast('Dupla desfeita. Os jogadores estão livres e nenhum ponto foi movimentado.')};
 
 /* ----- ranking ----- */
 A.rkSet=(d,el)=>{ui.rk[d.k]=el.value;if(d.k==='season')ui.rk.champ='all';render()};
@@ -1058,6 +1160,7 @@ A.mbEdit=d=>{const m=members.find(x=>x.username===d.e)||{username:'',name:'',rol
  <label class="field"><span>Nome de usuário (para entrar)</span><input class="inp" name="user" value="${esc(m.username)}" maxlength="30" autocapitalize="none" autocomplete="off" placeholder="ex.: joao.silva"></label>
  <label class="field"><span>${d.e?'Nova senha (deixe em branco para manter a atual)':'Senha (mínimo 6 caracteres)'}</span><input class="inp" name="pw" type="text" autocomplete="off" maxlength="72"></label>
  <label class="field"><span>Perfil</span><select name="role" style="width:100%">${['organizador','placar','leitura'].map(r=>`<option value="${r}" ${m.role===r?'selected':''}>${ROLE[r]}</option>`).join('')}</select></label>
+ <p class="note" style="margin-top:-4px"><b>Organizador:</b> campeonatos, jogadores, duplas, placares e finalização.<br><b>Lançador de placares:</b> só campeonatos e ranking; lança placar de partida aberta.<br><b>Somente leitura:</b> só consulta campeonatos e ranking.<br>O <b>Caixa</b> aparece apenas para quem tiver a opção de Caixa marcada abaixo.</p>
  <label class="chk"><input type="checkbox" name="caixa" ${m.caixa?'checked':''}><span>Pode acessar o Caixa</span></label>
  <p class="note">Usuário: de 3 a 30 caracteres, só letras sem acento, números, ponto, hífen e sublinhado. Anote a senha: ela não pode ser consultada depois, só trocada.</p>
  <p class="err" role="alert"></p><div class="acts"><button type="button" class="pill ghost" data-a="closeM">Cancelar</button><button class="pill">Salvar</button></div></form>`,{guard:true})};
@@ -1591,15 +1694,36 @@ A.jExpGo=d=>{const c=cur.c,ph=cur.ph,r=cur.r,i=c.phases.indexOf(ph)+1,j=ph.round
   rows:r.matches.map((m,k)=>[k+1,dl(T(m.a)),hasSets(m)?setsWon(m).join(' × '):'—',setsTxt(m.sets)||'—',dl(T(m.b)),ST[mStatus(m)]])}]},`Jogos_${slug(c.name)}_${i}Fase_${j}Rodada`,d.v)};
 
 /* ===================== Eventos ===================== */
-const READ=new Set([...VIS,'nav','sair','sair2','openC','rkSet','rkMode','rkIna','rkQ','pSort','crInfo','cxScope','cExp','jExp','cExpGo','jExpGo']);
+const READ=new Set([...VIS,'nav','sair','sair2','openC','rkSet','rkMode','rkIna','rkQ','pSort','crInfo','cxScope','offSync','cExp','jExp','cExpGo','jExpGo']);
 const SCORE=new Set(['mState','mAuto']),MASTER=new Set(['mbEdit','mbDel','cOpt','cDel','cfgPlayers','cfgRank','wipe','bkImp','bkExp']),CASH=new Set(['cxAdd','cxEdit','cxDel']),MASTERF=new Set(['uSave','cSave','tieSave','mbSave']);
 const DENY='Seu perfil não permite esta ação.';
+A.offSync=()=>trySync(true);
+/* ----- modo telão: tela cheia, só leitura, alterna sozinho entre classificação, jogos e chaveamento ----- */
+function vTelao(c,ro){cur.c=c;const ph=c.phases.find(p=>p.status!=='done'&&p.teamIds.length)||c.phases[c.phases.length-1];cur.ph=ph;const S=[];
+ if(statusKey(c)==='done'&&c.result&&T(c.result.champion)){const R=c.result;S.push(['Classificação final','<div class="tv-pod">'+[['1º',R.champion],['2º',R.vice],['3º',R.third],['4º',R.fourth]].filter(x=>x[1]&&T(x[1])).map(([p,id],i)=>'<div class="tv-pl'+(i?'':' first')+'"><span class="posb">'+p+'</span><b>'+esc(dl(T(id)))+'</b>'+(i?'':I.trophy)+'</div>').join('')+'</div>'])}
+ if(ph.type==='elim'){if(ph.rounds.length)S.push(['Chaveamento',bracketHTML(ph,ro)])}
+ else if(ph.teamIds.length){const old=ui.cls;ui.cls=ph.groups.length?'g':'all';const n=standData(ph,!ph.groups.length).length;for(let i=0;i<n;i+=2)S.push(['Classificação'+(n>2?' ('+(i/2+1)+'/'+Math.ceil(n/2)+')':''),'<div class="tv-grid">'+standHTML(ph,[i,i+1])+'</div>']);ui.cls=old}
+ const rs=ro?ph.rounds.filter(r=>!r.hidden):ph.rounds,rd=rs.find(r=>r.matches.some(m=>m.a&&m.b&&mStatus(m)!=='done'))||rs[rs.length-1];
+ if(rd&&rd.matches.length)for(let i=0;i<rd.matches.length;i+=8)S.push(['Jogos — '+rd.title+(rd.matches.length>8?' ('+(i/8+1)+'/'+Math.ceil(rd.matches.length/8)+')':''),'<div class="tv-grid">'+rd.matches.slice(i,i+8).map(m=>matchCard(m,rd,true)).join('')+'</div>']);
+ if(!S.length)S.push(['Aguardando','<p class="empty" style="font-size:22px">O campeonato ainda não tem jogos para exibir.</p>']);
+ const i=((ui.tv.i%S.length)+S.length)%S.length,now=new Date(),hh=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+ return'<div class="tv" data-slides="'+S.length+'"><header class="tv-h"><span class="tv-t">'+I.trophy+'<b>'+esc(c.name)+'</b><span>'+esc(ph.name)+' · '+TYPE[ph.type]+'</span></span><span class="tv-s">'+esc(S[i][0])+'</span><span class="tv-c">'+(ws.offline?'<i class="status-dot" style="background:#E0A800"></i>offline':CLOUD?'<i class="status-dot live"></i>ao vivo':'')+' <b>'+hh+'</b></span></header>'+
+  '<div class="tv-stage"><div class="tv-body" id="tvBody">'+S[i][1]+'</div></div>'+
+  '<footer class="tv-f"><span class="tv-dots">'+S.map((_,k)=>'<i class="'+(k===i?'on':'')+'"></i>').join('')+'</span><span class="tv-ctl"><button data-a="tvPause">'+(ui.tv.pause?'Continuar':'Pausar')+'</button><button data-a="tvNext">Próximo</button><button data-a="tvExit">Sair do telão</button></span></footer></div>'}
+// Ajusta o conteúdo ao tamanho da tela (amplia numa TV grande, reduz num celular), sem barra de rolagem.
+function fitTelao(){const b=document.getElementById('tvBody');if(!b)return;const st=b.parentElement,cs=getComputedStyle(st),aw=st.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight),ah=st.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);
+ b.style.transform='none';b.style.margin='0';b.style.width='1280px';const lc=[...b.querySelectorAll('.br-col')].pop(),w=lc?lc.offsetLeft+lc.offsetWidth:Math.max(1280,b.scrollWidth),h=b.scrollHeight||1,sc=Math.min(aw/w,ah/h,2.6);b.style.width=w+'px';b.style.transform='scale('+sc+')';b.style.marginLeft=Math.max(0,(aw-w*sc)/2)+'px';b.style.marginTop=Math.max(0,(ah-h*sc)/2)+'px'}
+A.tvOpen=()=>{const h=location.hash.replace(/^#\/?/,'').split('/');ui.tv.i=0;ui.tv.pause=false;location.hash='#/'+h[0]+'/'+h[1]+'/telao';try{const d=document.documentElement;d.requestFullscreen&&d.requestFullscreen().catch(()=>{})}catch(e){}};
+A.tvExit=()=>{const h=location.hash.replace(/^#\/?/,'').split('/');try{document.fullscreenElement&&document.exitFullscreen().catch(()=>{})}catch(e){}location.hash='#/'+h[0]+'/'+h[1]+(h[0]==='c'?'/classificacao':'')};
+A.tvNext=()=>{ui.tv.i++;render()};A.tvPause=()=>{ui.tv.pause=!ui.tv.pause;render()};
+setInterval(()=>{if(/\/telao$/.test(location.hash)&&document.querySelector('.tv')&&!ui.tv.pause&&!stack.length&&!document.hidden){ui.tv.i++;render()}},12000);
 const BRLOCK=new Set(['addRound','addMatch','rDel','mDel']);
 const PHLOCK=new Set(['brReset','addRound','addMatch','gen','cDuplas','cGrupos','cCrit','rDel','rReord','mDel']);
 function run(name,d,el,e){if(visitor){if(!VIS.has(name))return}
  else if(!READ.has(name)&&!(MASTER.has(name)?isMaster():CASH.has(name)?canCashEdit():SCORE.has(name)?canScore():canEdit())){if(el&&el.type==='checkbox')el.checked=!el.checked;return toast(DENY,'err')}
  if(!visitor&&BRLOCK.has(name)&&cur.ph&&isBracket(cur.ph))return alertBox('Chaveamento automático','No mata-mata as rodadas e os confrontos são montados e preenchidos automaticamente. Para refazer, use “REFAZER CHAVEAMENTO” enquanto não houver resultados.');
  if(!visitor&&PHLOCK.has(name)&&cur.c&&cur.ph){const lk=phaseLock(cur.c,cur.ph);if(lk)return alertBox(lk[0],lk[1])}
+ if(name==='sair'&&ws.offline&&off&&(offCount()||off.wsDirty||off.cxDirty))return alertBox('Há dados offline a enviar','Este aparelho guarda placares ou alterações que ainda não foram enviados. Conecte-se à internet e aguarde o envio antes de sair; se sair agora, só será possível enviar entrando de novo com o mesmo usuário neste mesmo aparelho.');
  const fn=A[name];fn&&fn(d,el,e)}
 document.addEventListener('click',e=>{const link=e.target.closest('.side a');if(link)document.body.classList.remove('nav');const el=e.target.closest('[data-a]');if(!el||el.disabled)return;
  if(el.tagName==='BUTTON')e.preventDefault();if(el.dataset.close)closeModal(true);run(el.dataset.a,el.dataset,el,e)});
@@ -1608,7 +1732,7 @@ document.addEventListener('input',e=>{const el=e.target.closest('[data-i]');el&&
 document.addEventListener('submit',e=>{e.preventDefault();const k=e.target.dataset.f;if(visitor){if(k!=='mSave')return}
  else if(k!=='login'&&!(k==='pwSave'?!!me.role:MASTERF.has(k)?(k==='cSave'||k==='tieSave'?canEdit():isMaster()):k==='mSave'?canScore():k==='cxSave'||k==='cxCota'?canCashEdit():canEdit()))return toast(DENY,'err');
  F[k]&&F[k](e.target)});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(stack.length)closeModal();else document.body.classList.remove('nav')}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(stack.length)closeModal();else if(document.querySelector('.tv'))A.tvExit();else document.body.classList.remove('nav')}
  if(e.key==='Tab'&&stack.length){const m=stack[stack.length-1].ov,fs=[...m.querySelectorAll('button,input:not([type=hidden]),select,textarea,a[href],summary')].filter(x=>!x.disabled&&x.offsetParent!==null);if(!fs.length)return;
   const a=document.activeElement,first=fs[0],last=fs[fs.length-1];if(!m.contains(a)||(!e.shiftKey&&a===last)){e.preventDefault();first.focus()}else if(e.shiftKey&&a===first){e.preventDefault();last.focus()}}});
 document.addEventListener('focusin',e=>{const t=e.target;if(!stack.length||!t.closest||!t.closest('.modal')||!/^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName)||!matchMedia('(pointer:coarse)').matches)return;setTimeout(()=>{try{t.scrollIntoView({block:'center',behavior:'smooth'})}catch(x){}},300)});
@@ -1617,11 +1741,11 @@ window.addEventListener('storage',e=>{if(CLOUD||e.key!==KEY)return;const id={c:c
  if(stack.length){cur.c=C(id.c);cur.ph=cur.c?.phases.find(p=>p.id===id.ph);cur.r=cur.ph?.rounds.find(r=>r.id===id.r);
   if((!id.c||cur.c)&&(!id.ph||cur.ph)&&(!id.r||cur.r))return;while(stack.length)closeModal(true);toast('Os dados foram alterados em outra aba.')}
  render()});
+if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'))navigator.serviceWorker.register('sw.js').catch(()=>{});
 if(CLOUD)setDb({});else load();
-{const base=render;render=function(){base();try{drawBracket()}catch(e){}}}
-window.addEventListener('resize',()=>{try{drawBracket()}catch(e){}});if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{try{drawBracket()}catch(e){}});
+{const base=render;render=function(){base();try{document.body.classList.toggle('tvon',!!document.querySelector('.tv'));drawBracket();fitTelao()}catch(e){}}}
+window.addEventListener('resize',()=>{try{fitTelao();drawBracket()}catch(e){}});if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{try{drawBracket();fitTelao()}catch(e){}});
 render();
 </script>
 </body>
 </html>
-
