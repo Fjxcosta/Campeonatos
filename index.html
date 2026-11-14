@@ -371,10 +371,69 @@ tr.qt .posb{background:#FFE08A;color:#5C4300}
 @media(max-width:700px){.cols3{column-count:1}}
 table.rk tbody tr:nth-child(odd) td,table.rk tbody tr:nth-child(odd) td.tot{background:#fff!important}
 table.rk tbody tr:nth-child(even) td,table.rk tbody tr:nth-child(even) td.tot{background:#F3F5F4!important}
-table.rk tbody tr.q td,table.rk tbody tr.q td.tot{background:#DDF5E3!important}
 table.rk tbody tr:hover td,table.rk tbody tr:hover td.tot{background:var(--sel)!important}
-table.rk tr.q .posb{background:#DBEAFE;color:#1E3A8A;box-shadow:none}
+table.rk tr.q .posb{background:#DDF5E3;color:#12683A;box-shadow:inset 0 0 0 1.5px #8FD9A8}
 table.rk tr.qt .posb{background:#FFE08A;color:#5C4300}
+
+/* cada jogador e cada dupla em um card próprio */
+.cols3{column-gap:14px}
+.cols3 li{border:1px solid var(--line);border-radius:12px;background:#fff;padding:10px 12px;margin:0 0 10px;box-shadow:0 1px 2px #1647340d}
+.cols3 li:hover{border-color:var(--g2)}
+.cols3 li.sel{background:var(--sel);border-color:var(--g1)}
+
+/* chaveamento em dois lados: final no centro, campeã acima e disputa de 3º lugar abaixo */
+.bracket.two .br-in{gap:34px;justify-content:center}
+.bracket.two .br-col{width:208px}
+.bracket.two .br-col.C{width:228px}
+.br-col.C .br-list{justify-content:center;gap:18px}
+.br-col.R .br-t{flex-direction:row-reverse;border-left:0;border-right:4px solid transparent}
+.br-col.R .br-n{text-align:right}
+.br-col.R .br-t.win{border-right-color:var(--g3)}
+.br-col.R .br-foot{flex-direction:row-reverse}
+.br-champ{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;padding:12px 10px;border:2px dashed #C3CEC8;border-radius:16px;background:#fff}
+.br-champ small{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--t2)}
+.br-champ .ic{width:30px;height:30px;color:#B9C5BE}
+.br-champ b{font-size:15px;line-height:1.2;overflow-wrap:anywhere;color:#9AA7A0}
+.br-champ.on{border:2px solid var(--g3);background:#F1FBF5}
+.br-champ.on .ic,.br-champ.on b{color:var(--g1)}
+@media(max-width:520px){.bracket.two .br-col{width:190px}.bracket.two .br-col.C{width:204px}.bracket.two .br-in{gap:28px;justify-content:flex-start}}
+
+/* janelas em duas colunas de cards (Duplas e Jogadores das Configurações) */
+.cols3.two{column-count:2}
+.modal.w2{max-width:800px}
+@media(max-width:700px){.cols3.two{column-count:1}}
+/* Melhor de 3: um card por partida */
+.gms{grid-column:1/-1;display:flex;flex-direction:column;gap:5px;margin-top:2px}
+.gm{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:34px;padding:4px 10px;border:1px solid var(--line);border-radius:9px;background:#FAFBFA;font-size:12.5px;text-align:left;width:100%}
+.gm:not(:disabled):hover{background:var(--sel)}
+.gm:disabled{opacity:1;cursor:default}
+.gm.done{border-color:#BFE3CC;background:#F1FBF5}
+.gm.na,.gm.if{color:#8A968F;border-style:dashed}
+.gm b{font-size:13.5px;white-space:nowrap}
+.gsum{display:grid;grid-template-columns:minmax(0,1fr) auto 16px auto minmax(0,1fr);gap:8px;align-items:center;margin:8px 0 0}
+.gsum .sbox{min-width:44px;height:40px;font-size:20px}
+.gcardm{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:10px;background:#fff}
+.gcardm.cur{border-color:var(--g2);box-shadow:0 0 0 2px #2ECD7133}
+.gcardm.na,.gcardm.if{background:#FAFBFA;border-style:dashed}
+.gcardm .gh{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.gcardm .score-pair{grid-template-columns:minmax(0,1fr) 60px 16px 60px minmax(0,1fr)}
+.gcardm .score-team-label.w{color:var(--g1);font-weight:700}
+.gacts{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+.gacts:empty{display:none}
+@media(max-width:520px){.gcardm .score-pair{grid-template-columns:minmax(0,1fr) 48px 14px 48px minmax(0,1fr)}}
+
+/* janela Grupos: cards em duas colunas */
+.gscroll{max-height:42vh;overflow:auto;padding:2px;margin:4px 0 8px}
+.gscroll .gnm{flex:1;min-width:0;overflow-wrap:anywhere;font-weight:500}
+.gscroll .ggt{text-align:center;margin:10px 0 6px;font-size:15px}
+.gscroll .ggt:first-child{margin-top:0}
+.gscroll li{flex-wrap:wrap}
+.gdef{display:flex;gap:8px;align-items:center;justify-content:space-between;width:100%;flex-wrap:wrap}
+.gdef select{flex:1;min-width:120px}
+/* chaveamento: em confronto encerrado, vencedora em verde-claro e derrotada em vermelho-claro */
+.br-t.lose{background:#FDECEC;border-left-color:#F2A9A4}
+.br-t.lose .br-n{color:#7A2E2A}
+.br-col.R .br-t.lose{border-right-color:#F2A9A4}
 </style>
 </head>
 <body>
@@ -606,7 +665,7 @@ const DEFCOLS=[['pts',1],['j',1],['v',1],['d',1],['pg',1],['pc',1],['dp',1],['pe
 const COL={pts:['Pontos de Classificação','PTS'],j:['Jogos disputados','J'],v:['Vitórias','V'],d:['Derrotas','D'],pg:['Pontos Pró','PP'],pc:['Pontos Contra','PC'],dp:['Diferença de pontos','DP'],pe:['Pontos Extras','PE'],e:['Empate','E']};
 const CRIT={pts:'Pontos',v:'Vitórias',pg:'Pontos ganhos',dp:'Saldo de pontos',h2h:'Confronto direto'};
 const TYPE={pc:'Pontos corridos',elim:'Mata-mata'};
-const newPhase=(n,type)=>({id:uid(),name:n+'ª Fase',type,bo:3,status:'prep',advance:{mode:'group',total:0,byGroup:{}},teamIds:[],groups:[],cols:DEFCOLS.map(([k,on])=>({k,on:!!on})),criteria:['pts','v','pg','dp','h2h'],rounds:[],audit:[]});
+const newPhase=(n,type)=>({id:uid(),name:n+'ª Fase',type,bo:1,status:'prep',advance:{mode:'group',total:0,byGroup:{}},teamIds:[],groups:[],cols:DEFCOLS.map(([k,on])=>({k,on:!!on})),criteria:['pts','v','pg','dp','h2h'],rounds:[],audit:[]});
 const newRound=title=>({id:uid(),title,hidden:false,allowLink:true,matches:[]});
 const newMatch=(a,b,bo)=>({id:uid(),a:a||null,b:b||null,bo:bo===1?1:3,status:'live',sets:[],history:[]});
 const need=m=>m.bo===1?1:2;
@@ -649,14 +708,14 @@ const cmpN=(a,b)=>norm(a).localeCompare(norm(b),'pt',{numeric:true});
 const elimLocked=(ph,r)=>ph.type==='elim'&&ph.rounds.slice(ph.rounds.indexOf(r)+1).some(x=>x.matches.length);
 const champTeams=c=>[...new Set(c.phases.flatMap(ph=>ph.teamIds))];
 /* ----- regras centrais (um único lugar para cada regra) ----- */
-const winPts=ph=>ph.type==='pc'?db.settings.ppw:0;                      // pontos por vitória: só em pontos corridos
+const winPts=ph=>ph.type==='pc'?db.settings.ppw:0;                      // pontos de CLASSIFICAÇÃO DA FASE: só em pontos corridos (no Ranking Geral toda vitória vale)
 const autoStatus=(m,sets)=>mStatus({...m,sets,status:undefined})==='done'?'done':'live'; // situação deduzida do placar
 const readScore=f=>[0,1,2].map(i=>[f['s'+i+'a']?String(f['s'+i+'a'].value).trim():'',f['s'+i+'b']?String(f['s'+i+'b'].value).trim():'']); // campos da janela de placar
 const shown=m=>{const[sa,sb]=setsWon(m),g=m.bo===1&&m.sets&&m.sets[0];return hasSets(m)?(g?[g[0],g[1]]:[sa,sb]):['','']}; // números exibidos no confronto
 const phaseLock=(c,ph)=>ph.status==='done'?['Fase finalizada','Reabra a fase (botão REABRIR FASE, em Jogos) para fazer alterações.']:statusKey(c)==='done'?['Campeonato finalizado','Reabra a fase final antes de fazer alterações.']:null;
 
 /* ----- classificação da fase ----- */
-function resultGames(ph,m){if(mStatus(m)!=='done'||!winner(m))return[];const out=[];let a=0,b=0,limit=need(m);for(const s of m.sets||[]){if(a>=limit||b>=limit)break;if(!Array.isArray(s)||s.length!==2||!Number.isInteger(+s[0])||!Number.isInteger(+s[1])||+s[0]===+s[1])continue;const g={a:+s[0],b:+s[1],winner:+s[0]>+s[1]?m.a:m.b};out.push(g);g.winner===m.a?a++:b++}return out}
+function resultGames(ph,m){if(!m.a||!m.b)return[];if(m.bo===1&&(mStatus(m)!=='done'||!winner(m)))return[];const out=[];let a=0,b=0,limit=need(m);for(const s of m.sets||[]){if(a>=limit||b>=limit)break;if(!Array.isArray(s)||s.length!==2||!Number.isInteger(+s[0])||!Number.isInteger(+s[1])||+s[0]===+s[1])continue;const g={a:+s[0],b:+s[1],winner:+s[0]>+s[1]?m.a:m.b};out.push(g);g.winner===m.a?a++:b++}return out}
 function phaseStats(ph){const st={},z=id=>st[id]||(st[id]={pts:0,j:0,v:0,d:0,pg:0,pc:0,dp:0,pe:0,e:0});
  ph.teamIds.forEach(z);
  for(const m of phMatches(ph)){for(const g of resultGames(ph,m)){const A=z(m.a),B=z(m.b),ap=g.a,bp=g.b;
@@ -689,7 +748,7 @@ function computeRanking(st){
   for(const m of phMatches(ph))for(const g of resultGames(ph,m)){
    [[m.a,g.a,g.b],[m.b,g.b,g.a]].forEach(([tid,forPts,against])=>{const t=T(tid);if(!t)return;ents(t).forEach(id=>{const R=row(id),k=cell(R,c.id),win=g.winner===tid;
     R.j++;k.j++;R.pg+=forPts;R.pc+=against;R.dp=R.pg-R.pc;k.pg+=forPts;k.pc+=against;
-    if(win){R.v++;k.v++;const w=winPts(ph);k.pts+=w;R.total+=w}else{R.d++;k.d++}})})}}
+    if(win){R.v++;k.v++;const w=db.settings.ppw;k.pts+=w;R.total+=w}else{R.d++;k.d++}})})}}
  let list;
  if(st.mode==='d'){list=db.teams.filter(t=>t.players.length===2||rows.has(t.id)).map(t=>{const r=row(t.id);r.name=dl(t);r.active=t.active&&t.players.length===2;
    if(st.champ==='all'){r.tr=(t.transfers||[]).filter(x=>st.season==='all'||String(x.season)===String(st.season)).reduce((a,x)=>a+x.points,0);r.total+=r.tr}return r})}
@@ -801,6 +860,10 @@ function vTeams(){const free=db.players.filter(p=>!db.teams.some(t=>t.active&&t.
   ${ed&&t.active?`<span class="tacts"><button class="pill ghost sm" data-a="tUndo" data-id="${t.id}" title="Corrigir uma dupla formada por engano, sem mexer em pontos">Desfazer dupla</button>${t.players.length===2?`<button class="pill ghost sm" data-a="tEnd" data-id="${t.id}" title="Fim real da parceria: aplica a transferência de pontos">Encerrar dupla</button>`:''}</span>`:''}</li>`).join('')}</ul>
  <p class="note"><b>Desfazer dupla</b>: corrige uma formação feita por engano, sem transferir nem descontar pontos. <b>Encerrar dupla</b>: fim real da parceria, com a transferência de ${db.settings.pct}% dos pontos para cada integrante. <b>Excluir selecionadas</b>: remove equipes sem vínculos; os jogadores continuam cadastrados e nenhum ponto é movimentado.</p>${WARN}`}
 function seasons(){return[...new Set([String(new Date().getFullYear()),...db.champs.map(c=>String(c.season))])].sort().reverse()}
+// Explica, no rodapé do ranking, por que nenhuma dupla aparece como classificada (quando for o caso).
+function rkWhy(s){if(s.mode!=='d')return'';if(s.season==='all')return' <b>Em “Histórico geral” não há classificados: escolha uma temporada.</b>';if(s.champ!=='all')return' <b>Com um torneio só selecionado não há classificados: escolha “Todos”.</b>';
+ const L=computeRanking({...s,q:'',inactive:false}).list;if(L.some(r=>r.q||r.qt))return'';const played=L.filter(r=>r.j>0||r.tr>0);if(!played.length)return'';
+ const mx=Math.max(...played.map(r=>Object.keys(r.per).length));return db.settings.minT>mx?' <b>Nenhuma dupla aparece como classificada porque o mínimo exigido é de '+db.settings.minT+' torneio(s) e as duplas disputaram no máximo '+mx+'. Ajuste em Meu usuário → “Mínimo de torneios disputados para classificar”.</b>':''}
 function vRank(){const s=ui.rk;if(s.champ!=='all'&&!db.champs.some(c=>c.id===s.champ&&(s.season==='all'||String(c.season)===s.season)))s.champ='all';
  const ts=db.champs.filter(c=>!c.isFinal&&(s.season==='all'||String(c.season)===s.season)).sort((a,b)=>when(a)-when(b));
  const none=s.season!=='all'&&!db.champs.some(c=>String(c.season)===s.season);
@@ -811,7 +874,7 @@ function vRank(){const s=ui.rk;if(s.champ!=='all'&&!db.champs.some(c=>c.id===s.c
  <label>Pesquisar<input class="inp" style="height:40px;width:200px" type="search" data-i="rkQ" value="${esc(s.q)}" placeholder="Nome da dupla ou jogador"></label>
  ${s.mode==='d'?`<label class="chk" style="flex-direction:row;margin-top:18px"><input type="checkbox" data-a="rkIna" ${s.inactive?'checked':''}>Mostrar duplas inativas</label>`:''}</div>
  <div id="rkBody">${rankHTML(s)}</div>
- <p class="note">${s.mode==='d'?`Vitória = 3 pontos de classificação em pontos corridos. Os pontos de jogo contam também no mata-mata. As ${db.settings.slots} melhores duplas ativas da temporada aparecem como “Classificada” para o torneio final. Clique em um valor para ver o detalhamento.`:'O ranking individual é informativo e não inclui pontos transferidos. Clique em um valor para ver o detalhamento.'}</p>`}
+ <p class="note">${s.mode==='d'?`No Ranking Geral, cada vitória vale 3 pontos e a derrota vale 0, em pontos corridos e no mata-mata. As ${db.settings.slots} melhores duplas ativas da temporada${db.settings.minT>0?`, com pelo menos ${db.settings.minT} torneio(s) disputado(s),`:''} ficam com a posição em verde-claro e a marca “Classificada” para o torneio final.${rkWhy(s)} Clique em um valor para ver o detalhamento.`:'O ranking individual é informativo e não inclui pontos transferidos. Clique em um valor para ver o detalhamento.'}</p>`}
 function usersHTML(){if(!CLOUD)return'<h2 style="margin-top:26px">Usuários e permissões</h2><p class="note">Disponível quando o sistema está ligado ao banco.</p>';
  return`<h2 style="margin-top:26px">Usuários e permissões</h2><p class="note">Cada pessoa entra com o nome de usuário e a senha que você definir aqui, sem precisar de e-mail. Você (master) continua entrando com o seu e-mail.</p>
  <div class="tw"><table><thead><tr><th class="l">Nome</th><th class="l">Usuário</th><th>Perfil</th><th>Caixa</th><th></th></tr></thead><tbody>
@@ -826,7 +889,7 @@ function vUser(){const s=db.settings,who=`<p class="muted">${CLOUD?`Conectado co
  <form data-f="uSave" style="max-width:520px"><label class="field"><span>Nome (aparece como organizador)</span><input class="inp" name="name" value="${esc(db.user.name)}" maxlength="60" required></label>
  <label class="field"><span>E-mail de contato</span><input class="inp" name="email" type="email" value="${esc(db.user.email)}"></label>
  <h2 style="margin-top:22px">Regras do ranking</h2>
- <p class="note"><b>Pontos por vitória:</b> 3 nas fases de pontos corridos. No mata-mata, a vitória define o avanço e não soma pontos de classificação.</p>
+ <p class="note"><b>Pontos por vitória:</b> no Ranking Geral, toda vitória vale 3 pontos e a derrota vale 0, em qualquer fase. Na tabela de classificação de uma fase de pontos corridos, a vitória também vale 3; o mata-mata não tem tabela, só o chaveamento.</p>
  <label class="field"><span>Percentual transferido na troca de dupla (%)</span><input class="inp" name="pct" type="number" min="0" max="100" value="${s.pct}" required></label>
  <label class="field"><span>Vagas no torneio final (duplas)</span><input class="inp" name="slots" type="number" min="1" max="64" value="${s.slots}" required></label>
  <label class="field"><span>Mínimo de torneios disputados para classificar</span><input class="inp" name="minT" type="number" min="0" max="99" value="${s.minT}" required></label>
@@ -911,30 +974,41 @@ function bracketHTML(ph,ro){if(!ph.rounds.length)return'<div class="center"><spa
  const mb=(m,col,k,fk,sub)=>{const st=mStatus(m),w=winner(m),[va,vb]=shown(m),can=ro?(col.r.allowLink&&statusKey(cur.c)!=='done'&&st!=='done'&&m.a&&m.b&&!m.pending):canScore(),act=ro?'mOpen':canEdit()?'mMenu':'mOpen',row=(id,v)=>'<div class="br-t'+(w?(w===id?' win':' lose'):'')+'"><span class="br-n">'+name(id)+'</span><span class="sbox">'+v+'</span></div>';
    return'<div class="br-m '+st+(sub?' third':'')+'" data-k="'+k+'" data-f="'+fk+'"'+(sub?' data-dash="1"':'')+'>'+(sub?'<div class="br-sub">'+sub+'</div>':'')+'<button class="br-hit" data-a="'+act+'" data-id="'+m.id+'" '+(can&&m.a&&m.b?'':'disabled')+' aria-label="Confronto: '+(m.a&&T(m.a)?esc(dl(T(m.a))):'a definir')+' contra '+(m.b&&T(m.b)?esc(dl(T(m.b))):'a definir')+'">'+row(m.a,va)+row(m.b,vb)+'</button><div class="br-foot"><span class="tag '+st+'">'+ST[st]+'</span>'+(m.pending?'<span class="tag pend">Aguardando aprovação</span>':'')+(m.bo!==1?'<small>'+(setsTxt(m.sets)?'Partidas: '+esc(setsTxt(m.sets)):'Melhor de 3 partidas')+'</small>':'')+'</div></div>'};
  const tm=thirdOf(ph);
- const cols=R.map((col,ri)=>{const hid=ro&&col.r.hidden;return'<div class="br-col"><div class="br-title">'+esc(col.r.title)+'</div><div class="br-list">'+col.items.map(it=>{const fk=it.f.map(p=>p.k).join(' ');
-   if(hid)return'<div class="br-m wait" data-k="'+it.k+'" data-f="'+fk+'"><div class="br-t"><span class="br-n"><span class="ph">Rodada oculta</span></span></div></div>';
+ const item=(it,col)=>{const fk=it.f.map(p=>p.k).join(' ');
+   if(ro&&col.r.hidden)return'<div class="br-m wait" data-k="'+it.k+'" data-f="'+fk+'"><div class="br-t"><span class="br-n"><span class="ph">Rodada oculta</span></span></div></div>';
    if(!it.m)return'<div class="br-m bye'+(it.s.t?' done':'')+'" data-k="'+it.k+'" data-f="'+fk+'"><div class="br-t'+(it.s.t?' win':'')+'"><span class="br-n">'+name(it.s.t)+'</span><small class="muted">avança direto</small></div></div>';
-   return mb(it.m,col,it.k,fk,'')}).join('')+(ri===R.length-1&&tm&&!hid?mb(tm,col,'m'+tm.id,(ri?arr(tm.src).map(e=>{const p=e&&e.l&&R[ri-1].items.find(q=>(q.m&&q.m.id===e.l)||(q.s.src&&q.s.src.m===e.l));return p?p.k:''}).filter(Boolean).join(' '):''),'Disputa de 3º lugar'):'')+'</div></div>'}).join('');
- const last=ph.rounds[ph.rounds.length-1],fm=finalOf(ph),fi=fm&&!(ro&&last.hidden)?phaseFinalInfo(ph):null,ch=fm&&winner(fm)&&!(ro&&last.hidden)?winner(fm):null;
- return'<div class="bracket" tabindex="0" aria-label="Chaveamento do mata-mata"><div class="br-in">'+cols+(ch?'<div class="br-col"><div class="br-title">Classificação final</div><div class="br-list"><div class="br-m champ" data-k="champ" data-f="m'+fm.id+'">'+[['1º',ch],['2º',ch===fm.a?fm.b:fm.a],...(tm&&winner(tm)?[['3º',winner(tm)],['4º',winner(tm)===tm.a?tm.b:tm.a]]:tm?[['3º',null],['4º',null]]:[])].map(([p,id],i)=>'<div class="br-t'+(i?'':' win')+'"><span class="posb">'+p+'</span><span class="br-n">'+name(id)+'</span>'+(i?'':'<span style="color:var(--g1);display:flex">'+I.trophy+'</span>')+'</div>').join('')+'</div></div></div>':'')+'<svg class="br-svg" aria-hidden="true"></svg></div></div>'}
+   return mb(it.m,col,it.k,fk,'')};
+ const n=R.length,LC=R[n-1],fm=finalOf(ph),fin=fm?LC.items.find(it=>it.m===fm):null,hidF=ro&&LC.r.hidden,ch=fm&&winner(fm)&&!hidF?winner(fm):null;
+ const third=()=>tm&&!hidF?mb(tm,LC,'m'+tm.id,(n>1?arr(tm.src).map(e=>{const p=e&&e.l&&R[n-2].items.find(q=>(q.m&&q.m.id===e.l)||(q.s.src&&q.s.src.m===e.l));return p?p.k:''}).filter(Boolean).join(' '):''),'Disputa de 3º lugar'):'';
+ const pod=ch?'<div class="br-m champ"><div class="br-sub">Classificação final</div>'+[['1º',ch],['2º',ch===fm.a?fm.b:fm.a],...(tm&&winner(tm)?[['3º',winner(tm)],['4º',winner(tm)===tm.a?tm.b:tm.a]]:[])].map(([p,id],i)=>'<div class="br-t'+(i?'':' win')+'"><span class="posb">'+p+'</span><span class="br-n">'+name(id)+'</span></div>').join('')+'</div>':'';
+ if(!fin){ // chave ainda sem final definida (dados antigos): colunas simples da esquerda para a direita
+  return'<div class="bracket" tabindex="0" aria-label="Chaveamento do mata-mata"><div class="br-in">'+R.map(col=>'<div class="br-col"><div class="br-title">'+esc(col.r.title)+'</div><div class="br-list">'+col.items.map(it=>item(it,col)).join('')+'</div></div>').join('')+'<svg class="br-svg" aria-hidden="true"></svg></div></div>'}
+ // lados: quem leva à 1ª vaga da final fica à esquerda; quem leva à 2ª vaga, à direita; final, campeã e 3º lugar no centro
+ const mark=(it,sd)=>{if(!it||it.side)return;it.side=sd;it.f.forEach(p=>mark(p,sd))};fin.side='C';mark(fin.f[0],'L');mark(fin.f[1],'R');R.forEach(col=>col.items.forEach(it=>{if(!it.side)it.side='L'}));
+ const colH=(col,sd)=>{const its=col.items.filter(it=>it.side===sd);return its.length?'<div class="br-col '+sd+'"><div class="br-title">'+esc(col.r.title)+'</div><div class="br-list">'+its.map(it=>item(it,col)).join('')+'</div></div>':''};
+ const center='<div class="br-col C"><div class="br-title">'+esc(LC.r.title)+'</div><div class="br-list">'+item(fin,LC)+'<div class="br-champ'+(ch?' on done':'')+'" data-k="champ" data-f="'+fin.k+'" data-v="1"><small>Campeão</small>'+I.trophy+'<b>'+(ch?name(ch):'?')+'</b></div>'+third()+pod+'</div></div>';
+ return'<div class="bracket two" tabindex="0" aria-label="Chaveamento do mata-mata"><div class="br-in">'+R.slice(0,n-1).map(c=>colH(c,'L')).join('')+center+R.slice(0,n-1).reverse().map(c=>colH(c,'R')).join('')+'<svg class="br-svg" aria-hidden="true"></svg></div></div>'}
 // Liga cada bloco aos blocos de onde vêm as duplas (medido na tela, por isso acompanha qualquer tamanho).
 function drawBracket(){document.querySelectorAll('.br-in').forEach(inn=>{const svg=inn.querySelector('.br-svg');if(!svg)return;const B=inn.getBoundingClientRect(),K=(inn.offsetWidth&&B.width/inn.offsetWidth)||1,W=inn.scrollWidth,H=inn.scrollHeight;svg.setAttribute('width',W);svg.setAttribute('height',H);svg.setAttribute('viewBox','0 0 '+W+' '+H);let d='';const by={};inn.querySelectorAll('[data-k]').forEach(e=>by[e.dataset.k]=e);
-  inn.querySelectorAll('[data-f]').forEach(e=>{if(!e.dataset.f)return;const t=e.getBoundingClientRect(),x2=(t.left-B.left)/K,y2=(t.top-B.top+t.height/2)/K;e.dataset.f.split(' ').forEach(k=>{const s=by[k];if(!s)return;const q=s.getBoundingClientRect(),x1=(q.right-B.left)/K,y1=(q.top-B.top+q.height/2)/K,mx=Math.round((x1+x2)/2);d+='<path d="M'+Math.round(x1)+' '+Math.round(y1)+'H'+mx+'V'+Math.round(y2)+'H'+Math.round(x2)+'" fill="none" stroke="'+(s.classList.contains('done')?'#2ECD71':'#C3CEC8')+'" stroke-width="2"'+(e.dataset.dash?' stroke-dasharray="5 5"':'')+'/>'})});svg.innerHTML=d})}
+  inn.querySelectorAll('[data-f]').forEach(e=>{if(!e.dataset.f)return;const t=e.getBoundingClientRect(),y2=(t.top-B.top+t.height/2)/K;e.dataset.f.split(' ').forEach(k=>{const s=by[k];if(!s)return;const q=s.getBoundingClientRect();if(e.dataset.v){const cx=Math.round((q.left+q.width/2-B.left)/K);const dn=t.top>q.top;d+='<path d="M'+cx+' '+Math.round(((dn?q.bottom:q.top)-B.top)/K)+'V'+Math.round(((dn?t.top:t.bottom)-B.top)/K)+'" fill="none" stroke="'+(e.classList.contains('on')?'#2ECD71':'#C3CEC8')+'" stroke-width="2"/>';return}const rev=q.left>t.left,x2=((rev?t.right:t.left)-B.left)/K,x1=((rev?q.left:q.right)-B.left)/K,y1=(q.top-B.top+q.height/2)/K,mx=Math.round((x1+x2)/2);d+='<path d="M'+Math.round(x1)+' '+Math.round(y1)+'H'+mx+'V'+Math.round(y2)+'H'+Math.round(x2)+'" fill="none" stroke="'+(s.classList.contains('done')?'#2ECD71':'#C3CEC8')+'" stroke-width="2"'+(e.dataset.dash?' stroke-dasharray="5 5"':'')+'/>'})});svg.innerHTML=d})}
 function classBlock(c,ph,manage){if(ph.type==='elim')return '<div class="cls-top"><div class="cls-ctl"><select data-c="selPhase" aria-label="Fase">'+c.phases.map(p=>'<option value="'+p.id+'" '+(p===ph?'selected':'')+'>'+esc(p.name)+' — '+TYPE[p.type]+'</option>').join('')+'</select><span class="muted" style="font-size:13px">Chaveamento · '+BOT[ph.bo]+'</span></div>'+(manage?'<div class="panel-plus-row"><button class="panel-plus" data-a="cMenu" aria-label="Gerenciar classificação" title="Gerenciar classificação">+</button></div>':'')+'</div><section class="cls-body" aria-label="Chaveamento">'+(ph.teamIds.length?bracketHTML(ph,!manage&&visitor):'<div class="center"><span class="muted">Ainda não há duplas.</span>'+(manage?'<button class="pill dark big" data-a="cDuplas">ADICIONAR DUPLAS</button>':'')+'</div>')+'</section>';const grp=ph.groups.length>0,all=ui.cls==='all'||!grp,Q=qualState(ph);
  return '<div class="cls-top"><div class="cls-ctl"><select data-c="selPhase" aria-label="Fase">'+c.phases.map(p=>'<option value="'+p.id+'" '+(p===ph?'selected':'')+'>'+esc(p.name)+' — '+TYPE[p.type]+'</option>').join('')+'</select><span class="seg" role="group" aria-label="Visualização"><button class="'+(all?'':'on')+'" data-a="clsView" data-v="g" '+(grp?'':'disabled title="Esta fase não tem grupos"')+'>Por grupo</button><button class="'+(all?'on':'')+'" data-a="clsView" data-v="all">Geral</button></span></div>'+
   (manage?'<div class="panel-plus-row"><button class="panel-plus" data-a="cMenu" aria-label="Gerenciar classificação" title="Gerenciar classificação">+</button></div>':'')+
   (hasNextPhase(ph)&&Q.on?'<p class="note" style="margin:0 0 8px"><i class="qdot"></i>Posição em verde: duplas na zona de classificação para a próxima fase ('+esc(qualTxt(ph))+').</p>':'')+
   '</div><section class="cls-body" aria-label="Classificação">'+(ph.teamIds.length?standHTML(ph):'<div class="center"><span class="muted">Ainda não há duplas.</span>'+(manage?'<button class="pill dark big" data-a="cDuplas">ADICIONAR DUPLAS</button>':'')+'</div>')+'</section>'}
+// Situação de cada partida de uma disputa Melhor de 3 (as três partidas pertencem ao MESMO confronto).
+function gameState(m,i){const n=(m.sets||[]).filter(Boolean).length,[a,b]=setsWon(m),dec=a>=2||b>=2;return i<n?['done','Encerrada']:dec?['na','Não necessária']:i===2&&n<2?['if','Se necessária']:['wait','Aguardando']}
 function matchCard(m,r,ro){const st=mStatus(m),[sa,sb]=setsWon(m),has=hasSets(m),action=ro?'mOpen':canEdit()?'mMenu':'mOpen';
  const nm=id=>id&&T(id)?esc(dl(T(id))):'<span class="ph">A definir</span>';
  const can=ro?(r.allowLink&&statusKey(cur.c)!=='done'&&st!=='done'&&m.a&&m.b&&!m.pending):canScore();
  const one=m.bo===1,[va,vb]=shown(m);
- const fmt=one?'Partida única':'Melhor de 3 partidas'+(setsTxt(m.sets)?' · '+setsTxt(m.sets):'');
+ const fmt=one?'Partida única':'Melhor de 3 partidas';
+ const games=!one&&m.a&&m.b?'<div class="gms">'+[0,1,2].map(i=>{const[k,l]=gameState(m,i),g=m.sets&&m.sets[i];return'<button class="gm '+k+'" data-a="'+action+'" data-id="'+m.id+'" '+(can?'':'disabled')+'><span>Partida '+(i+1)+' — '+l+'</span>'+(g?'<b>'+g[0]+' × '+g[1]+'</b>':'')+'</button>'}).join('')+'</div>':'';
  return '<div class="match"><button class="mt l" data-a="'+action+'" data-id="'+m.id+'" '+(ro||!canEdit()?'disabled':'')+'>'+nm(m.a)+'</button>'+
  '<button class="score" data-a="'+action+'" data-id="'+m.id+'" '+(can?'':'disabled')+' aria-label="'+(ro?'Informar placar':'Opções do confronto')+'"><span class="sbox">'+va+'</span>×<span class="sbox">'+vb+'</span></button>'+
  '<button class="mt r" data-a="'+action+'" data-id="'+m.id+'" '+(ro||!canEdit()?'disabled':'')+'>'+nm(m.b)+'</button>'+
  '<div class="mfoot"><span><span class="tag '+st+'">'+ST[st]+'</span> '+(m.pending?'<span class="tag pend">Aguardando aprovação</span>':'')+(m.third?' <span class="tag pend">Disputa de 3º lugar</span>':'')+' <small class="muted">'+esc(fmt)+'</small></span>'+
- (ro?(can?'<button class="pill sm" data-a="mOpen" data-id="'+m.id+'">Informar placar</button>':''):'')+'</div></div>'}
+ (ro?(can?'<button class="pill sm" data-a="mOpen" data-id="'+m.id+'">Informar placar</button>':''):'')+'</div>'+games+'</div>'}
 
 function jogosHTML(c,ph,ro){const r=getRound(ph,ro),rs=ro?ph.rounds.filter(x=>!x.hidden):ph.rounds;cur.r=r;
  const last=ph.rounds[ph.rounds.length-1],canNext=!ro&&ph.type==='elim'&&last&&last.matches.length&&last.matches.every(m=>mStatus(m)==='done')&&(last.byes||[]).length+last.matches.length>1;
@@ -1081,7 +1155,7 @@ function champTiers(c){if(statusKey(c)!=='done'||!c.result)return null;const tie
   else rankGroups(ph,phaseStats(ph),ph.teamIds.filter(id=>!placed.has(id))).forEach(g=>put([...g]))}
  return tiers}
 function champPlace(c,teamId){const t=champTiers(c);if(!t||!teamId)return null;let pos=1;for(const g of t){if(g.includes(teamId))return pos;pos+=g.length}return null}
-function entMatches(id,mode,c){const out=[];c.phases.forEach(ph=>ph.rounds.forEach(r=>r.matches.forEach(m=>{if(mStatus(m)!=='done')return;const side=[m.a,m.b].find(tid=>mode==='d'?tid===id:T(tid)?.players.includes(id));if(!side)return;resultGames(ph,m).forEach((g,index)=>out.push({ph,r,m,side,win:g.winner===side,g,index,pts:ph.type==='pc'&&g.winner===side?3:0}))})));return out}
+function entMatches(id,mode,c){const out=[];c.phases.forEach(ph=>ph.rounds.forEach(r=>r.matches.forEach(m=>{if(!m.a||!m.b)return;const side=[m.a,m.b].find(tid=>mode==='d'?tid===id:T(tid)?.players.includes(id));if(!side)return;resultGames(ph,m).forEach((g,index)=>out.push({ph,r,m,side,win:g.winner===side,g,index,pts:g.winner===side?db.settings.ppw:0}))})));return out}
 A.rkCell=d=>{if(!C(d.cid))return render();const c=C(d.cid),ms=entMatches(d.id,d.mode,c),name=d.mode==='d'?dl(T(d.id)):P(d.id)?.name,v=ms.filter(x=>x.win).length;
  const partners=d.mode==='i'?[...new Set(champTeams(c).map(T).filter(t=>t&&t.players.includes(d.id)).map(t=>t.players.filter(x=>x!==d.id).map(x=>P(x)?.name).join('')||'—'))]:[];
  modal(`${mHead(esc(c.name),'Data: '+champDate(c))}<p><b>${esc(name)}</b>${partners.length?`<br><span class="muted">Parceiro(a): ${esc(partners.join(', '))}</span>`:''}</p>
@@ -1145,10 +1219,18 @@ F.cSave=f=>{const c=cur.c,n=clean(f.name.value),st=f.start.value,en=f.end.value,
  if(dupC(n,s,c.id))return setErr(f,'Já existe um campeonato com este nome nesta temporada.');
  Object.assign(c,{name:n,startDate:st,endDate:en,season:s});save();render();toast('Alterações salvas.')};
 A.cOpt=(d,el)=>{cur.c[d.k]=el.checked;save();render();toast('Opção salva.')};
-A.cfgPlayers=()=>{const c=cur.c,inC=new Set(champTeams(c).flatMap(id=>T(id)?.players||[])),l=[...db.players].sort((a,b)=>cmpN(a.name,b.name));
- modal(`${mHead('Jogadores',`${inC.size} no campeonato · ${l.length} cadastrados`)}<form data-f="cfgPAdd"><div class="addrow"><input name="n" placeholder="Nome do jogador" maxlength="60" autocomplete="off" aria-label="Nome do jogador" autofocus><button class="pill">Adicionar</button></div><p class="err" role="alert"></p></form>
- <ul class="rows" style="max-height:44vh;overflow:auto;margin-top:8px">${l.map(p=>`<li><span style="flex:1">${esc(p.name)}</span>${inC.has(p.id)?'<span class="tag ok">No campeonato</span>':''}</li>`).join('')||'<li class="muted">Nenhum jogador cadastrado.</li>'}</ul>
- <p class="note">O jogador entra no cadastro geral. Para colocá-lo no campeonato, forme a dupla em Cadastro de equipes e adicione-a em Duplas.</p><div class="acts"><button class="pill" data-a="closeM">Fechar</button></div>`,{cls:'wide'})};
+let cpSel=new Set();
+A.cfgPlayers=()=>{const c=cur.c,inC=new Set(champTeams(c).flatMap(id=>T(id)?.players||[]));cpSel=new Set([...cpSel].filter(P));
+ modal(`${mHead('Jogadores',`${inC.size} no campeonato · ${db.players.length} cadastrados`)}<form data-f="cfgPAdd"><div class="addrow"><input name="n" placeholder="Nome do jogador" maxlength="60" autocomplete="off" aria-label="Nome do jogador" autofocus><button class="pill">Adicionar</button></div><p class="err" role="alert"></p></form>
+ <div class="selbar" style="margin:12px 0 6px"><label class="chk" style="margin:0;align-items:center"><input type="checkbox" data-a="cpAll" id="cpAll"><span>Selecionar todos</span></label><span class="muted" id="cpCnt"></span><span style="flex:1"></span><button type="button" class="pill red sm" data-a="cpDel" id="cpDel">Excluir selecionados</button></div>
+ <div style="max-height:44vh;overflow:auto;padding:2px"><ul class="rows cols3 two" id="cpList"></ul></div>
+ <p class="note">O jogador entra no cadastro geral. Para colocá-lo no campeonato, forme a dupla em Cadastro de equipes e adicione-a em Duplas. Selecionar jogadores aqui não os cadastra, vincula nem exclui sozinho: a exclusão só acontece pelo botão, com confirmação.</p><div class="acts"><button class="pill" data-a="closeM">Fechar</button></div>`,{cls:'wide w2'});cpDraw()};
+function cpDraw(){const box=document.getElementById('cpList');if(!box||!cur.c)return;const inC=new Set(champTeams(cur.c).flatMap(id=>T(id)?.players||[])),l=[...db.players].sort((a,b)=>cmpN(a.name,b.name)),st=box.parentElement.scrollTop;
+ box.innerHTML=l.map((p,i)=>`<li class="${cpSel.has(p.id)?'sel':''}"><label style="display:flex;gap:10px;align-items:center;flex:1;min-width:0;cursor:pointer"><input type="checkbox" data-a="cpSel" data-id="${p.id}" ${cpSel.has(p.id)?'checked':''}><span class="posb blue">${i+1}</span><span style="flex:1;min-width:0;overflow-wrap:anywhere">${esc(p.name)}</span></label>${inC.has(p.id)?'<span class="tag ok">No campeonato</span>':''}</li>`).join('')||'<li class="muted">Nenhum jogador cadastrado.</li>';
+ const n=l.filter(p=>cpSel.has(p.id)).length,a=document.getElementById('cpAll');document.getElementById('cpCnt').textContent=n+' selecionado'+(n===1?'':'s');a.checked=l.length>0&&n===l.length;a.disabled=!l.length;document.getElementById('cpDel').disabled=!n;box.parentElement.scrollTop=st}
+A.cpSel=(d,el)=>{el.checked?cpSel.add(d.id):cpSel.delete(d.id);cpDraw()};
+A.cpAll=(d,el)=>{cpSel=new Set(el.checked?db.players.map(p=>p.id):[]);cpDraw()};
+A.cpDel=async()=>{if(!cpSel.size)return;ui.selP=new Set(cpSel);await A.pDel();cpSel=new Set([...cpSel].filter(id=>P(id)&&ui.selP.has(id)));cpSel.clear();cpDraw()};
 F.cfgPAdd=f=>{const n=clean(f.n.value);if(!n)return setErr(f,'Informe o nome do jogador.');
  if(dupP(n))return setErr(f,'Este jogador já está cadastrado. Verifique a lista antes de realizar uma nova inclusão.');
  db.players.push({id:uid(),name:n,pending:null});save();closeModal(true);render();A.cfgPlayers();toast('Jogador cadastrado.')};
@@ -1237,13 +1319,14 @@ A.cMenu=()=>menu([['cDuplas','Duplas',I.users],['cGrupos','Grupos',I.layers],['c
 let dw;
 A.cDuplas=()=>{const ph=cur.ph,c=cur.c;dw={sel:new Set(ph.teamIds),q:'',grp:{},origin:{...(ph.origin||{})}};ph.groups.forEach(g=>g.teamIds.forEach(id=>dw.grp[id]=g.id));
  const el=modal(`${mHead('Duplas','Selecione as duplas participantes de '+esc(ph.name)+'.'+(ph.groups.length?' O grupo de cada dupla aparece ao lado e pode ser alterado.':''))}<input class="inp" type="search" placeholder="Pesquisar pelo nome dos integrantes" data-i="dQ" data-nodirty aria-label="Pesquisar duplas">
- <ul class="rows" id="dList" style="margin-top:10px;max-height:44vh;overflow:auto"></ul><p class="err" role="alert"></p>
- <div class="acts"><button class="pill ghost" data-a="closeM">Cancelar</button><button class="pill" data-a="dSave">Salvar</button></div>`,{cls:'wide',guard:true});dDraw(el)};
+ <div class="selbar" style="margin:10px 0 6px"><label class="chk" style="margin:0;align-items:center"><input type="checkbox" data-a="dAll" id="dAll" data-nodirty><span>Selecionar todos</span></label><span class="muted" id="dCnt"></span></div><div style="max-height:46vh;overflow:auto;padding:2px"><ul class="rows cols3 two" id="dList"></ul></div><p class="err" role="alert"></p>
+ <div class="acts"><button class="pill ghost" data-a="closeM">Cancelar</button><button class="pill" data-a="dSave">Salvar</button></div>`,{cls:'wide w2',guard:true});dDraw(el)};
 function dDraw(){const ph=cur.ph,q=norm(dw.q),l=db.teams.filter(t=>t.players.length===2&&(t.active||ph.teamIds.includes(t.id))).filter(t=>!q||norm(dl(t)+' '+t.name).includes(q)).sort((a,b)=>cmpN(dl(a),dl(b)));
- const box=document.getElementById('dList'),st=box.scrollTop;
+ const box=document.getElementById('dList'),st=box.parentElement.scrollTop;
  box.innerHTML=l.length?l.map(t=>`<li><label style="display:flex;gap:10px;align-items:center;flex:1;cursor:pointer"><input type="checkbox" data-a="dTog" data-id="${t.id}" ${dw.sel.has(t.id)?'checked':''}><span><b>${esc(dl(t))}</b>${t.auto?'':` <small class="muted">${esc(t.name)}</small>`}</span></label>${ph.groups.length&&dw.sel.has(t.id)?`<select class="sm" data-c="dGrp" data-id="${t.id}" aria-label="Grupo de ${esc(dl(t))}"><option value="">Sem grupo</option>${ph.groups.map(g=>`<option value="${g.id}" ${dw.grp[t.id]===g.id?'selected':''}>${esc(g.name)}</option>`).join('')}</select>`:''}${ph.teamIds.includes(t.id)?'<span class="tag ok">Na fase</span>':''}</li>`).join('')
-  :'<li class="muted">Nenhuma dupla disponível. Forme as duplas em Cadastro de equipes.</li>';box.scrollTop=st}
-A.dQ=(d,el)=>{dw.q=el.value;dDraw()};A.dTog=(d,el)=>{el.checked?dw.sel.add(d.id):dw.sel.delete(d.id);if(cur.ph.groups.length)dDraw()};
+  :'<li class="muted">Nenhuma dupla disponível. Forme as duplas em Cadastro de equipes.</li>';const vis=l.map(t=>t.id),nv=vis.filter(id=>dw.sel.has(id)).length,da=document.getElementById('dAll');dw.vis=vis;document.getElementById('dCnt').textContent=dw.sel.size+' selecionada'+(dw.sel.size===1?'':'s');da.checked=vis.length>0&&nv===vis.length;da.disabled=!vis.length;box.parentElement.scrollTop=st}
+A.dQ=(d,el)=>{dw.q=el.value;dDraw()};A.dTog=(d,el)=>{el.checked?dw.sel.add(d.id):dw.sel.delete(d.id);dDraw()};
+A.dAll=(d,el)=>{(dw.vis||[]).forEach(id=>el.checked?dw.sel.add(id):dw.sel.delete(id));stack[stack.length-1].dirty=true;dDraw()};
 A.dGrp=(d,el)=>{if(el.value)dw.grp[d.id]=el.value;else delete dw.grp[d.id]};
 A.dSave=()=>{const ph=cur.ph,el=stack[stack.length-1].ov,ids=[...dw.sel].filter(T),seen={};
  for(const id of ids)for(const p of T(id).players){if(seen[p])return setErr(el,`${P(p).name} está em duas duplas selecionadas (${dl(T(seen[p]))} e ${dl(T(id))}). Um jogador só pode participar de uma dupla por fase.`);seen[p]=id}
@@ -1259,21 +1342,21 @@ let gw;
 A.cGrupos=()=>{const ph=cur.ph;gw={n:Math.max(1,ph.groups.length),names:ph.groups.map(g=>g.name),asg:{},open:null,seeds:new Set((ph.seeds||[]).filter(id=>ph.teamIds.includes(id))),sorted:false,redo:false};
  ph.groups.forEach((g,i)=>g.teamIds.forEach(id=>gw.asg[id]=i));const max=32;if(gw.n>max)gw.n=max;gFix();
  modal(`${mHead('Grupos',esc(ph.name))}<label class="field"><span>Quantidade de grupos: <b id="gNum">${gw.n}</b></span><span style="display:flex;gap:10px;align-items:center"><button type="button" class="sqb" data-a="gStep" data-v="-1" aria-label="Menos um grupo">−</button><input type="range" id="gRange" min="1" max="${max}" value="${gw.n}" data-i="gN" style="flex:1;accent-color:var(--g1)" aria-label="Quantidade de grupos"><button type="button" class="sqb" data-a="gStep" data-v="1" aria-label="Mais um grupo">+</button></span></label>
- <div id="gOpts"></div><p class="err" role="alert"></p><div class="acts"><button class="pill ghost" data-a="closeM">Cancelar</button><button class="pill" data-a="gSave">Salvar</button></div>`,{cls:'wide',guard:true});gDraw()};
+ <div id="gOpts"></div><p class="err" role="alert"></p><div class="acts"><button class="pill ghost" data-a="closeM">Cancelar</button><button class="pill" data-a="gSave">Salvar</button></div>`,{cls:'wide w2',guard:true});gDraw()};
 function gFix(){for(let i=0;i<gw.n;i++)if(!gw.names[i])gw.names[i]='Grupo '+(i<26?String.fromCharCode(65+i):i+1);gw.names.length=gw.n;for(const k in gw.asg)if(gw.asg[k]>=gw.n)delete gw.asg[k];while(gw.seeds.size>gw.n)gw.seeds.delete([...gw.seeds].pop())}
 function gDraw(){const ph=cur.ph,dis=gw.n<2?'disabled':'',o=gw.n<2?null:gw.open;
  const sel=id=>'<select class="sm" data-c="gSet" data-id="'+id+'" aria-label="Grupo de '+esc(dl(T(id)))+'"><option value="">Sem grupo</option>'+gw.names.map((n,i)=>'<option value="'+i+'" '+(gw.asg[id]===i?'selected':'')+'>'+esc(n)+'</option>').join('')+'</select>';
- const star=id=>gw.seeds.has(id)?'★ ':'';
+ const seedTag=id=>gw.seeds.has(id)?'<span class="tag live" title="Cabeça de chave">★ Cabeça de chave</span>':'',nm=id=>'<span class="gnm">'+esc(dl(T(id)))+'</span>',box=inner=>'<div class="gscroll">'+inner+'</div>';
  let html=ph.drawn?'<p class="note" style="margin:0 0 8px"><b>Os grupos desta fase já foram sorteados.</b></p>':'';
  html+='<button class="opt" data-a="gOpen" data-v="seeds" '+dis+'>'+I.flag+'<span style="flex:1">Cabeças de chave</span><small class="muted">'+(gw.n<2?'':gw.seeds.size+' de até '+gw.n)+'</small></button>';
- if(o==='seeds')html+='<ul class="rows" style="max-height:220px;overflow:auto">'+(ph.teamIds.map(id=>'<li style="padding:6px 8px"><label style="display:flex;gap:10px;align-items:center;flex:1;cursor:pointer"><input type="checkbox" data-a="gSeed" data-id="'+id+'" '+(gw.seeds.has(id)?'checked':'')+'>'+esc(dl(T(id)))+'</label></li>').join('')||'<li class="muted">Adicione as duplas para escolher os cabeças de chave.</li>')+'</ul><p class="note">Marque no máximo '+gw.n+' cabeças de chave (um por grupo) antes de sortear.</p>';
+ if(o==='seeds')html+=box('<ul class="rows cols3 two" id="gSeeds">'+(ph.teamIds.map(id=>'<li class="'+(gw.seeds.has(id)?'sel':'')+'"><label style="display:flex;gap:10px;align-items:center;flex:1;min-width:0;cursor:pointer"><input type="checkbox" data-a="gSeed" data-id="'+id+'" '+(gw.seeds.has(id)?'checked':'')+'>'+nm(id)+'</label>'+seedTag(id)+'</li>').join('')||'<li class="muted">Adicione as duplas para escolher os cabeças de chave.</li>')+'</ul>')+'<p class="note">Marque no máximo '+gw.n+' cabeças de chave (um por grupo) antes de sortear. Selecionados: <b>'+gw.seeds.size+' de '+gw.n+'</b>.</p>';
  html+='<button class="opt" data-a="gSort" '+dis+'>'+I.shuffle+'Sortear duplas nos grupos</button>';
- if(o==='sort')html+='<div style="padding:4px 0 10px">'+gw.names.map((n,i)=>'<p style="margin:6px 0"><b>'+esc(n)+':</b> '+ph.teamIds.filter(id=>gw.asg[id]===i).map(id=>star(id)+esc(dl(T(id)))).join('; ')||'—'+'</p>').join('')+'<p class="note">★ = cabeça de chave. Sorteie novamente se desejar outra distribuição. Use Salvar para confirmar.</p></div>';
+ if(o==='sort')html+=box(gw.names.map((n,i)=>{const ids=ph.teamIds.filter(id=>gw.asg[id]===i);return'<h4 class="ggt">'+esc(n)+' <small class="muted">('+ids.length+')</small></h4><ul class="rows cols3 two gsort">'+(ids.map(id=>'<li>'+nm(id)+'<span class="tag ok">'+esc(n)+'</span>'+seedTag(id)+'</li>').join('')||'<li class="muted">Nenhuma dupla neste grupo.</li>')+'</ul>'}).join(''))+'<p class="note">Clique de novo em “Sortear duplas nos grupos” para outra distribuição. Use Salvar para confirmar.</p>';
  html+='<button class="opt" data-a="gOpen" data-v="def" '+dis+'>'+I.users+'Definir grupo das duplas</button>';
- if(o==='def')html+='<ul class="rows">'+(ph.teamIds.map(id=>'<li><span style="flex:1">'+star(id)+esc(dl(T(id)))+'</span>'+sel(id)+'</li>').join('')||'<li class="muted">Ainda não há duplas nesta fase.</li>')+'</ul>';
+ if(o==='def')html+=box('<ul class="rows cols3 two" id="gDef">'+(ph.teamIds.map(id=>'<li>'+nm(id)+seedTag(id)+'<span class="gdef"><small class="muted">Grupo atual: <b class="gcur">'+(gw.asg[id]!=null?esc(gw.names[gw.asg[id]]):'sem grupo')+'</b></small>'+sel(id)+'</span></li>').join('')||'<li class="muted">Ainda não há duplas nesta fase.</li>')+'</ul>');
  html+='<button class="opt" data-a="gOpen" data-v="names" '+dis+'>'+I.edit+'Nome dos grupos</button>';
- if(o==='names')html+=gw.names.map((n,i)=>'<input class="inp" style="margin:4px 0;height:40px" data-i="gName" data-k="'+i+'" value="'+esc(n)+'" maxlength="30" aria-label="Nome do grupo '+(i+1)+'">').join('');
- document.getElementById('gOpts').innerHTML=html}
+ if(o==='names')html+=box('<ul class="rows cols3 two" id="gNames">'+gw.names.map((n,i)=>'<li><span class="posb blue">'+(i+1)+'</span><label style="flex:1;min-width:0"><small class="muted" style="display:block;margin-bottom:2px">Grupo '+(i+1)+'</small><input class="inp" style="height:38px;font-size:15px" data-i="gName" data-k="'+i+'" value="'+esc(n)+'" maxlength="30" aria-label="Nome do grupo '+(i+1)+'"></label></li>').join('')+'</ul>');
+ const host=document.getElementById('gOpts'),old=host.querySelector('.gscroll'),top=old?old.scrollTop:0;host.innerHTML=html;const nw=host.querySelector('.gscroll');if(nw)nw.scrollTop=top}
 A.gN=(d,el)=>{gw.n=+el.value;gFix();document.getElementById('gNum').textContent=gw.n;gDraw()};
 A.gStep=d=>{const r=document.getElementById('gRange'),v=Math.min(32,Math.max(1,gw.n+ +d.v));r.value=v;stack[stack.length-1].dirty=true;A.gN({},r)};
 A.gOpen=d=>{gw.open=gw.open===d.v?null:d.v;gDraw()};
@@ -1286,7 +1369,7 @@ A.gSort=async()=>{const ph=cur.ph,n=gw.n;if(!ph.teamIds.length)return toast('Adi
  const rest=ph.teamIds.filter(id=>!gw.seeds.has(id)),bk={};rest.forEach(id=>{const k=O[id]?'g'+O[id].g:'-';(bk[k]=bk[k]||[]).push(id)});
  shuffle(Object.keys(bk)).flatMap(k=>shuffle(bk[k])).forEach(id=>{const mn=Math.min(...cnt);let op=cnt.map((c,i)=>c===mn?i:-1).filter(i=>i>=0);const ms=Math.min(...op.map(g=>sameO(id,g)));op=op.filter(g=>sameO(id,g)===ms);const g=op[Math.floor(Math.random()*op.length)];gw.asg[id]=g;cnt[g]++});
  gw.sorted=true;gw.open='sort';stack[stack.length-1].dirty=true;gDraw()};
-A.gSet=(d,el)=>{if(el.value==='')delete gw.asg[d.id];else gw.asg[d.id]=+el.value};
+A.gSet=(d,el)=>{if(el.value==='')delete gw.asg[d.id];else gw.asg[d.id]=+el.value;const c=el.closest('li'),b=c&&c.querySelector('.gcur');if(b)b.textContent=el.value===''?'sem grupo':gw.names[+el.value]};
 A.gName=(d,el)=>{gw.names[+d.k]=el.value};
 A.gSave=()=>{const ph=cur.ph,el=stack[stack.length-1].ov;let groups=[];
  if(gw.n>=2){const names=gw.names.map(clean);if(names.some(n=>!n))return setErr(el,'Todos os grupos precisam de um nome.');
@@ -1324,7 +1407,7 @@ function phaseEditorHTML(p,c){const idx=p?c.phases.indexOf(p):c.phases.length,ne
  return '<form data-f="fSave">'+mHead(p?'Editar fase':'Nova fase')+'<input type="hidden" name="id" value="'+(p?p.id:'')+'">'+
   '<label class="field"><span>Nome da fase</span><input class="inp" name="n" maxlength="40" value="'+esc(p?p.name:(c.phases.length+1)+'ª Fase')+'" autofocus></label>'+
   '<label class="field"><span>Tipo de disputa</span><select name="t" '+(lock?'disabled':'')+' style="width:100%"><option value="pc" '+(p?.type==='pc'?'selected':'')+'>Pontos corridos</option><option value="elim" '+(p?.type==='elim'?'selected':'')+'>Mata-mata</option></select></label>'+
-  '<label class="field"><span>Formato das partidas</span><select name="bo" '+(lock?'disabled':'')+' style="width:100%"><option value="1" '+(p?.bo===1?'selected':'')+'>Partida única</option><option value="3" '+(p?.bo===1?'':'selected')+'>Melhor de 3 partidas</option></select></label>'+
+  '<label class="field"><span>Formato das partidas</span><select name="bo" '+(lock?'disabled':'')+' style="width:100%"><option value="1" '+(!p||p.bo===1?'selected':'')+'>Partida única</option><option value="3" '+(p&&p.bo!==1?'selected':'')+'>Melhor de 3 partidas</option></select></label>'+
   (lock?'<p class="note">Tipo e formato ficam bloqueados depois que os confrontos são gerados.</p>':'')+migrationNote+advance+
   '<p class="err" role="alert"></p><div class="acts">'+(p?'<button type="button" class="pill red" data-a="fDel" data-id="'+p.id+'" style="margin-right:auto">Excluir fase</button>':'')+
   '<button type="button" class="pill ghost" data-a="fBack">Cancelar</button><button class="pill">Salvar</button></div></form>'}
@@ -1586,11 +1669,52 @@ F.tieSave=async f=>{const c=cur.c,ph=cur.ph,type=f.elements.type.value,key=f.ele
 /* ----- partida / placar ----- */
 A.mMenu=d=>{const x=findMatch(d.id);if(!x)return toast('Este confronto não existe mais.','err');
  modal('<div style="display:flex;flex-direction:column;gap:6px"><button data-a="mOpen" data-id="'+d.id+'" data-close="1">'+I.edit+'Editar resultado</button><button data-a="mDel" data-id="'+d.id+'" data-close="1">'+I.trash+'Excluir confronto</button></div>',{cls:'menu'})};
+function resExtras(m){const pending=!visitor&&m.pending?'<div class="box" style="margin:10px 0"><b>Resultado enviado pelo link:</b> '+esc(setsTxt(m.pending.sets))+' <small class="muted">('+dt(m.pending.at)+')</small><div class="acts" style="margin-top:8px"><button type="button" class="pill ghost sm" data-a="mReject" data-id="'+m.id+'">Rejeitar</button><button type="button" class="pill sm" data-a="mApprove" data-id="'+m.id+'">Aprovar</button></div></div>':'';const hist=!visitor&&m.history?.length?'<details class="note"><summary>Histórico de alterações ('+m.history.length+')</summary>'+m.history.map(h=>'<div>'+dt(h.at)+' · '+esc(h.by||'organizador')+' · '+esc(setsTxt(h.sets)||'placar limpo')+'</div>').join('')+'</details>':'';return pending+hist}
+// Grava um resultado já validado (usado pela partida única e por cada partida do Melhor de 3): confere o chaveamento, salva, sincroniza.
+async function commitScore(f,x,sets,state,btn){const{m,ph,r,c}=x;
+ const a=m.a,b=m.b;if(!a||!b)return setErr(f,'Defina as duas duplas do confronto antes de informar o placar.');
+ const scoreChanged=JSON.stringify(sets)!==JSON.stringify(m.sets||[]),oldState=mStatus(m)==='done'?'done':'live',stateChanged=oldState!==state;
+ const draft={...m,a,b,sets:sets,status:state};
+ let rebuild=[];if(ph.type==='elim'&&winner(m)!==winner(draft)){if(!isBracket(ph)){if(elimLocked(ph,r))return setErr(f,'A rodada seguinte já foi gerada com o vencedor deste confronto. Reconstrua as fases posteriores antes de mudar o vencedor.')}
+  else{rebuild=elimDeps(ph,m);if(rebuild.length){if(!canEdit())return setErr(f,'Este resultado já definiu confrontos posteriores que têm placar. Só o organizador pode corrigi-lo.');
+   if(!await confirmBox({title:'Alteração no chaveamento',msg:'A correção muda a dupla vencedora deste confronto. '+rebuild.length+' confronto(s) posterior(es) já têm resultado e serão reabertos, sem placar, com as duplas atualizadas. Os resultados anteriores ficam guardados no histórico e na auditoria.<br><br>Deseja reconstruir essa parte do chaveamento?',ok:'Sim, reconstruir',cancel:'Não, cancelar',danger:true}))return}}}
+ if((scoreChanged||stateChanged)&&statusKey(c)==='done'&&!await confirmBox({title:'Campeonato finalizado',msg:'Este resultado será corrigido e registrado no histórico. Continuar?',ok:'Corrigir resultado'}))return;
+ if(scoreChanged||stateChanged){if(btn)btn.disabled=true;let ok;try{ok=await scoreAdmin(m,sets,userName(),state)}catch(e){if(btn)btn.disabled=false;return setErr(f,errTxt(e))}
+  if(!ok){if(btn)btn.disabled=false;render();return setErr(f,conflictMsg(m))}}
+ m.sets=sets;m.status=state;
+ if(rebuild.length){const archive=rebuild.map(d=>({matchId:d.id,a:d.a,b:d.b,sets:(d.sets||[]).map(z=>[...z])}));for(const d of rebuild){try{await scoreAdmin(d,[],userName(),'live')}catch(e){toast('Um confronto posterior não pôde ser reaberto: '+errTxt(e),'err')}}phaseAudit(c,ph,'rebuild-bracket',{summary:'Chaveamento reconstruído após correção de resultado.',matchId:m.id,archive})}
+ if(ph.type==='elim')elimSync(ph);if(canEdit()){if(ph.status==='prep')ph.status='live';save()}closeModal(true);render();
+ if(state==='done')await maybeAutoFinalize(c,ph);
+ if(scoreChanged&&state==='done')toast('Resultado salvo. Classificação e rankings atualizados.')}
+// Melhor de 3: cada partida tem o seu card e o seu botão de salvar; a disputa encerra sozinha quando alguém chega a 2 vitórias.
+function gamesModal(x){const{m,ph,r}=x,[wa,wb]=setsWon(m),n=(m.sets||[]).filter(Boolean).length,dec=wa>=2||wb>=2,NA=esc(dl(T(m.a))),NB=esc(dl(T(m.b)));
+ const card=i=>{const[k,l]=gameState(m,i),g=(m.sets&&m.sets[i])||['',''],edit=k==='wait'&&i===n,w=k==='done'?(g[0]>g[1]?'a':'b'):'';
+  return'<div class="gcardm '+k+(edit?' cur':'')+'" data-g="'+i+'"><div class="gh"><b>Partida '+(i+1)+'</b><span class="tag '+(k==='done'?'done':edit?'live':'')+'">'+l+'</span></div>'+
+   '<div class="score-pair"><span class="score-team-label a'+(w==='a'?' w':'')+'">'+NA+'</span><input type="number" min="0" max="99" step="1" name="s'+i+'a" inputmode="numeric" value="'+g[0]+'" '+(edit?'':'disabled')+' aria-label="Placar da Dupla 1, partida '+(i+1)+'"><span class="score-times">×</span><input type="number" min="0" max="99" step="1" name="s'+i+'b" inputmode="numeric" value="'+g[1]+'" '+(edit?'':'disabled')+' aria-label="Placar da Dupla 2, partida '+(i+1)+'"><span class="score-team-label b'+(w==='b'?' w':'')+'">'+NB+'</span></div>'+
+   '<div class="gacts">'+(k==='done'&&canEdit()?'<button type="button" class="pill ghost sm" data-a="mGameEdit" data-g="'+i+'">Corrigir</button>':'')+'<button type="button" class="pill sm" data-a="mGame" data-g="'+i+'" '+(edit?'':'hidden')+'>Salvar Partida '+(i+1)+'</button></div></div>'};
+ modal('<form data-f="mGameForm">'+mHead('Editar resultado',esc(ph.name)+' · '+esc(r.title)+' · Melhor de 3 partidas')+'<input type="hidden" name="id" value="'+m.id+'"><input type="hidden" name="rev" value="'+(m.rev||0)+'">'+
+  '<div class="gsum"><span class="score-team-label a">'+NA+'</span><span class="sbox">'+wa+'</span><span class="score-times">×</span><span class="sbox">'+wb+'</span><span class="score-team-label b">'+NB+'</span></div><p class="note" style="text-align:center;margin:4px 0 12px">'+(dec?'Disputa encerrada por '+Math.max(wa,wb)+' × '+Math.min(wa,wb)+'.':'Placar da disputa (vitórias). Cada partida é salva separadamente; vence quem chegar a 2 vitórias.')+'</p>'+
+  [0,1,2].map(card).join('')+resExtras(m)+'<p class="err" role="alert"></p><div class="acts"><button type="button" class="pill ghost" data-a="closeM">Fechar</button></div></form>',{cls:'res',guard:true})}
+A.mGameEdit=async(d,el)=>{const c=el.closest('.gcardm');if(!c)return;if(!await confirmBox({title:'Corrigir Partida '+(+d.g+1),msg:'O placar atual desta partida fica guardado no histórico. Depois de salvar a correção, as vitórias da disputa são recalculadas.',ok:'Corrigir'}))return;
+ c.querySelectorAll('input').forEach(i=>i.disabled=false);const b=c.querySelector('[data-a=mGame]');b.hidden=false;el.hidden=true;c.classList.add('cur');c.querySelector('input').focus()};
+A.mGame=async(d,el)=>{const f=el.closest('form'),x=f&&findMatch(f.id.value);if(!x)return f&&setErr(f,'Este confronto foi excluído por outra pessoa.');const{m}=x,i=+d.g,N=i+1;
+ if(+f.rev.value!==(m.rev||0))return setErr(f,conflictMsg(m));
+ const va=String(f['s'+i+'a'].value).trim(),vb=String(f['s'+i+'b'].value).trim();
+ if(va===''||vb==='')return setErr(f,'Informe o placar das duas duplas na Partida '+N+'.');
+ if(!/^\d+$/.test(va)||!/^\d+$/.test(vb)||+va>99||+vb>99)return setErr(f,'O placar da Partida '+N+' deve ser um número inteiro entre 0 e 99.');
+ if(+va===+vb)return setErr(f,'A Partida '+N+' não pode terminar empatada.');
+ const cur0=(m.sets||[]).filter(Boolean).map(z=>[z[0],z[1]]);if(i>cur0.length)return setErr(f,'Lance antes a Partida '+(cur0.length+1)+'.');
+ cur0[i]=[+va,+vb];let wa=0,wb=0;const out=[];for(const g of cur0){out.push(g);g[0]>g[1]?wa++:wb++;if(wa===2||wb===2)break}
+ if(out.length<cur0.length&&!await confirmBox({title:'A Partida 3 deixa de valer',msg:'Com esta correção a disputa fica decidida em 2 × 0. O placar da Partida 3 ('+cur0[2][0]+' × '+cur0[2][1]+') será retirado da disputa e ficará guardado no histórico. Continuar?',ok:'Salvar correção',danger:true}))return;
+ const state=wa===2||wb===2?'done':'live';if(el.disabled)return;await commitScore(f,x,out,state,el);
+ if(!stack.length&&state==='live')toast('Partida '+N+' salva. Disputa em '+wa+' × '+wb+(out.length===2?': a Partida 3 decide.':'.'))};
+F.mGameForm=f=>{const b=[...f.querySelectorAll('[data-a=mGame]')].find(z=>!z.hidden);if(b)A.mGame(b.dataset,b)};
 A.mOpen=d=>{const fnd=findMatch(d.id);if(!fnd)return;const{m,ph,r}=fnd,has=hasSets(m),locked=mStatus(m)==='done';
  if((!m.a||!m.b)&&m.src)return visitor?undefined:alertBox('Confronto a definir','As duplas deste confronto serão preenchidas automaticamente quando os confrontos anteriores forem encerrados.');
  if(!m.a||!m.b){if(visitor||!canEdit())return;cur.ph=ph;cur.r=r;return pairModal(m)}
  if(!visitor){const lk=phaseLock(fnd.c,ph);if(lk)return alertBox(lk[0],lk[1])}
  if(visitor&&(!r.allowLink||statusKey(fnd.c)==='done'||locked||!m.a||!m.b||m.pending))return;
+ if(!visitor&&m.bo!==1)return gamesModal(fnd);
  const score=i=>m.sets?.[i]||['',''],state=locked?'done':'live';
  const statusInput=visitor?'<input type="hidden" name="state" value="done">':
   '<label class="field"><span>Situação da partida</span><select name="state" data-c="mState" data-id="'+m.id+'" data-was-done="'+(locked?'true':'false')+'" style="width:auto;min-width:190px"><option value="live" '+(state==='live'?'selected':'')+'>Em andamento</option><option value="done" '+(state==='done'?'selected':'')+'>Encerrado</option></select></label>';
@@ -1598,12 +1722,10 @@ A.mOpen=d=>{const fnd=findMatch(d.id);if(!fnd)return;const{m,ph,r}=fnd,has=hasSe
  const participant=side=>'<span class="score-team-label '+side+'">'+teamLabel(side,side==='a'?m.a:m.b)+'</span>';
  const scoreFields=Array.from({length:m.bo===1?1:3},(_,i)=>'<div class="score-game"><span class="score-game-title">Partida '+(i+1)+'</span><div class="score-pair">'+participant('a',i)+'<input type="number" min="0" step="1" name="s'+i+'a" data-i="mAuto" inputmode="numeric" value="'+score(i)[0]+'" aria-label="Placar da Dupla 1, partida '+(i+1)+'" '+(locked?'disabled':'')+'><span class="score-times">×</span><input type="number" min="0" step="1" name="s'+i+'b" data-i="mAuto" inputmode="numeric" value="'+score(i)[1]+'" aria-label="Placar da Dupla 2, partida '+(i+1)+'" '+(locked?'disabled':'')+'>'+participant('b',i)+'</div></div>').join('');
  const participantNote='';
-  const pending=!visitor&&m.pending?'<div class="box" style="margin:10px 0"><b>Resultado enviado pelo link:</b> '+esc(setsTxt(m.pending.sets))+' <small class="muted">('+dt(m.pending.at)+')</small><div class="acts" style="margin-top:8px"><button type="button" class="pill ghost sm" data-a="mReject" data-id="'+m.id+'">Rejeitar</button><button type="button" class="pill sm" data-a="mApprove" data-id="'+m.id+'">Aprovar</button></div></div>':'';
- const hist=!visitor&&m.history?.length?'<details class="note"><summary>Histórico de alterações ('+m.history.length+')</summary>'+m.history.map(h=>'<div>'+dt(h.at)+' · '+esc(h.by||'organizador')+' · '+esc(setsTxt(h.sets)||'placar limpo')+'</div>').join('')+'</details>':'';
  modal('<form data-f="mSave">'+mHead(visitor?'Informar placar':'Editar resultado',esc(ph.name)+' · '+esc(r.title))+
   '<input type="hidden" name="id" value="'+m.id+'"><input type="hidden" name="rev" value="'+(m.rev||0)+'">'+statusInput+
   '<div class="score-list">'+scoreFields+'</div>'+participantNote+'<p class="note">'+(m.bo===1?'Partida única: o placar define o vencedor.':'Melhor de 3 partidas: a disputa termina quando uma dupla alcançar duas vitórias. A 3ª partida fica vazia se não for necessária.')+'</p>'+
-  (locked?'<p class="note">Para corrigir um resultado encerrado, altere a situação para “Em andamento” e confirme a reabertura.</p>':'')+pending+hist+
+  (locked?'<p class="note">Para corrigir um resultado encerrado, altere a situação para “Em andamento” e confirme a reabertura.</p>':'')+resExtras(m)+
   '<p class="err" role="alert"></p><div class="acts"><button type="button" class="pill ghost" data-a="closeM">Cancelar</button><button class="pill">Salvar</button></div></form>',{cls:'res',guard:true})};
 A.mAuto=(d,el)=>{const f=el.closest('form'),s=f&&f.elements.state;if(!s||s.tagName!=='SELECT'||f.dataset.reopened==='1'||s.dataset.wasDone==='true')return;const x=findMatch(f.id.value);if(!x)return;const v=validateSets(readScore(f),x.m.bo);if(!v.err&&v.winner){if(s.value==='live'){s.value='done';f.dataset.auto='1'}}else if(f.dataset.auto==='1'){s.value='live';f.dataset.auto=''}};
 A.mState=async(d,el)=>{const f=el.closest('form');if(!f)return;
@@ -1627,20 +1749,7 @@ F.mSave=async f=>{const x=findMatch(f.id.value);if(!x)return setErr(f,'Este conf
   m.rev=(m.rev||0)+1;
   if(c.requireApproval){m.pending={sets:v.sets,at:Date.now()};m.status='live';save();closeModal(true);render();return toast('Placar enviado. Aguardando aprovação do organizador.')}
   m.sets=v.sets;m.status='done';m.history.push({at:Date.now(),by:'link',sets:v.sets});save();closeModal(true);render();return toast('Placar salvo.')}
- const a=m.a,b=m.b;if(!a||!b)return setErr(f,'Defina as duas duplas do confronto antes de informar o placar.');
- const scoreChanged=JSON.stringify(v.sets)!==JSON.stringify(m.sets||[]),oldState=mStatus(m)==='done'?'done':'live',stateChanged=oldState!==state;
- const draft={...m,a,b,sets:v.sets,status:state};
- let rebuild=[];if(ph.type==='elim'&&winner(m)!==winner(draft)){if(!isBracket(ph)){if(elimLocked(ph,r))return setErr(f,'A rodada seguinte já foi gerada com o vencedor deste confronto. Reconstrua as fases posteriores antes de mudar o vencedor.')}
-  else{rebuild=elimDeps(ph,m);if(rebuild.length){if(!canEdit())return setErr(f,'Este resultado já definiu confrontos posteriores que têm placar. Só o organizador pode corrigi-lo.');
-   if(!await confirmBox({title:'Alteração no chaveamento',msg:'A correção muda a dupla vencedora deste confronto. '+rebuild.length+' confronto(s) posterior(es) já têm resultado e serão reabertos, sem placar, com as duplas atualizadas. Os resultados anteriores ficam guardados no histórico e na auditoria.<br><br>Deseja reconstruir essa parte do chaveamento?',ok:'Sim, reconstruir',cancel:'Não, cancelar',danger:true}))return}}}
- if((scoreChanged||stateChanged)&&statusKey(c)==='done'&&!await confirmBox({title:'Campeonato finalizado',msg:'Este resultado será corrigido e registrado no histórico. Continuar?',ok:'Corrigir resultado'}))return;
- if(scoreChanged||stateChanged){if(btn)btn.disabled=true;let ok;try{ok=await scoreAdmin(m,v.sets,userName(),state)}catch(e){if(btn)btn.disabled=false;return setErr(f,errTxt(e))}
-  if(!ok){if(btn)btn.disabled=false;render();return setErr(f,conflictMsg(m))}}
- m.sets=v.sets;m.status=state;
- if(rebuild.length){const archive=rebuild.map(d=>({matchId:d.id,a:d.a,b:d.b,sets:(d.sets||[]).map(z=>[...z])}));for(const d of rebuild){try{await scoreAdmin(d,[],userName(),'live')}catch(e){toast('Um confronto posterior não pôde ser reaberto: '+errTxt(e),'err')}}phaseAudit(c,ph,'rebuild-bracket',{summary:'Chaveamento reconstruído após correção de resultado.',matchId:m.id,archive})}
- if(ph.type==='elim')elimSync(ph);if(canEdit()){if(ph.status==='prep')ph.status='live';save()}closeModal(true);render();
- if(state==='done')await maybeAutoFinalize(c,ph);
- if(scoreChanged&&state==='done')toast('Resultado salvo. Classificação e rankings atualizados.')};
+ return commitScore(f,x,v.sets,state,btn)};
 async function resolvePending(id,ap){const x=findMatch(id);if(!x||!x.m.pending)return;const m=x.m;mut++;
  try{if(CLOUD){const r=await rpc('gc_resolve_pending',{p_match_id:m.id,p_approve:ap,p_expected_rev:m.rev||0});mut++;
    if(!r.ok){if(r.rev!=null)applyRemote(m,r);else m.pending=null;if(stack.length)closeModal(true);render();return toast('Esta partida foi alterada por outra pessoa. Confira o placar atual.','err')}
@@ -1695,7 +1804,7 @@ A.jExpGo=d=>{const c=cur.c,ph=cur.ph,r=cur.r,i=c.phases.indexOf(ph)+1,j=ph.round
 
 /* ===================== Eventos ===================== */
 const READ=new Set([...VIS,'nav','sair','sair2','openC','rkSet','rkMode','rkIna','rkQ','pSort','crInfo','cxScope','offSync','cExp','jExp','cExpGo','jExpGo']);
-const SCORE=new Set(['mState','mAuto']),MASTER=new Set(['mbEdit','mbDel','cOpt','cDel','cfgPlayers','cfgRank','wipe','bkImp','bkExp']),CASH=new Set(['cxAdd','cxEdit','cxDel']),MASTERF=new Set(['uSave','cSave','tieSave','mbSave']);
+const SCORE=new Set(['mState','mAuto','mGame']),MASTER=new Set(['mbEdit','mbDel','cOpt','cDel','cfgPlayers','cpAll','cpSel','cpDel','cfgRank','wipe','bkImp','bkExp']),CASH=new Set(['cxAdd','cxEdit','cxDel']),MASTERF=new Set(['uSave','cSave','tieSave','mbSave']);
 const DENY='Seu perfil não permite esta ação.';
 A.offSync=()=>trySync(true);
 /* ----- modo telão: tela cheia, só leitura, alterna sozinho entre classificação, jogos e chaveamento ----- */
@@ -1730,7 +1839,7 @@ document.addEventListener('click',e=>{const link=e.target.closest('.side a');if(
 document.addEventListener('change',e=>{const el=e.target.closest('[data-c]');el&&run(el.dataset.c,el.dataset,el,e)});
 document.addEventListener('input',e=>{const el=e.target.closest('[data-i]');el&&run(el.dataset.i,el.dataset,el,e)});
 document.addEventListener('submit',e=>{e.preventDefault();const k=e.target.dataset.f;if(visitor){if(k!=='mSave')return}
- else if(k!=='login'&&!(k==='pwSave'?!!me.role:MASTERF.has(k)?(k==='cSave'||k==='tieSave'?canEdit():isMaster()):k==='mSave'?canScore():k==='cxSave'||k==='cxCota'?canCashEdit():canEdit()))return toast(DENY,'err');
+ else if(k!=='login'&&!(k==='pwSave'?!!me.role:MASTERF.has(k)?(k==='cSave'||k==='tieSave'?canEdit():isMaster()):(k==='mSave'||k==='mGameForm')?canScore():k==='cxSave'||k==='cxCota'?canCashEdit():canEdit()))return toast(DENY,'err');
  F[k]&&F[k](e.target)});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(stack.length)closeModal();else if(document.querySelector('.tv'))A.tvExit();else document.body.classList.remove('nav')}
  if(e.key==='Tab'&&stack.length){const m=stack[stack.length-1].ov,fs=[...m.querySelectorAll('button,input:not([type=hidden]),select,textarea,a[href],summary')].filter(x=>!x.disabled&&x.offsetParent!==null);if(!fs.length)return;
