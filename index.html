@@ -538,7 +538,7 @@ function setDb(d){d=d&&typeof d==='object'?d:{};db=Object.assign({},d);
    if(!ph.advance||typeof ph.advance!=='object')ph.advance={mode:ph.groups.length?'group':'total',total:Math.max(0,Math.floor(+ph.qual||0)),byGroup:Object.fromEntries(ph.groups.filter(g=>g.qual!=null&&g.qual!=='').map(g=>[g.id,Math.max(0,Math.floor(+g.qual||0))]))};
    if(!Array.isArray(ph.migrationConflicts)){ph.migrationConflicts=[];if(ph.qual!=null&&ph.qual!==''&&+ph.advance.total>0&&+ph.qual!==+ph.advance.total)ph.migrationConflicts.push('Quantidade geral antiga: '+ph.qual+'; configuração central: '+ph.advance.total);ph.groups.forEach(g=>{if(g.qual!=null&&g.qual!==''&&ph.advance.byGroup?.[g.id]!=null&&+g.qual!==+ph.advance.byGroup[g.id])ph.migrationConflicts.push(g.name+': valor antigo '+g.qual+'; configuração central '+ph.advance.byGroup[g.id])})}
    ph.advance.mode=ph.advance.mode==='total'?'total':'group';ph.advance.total=Math.max(0,Math.floor(+ph.advance.total||0));ph.advance.byGroup=ph.advance.byGroup&&typeof ph.advance.byGroup==='object'?ph.advance.byGroup:{};
-   if(+ph.bo===1||+ph.bo===3){ph.bo=+ph.bo;ph.formatMigrationConflict=!!ph.formatMigrationConflict}else{const legacyFormats=arr(ph.rounds).flatMap(r=>arr(r?.matches)).map(m=>+m.bo).filter(x=>x===1||x===3),counts=legacyFormats.reduce((o,x)=>(o[x]=(o[x]||0)+1,o),{});ph.bo=counts[1]>counts[3]?1:3;ph.formatMigrationConflict=new Set(legacyFormats).size>1}ph.status=['prep','live','done'].includes(ph.status)?ph.status:'prep';ph.audit=arr(ph.audit);
+   if(+ph.bo===1||+ph.bo===3){ph.bo=+ph.bo;ph.formatMigrationConflict=!!ph.formatMigrationConflict}else{const legacyFormats=arr(ph.rounds).flatMap(r=>arr(r?.matches)).filter(Boolean).map(m=>+m.bo).filter(x=>x===1||x===3),counts=legacyFormats.reduce((o,x)=>(o[x]=(o[x]||0)+1,o),{});ph.bo=counts[1]>counts[3]?1:3;ph.formatMigrationConflict=new Set(legacyFormats).size>1}ph.status=['prep','live','done'].includes(ph.status)?ph.status:'prep';ph.audit=arr(ph.audit);
    ph.cols=arr(ph.cols).filter((x,i,a)=>x&&COL[x.k]&&a.findIndex(y=>y&&y.k===x.k)===i);DEFCOLS.forEach(([k,on])=>{if(!ph.cols.some(x=>x.k===k))ph.cols.push({k,on:!!on})});
    ph.criteria=[...new Set(arr(ph.criteria).filter(k=>CRIT[k]))];Object.keys(CRIT).forEach(k=>{if(!ph.criteria.includes(k))ph.criteria.push(k)});
    ph.seeds=arr(ph.seeds).filter(id=>inPh.has(id));if(!ph.origin||typeof ph.origin!=='object')ph.origin={};
@@ -546,7 +546,8 @@ function setDb(d){d=d&&typeof d==='object'?d:{};db=Object.assign({},d);
     r.matches.forEach(m=>{m.a=tid.has(m.a)?m.a:null;m.b=tid.has(m.b)?m.b:null;m.bo=+m.bo===1?1:3;m.sets=arr(m.sets).filter(x=>Array.isArray(x)&&x.length===2&&isFinite(+x[0])&&isFinite(+x[1])).map(x=>[+x[0],+x[1]]);m.history=arr(m.history);m.rev=+m.rev||0;m.pending=m.pending||null})})})});
  db.caixa=cashNorm(d.caixa)}
 const eachM=fn=>db.champs.forEach(c=>c.phases.forEach(p=>p.rounds.forEach(r=>r.matches.forEach(m=>fn(m,r,p,c)))));
-function load(){let d=null;try{d=JSON.parse(localStorage.getItem(KEY))}catch(e){}setDb(d);buildAll()}
+function load(){let d=null,raw=null;try{raw=localStorage.getItem(KEY);d=JSON.parse(raw)}catch(e){}
+ try{setDb(d);buildAll()}catch(e){console.error(e);try{if(raw)localStorage.setItem(KEY+'_danificado',raw)}catch(x){}setDb({});setTimeout(()=>alertBox('Dados deste navegador danificados','Os dados guardados neste navegador não puderam ser lidos. Uma cópia intacta foi preservada (chave <b>'+KEY+'_danificado</b>) e o sistema abriu vazio para não travar. Não cadastre nada por cima sem antes recuperar essa cópia.'),300)}}
 function save(){elimSyncAll();if(CLOUD){if(!visitor){if(ws.offline){off.wsDirty=true;offPersist();return}ws.dirty=true;pushWs()}return}
  try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){toast('Não foi possível salvar os dados neste navegador.','err')}}
 
@@ -667,7 +668,12 @@ async function trySync(manual,again){if(!ws.offline||!off||off.busy)return;off.b
    if(r.ok){x.m.rev=r.rev;x.m.stRev=r.rev;srvRev.set(id,r.rev)}else{div.push('<li><b>'+esc(nm)+'</b>: neste aparelho '+esc(setsTxt(q.sets)||'sem placar')+'; online já estava '+esc(setsTxt(r.sets)||'sem placar')+'.</li>');offConf=offConf.filter(z=>z.id!==id);offConf.push({id,names:nm,mine:q.sets||[],theirs:r.sets||[],at:Date.now(),by:userName()})}
    delete off.q[id];offPersist()}
   if(canEdit()&&(off.wsDirty||ws.rev===off.wsRev)){try{const r=await rpc('gc_save_workspace',{p_data:wsData(),p_expected_rev:ws.rev});if(r.ok){ws.rev=r.rev;off.wsRev=r.rev}}catch(e){if(!e.status)throw e}off.wsDirty=false}
-  if(off.cxDirty&&canCashEdit()){const r=await rpc('gc_save_cash',{p_data:db.caixa,p_expected_rev:off.cxRev});if(!r.ok)div.push('<li><b>Caixa</b>: foi alterado online enquanto você estava offline; os lançamentos de caixa feitos offline não foram enviados. Confira e lance de novo.</li>')}
+  if(off.cxDirty&&canCashEdit()){const r=await rpc('gc_save_cash',{p_data:db.caixa,p_expected_rev:off.cxRev});if(!r.ok){
+    // Caixa mudou online nesse meio-tempo: os lançamentos NOVOS feitos offline são somados ao caixa online (com nova numeração), em vez de descartados.
+    const L=await rpc('gc_load',{}),srv=cashNorm(L&&L.cash&&L.cash.data),has=new Set(srv.items.map(i=>i.id)),mine=db.caixa.items.filter(i=>!has.has(i.id)&&(i.at||0)>=(off.since||0)-120000/* o lançamento que 'descobre' a queda nasce um pouco antes do registro dela */);let sent=!mine.length;
+    if(mine.length){mine.forEach(i=>{srv.seq=(+srv.seq||0)+1;srv.items.push({...i,n:srv.seq})});const r2=await rpc('gc_save_cash',{p_data:srv,p_expected_rev:L.cash?L.cash.rev:0});sent=!!(r2&&r2.ok)}
+    if(!sent)throw Object.assign(new Error('O caixa mudou de novo durante o envio.'),{status:409});
+    div.push('<li><b>Caixa</b>: foi alterado online enquanto você estava offline. '+(mine.length?mine.length+' lançamento(s) novo(s) feito(s) offline foram somados ao caixa online, com nova numeração. ':'')+'Edições e exclusões de lançamentos antigos feitas offline <b>não</b> foram aplicadas — confira o Caixa.</li>')}off.cxDirty=false;offPersist()}
   const keepConf=offConf;ws.offline=false;off=null;ws.state='ok';offClear();while(stack.length)closeModal(true);await loadCloud();offConf=keepConf;offPersist();render();
   if(div.length)alertBox('Envio concluído com conflitos','A conexão voltou e os dados foram enviados, com exceção de:<ul>'+div.join('')+'</ul>Nada foi sobrescrito: por enquanto vale o que estava online, e a versão deste aparelho ficou guardada. Use a faixa <b>“Conflitos de placar”</b> no topo para escolher qual resultado deve valer. Se uma fase foi finalizada offline com um resultado diferente, reabra a fase e finalize de novo.');else toast('Conexão restabelecida: tudo o que foi feito offline está salvo online.')}
  catch(e){if(off){setSync(e&&e.status?'serr':'off');if(manual||(e&&e.status))toast(e&&e.status?'Erro de sincronização: '+errTxt(e)+' O que faltou continua guardado; nada foi duplicado.':'O envio foi interrompido. O que faltou continua guardado e será reenviado.','err')}}
@@ -2067,4 +2073,3 @@ render();
 </script>
 </body>
 </html>
-
