@@ -434,6 +434,31 @@ table.rk tr.qt .posb{background:#FFE08A;color:#5C4300}
 .br-t.lose{background:#FDECEC;border-left-color:#F2A9A4}
 .br-t.lose .br-n{color:#7A2E2A}
 .br-col.R .br-t.lose{border-right-color:#F2A9A4}
+
+/* campos de senha com olho, datas lado a lado, painel de colocações */
+.pwf{position:relative;display:block}
+.pwf .inp{padding-right:48px}
+.pwf .eye{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:40px;height:40px;display:grid;place-items:center;color:var(--t2);border-radius:8px}
+.pwf .eye:hover{background:var(--sel);color:var(--g1)}
+.two2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.two2 .field{margin:12px 0;min-width:0}
+@media(max-width:480px){.two2{grid-template-columns:1fr;gap:0}}
+.podg{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-top:8px}
+.podc{border:1px solid var(--line);border-radius:14px;background:#fff;padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.podt{font-size:16px;overflow-wrap:anywhere}
+.podr{display:grid;grid-template-columns:34px 128px minmax(0,1fr);gap:8px;align-items:center;padding:6px 0;border-top:1px solid #E6EBE8}
+.podr:first-of-type{margin-top:8px}
+.podm{font-size:22px;text-align:center;line-height:1}
+.podm.p4{font-size:13px;font-weight:700;background:#E4E9E6;border-radius:8px;padding:6px 0}
+.podl{font-size:13px;color:var(--t2);font-weight:600}
+.podn{min-width:0;overflow-wrap:anywhere;font-weight:600}
+@media(max-width:520px){.podr{grid-template-columns:30px minmax(0,1fr)}.podl{display:none}}
+.cfv{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+.cfv span{border:1px solid var(--line);border-radius:10px;padding:6px 10px;background:#fff}
+.cfv small{display:block;color:var(--t2);font-size:11px;font-weight:600}
+.mh>div{min-width:0}
+.phpick{display:flex;gap:6px 8px;align-items:center;flex-wrap:wrap;font-weight:600;color:var(--t1);max-width:100%}
+.phpick select{flex:1 1 150px;min-width:0;width:auto;max-width:320px;padding:6px 10px;font-weight:600;text-overflow:ellipsis}
 </style>
 </head>
 <body>
@@ -482,6 +507,10 @@ cash:ic('<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12
 flag:ic('<path d="M4 22V4M4 4h13l-2 4 2 4H4"/>'),
 cal:ic('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>')};
 
+I.eye=ic('<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>');
+I.eyeOff=ic('<path d="M3 3l18 18M10.6 5.2A10.6 10.6 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4M6.5 6.6A17.3 17.3 0 0 0 2 12s3.6 7 10 7a10 10 0 0 0 4.2-.9M9.9 9.9a3 3 0 0 0 4.2 4.2"/>');
+// Campo de senha com botão de olho (começa sempre oculto).
+const pwInp=(name,ac,extra='')=>'<span class="pwf"><input class="inp" name="'+name+'" type="password" autocomplete="'+ac+'" maxlength="72" '+extra+'><button type="button" class="eye" data-a="pwEye" aria-label="Mostrar senha" aria-pressed="false" title="Mostrar ou ocultar a senha">'+I.eyeOff+'</button></span>';
 /* ===================== Dados ===================== */
 let db, visitor=false;
 const ui={tv:{i:0,pause:false},pSort:'az',selP:new Set(),selT:new Set(),phase:{},round:{},rk:{season:String(new Date().getFullYear()),champ:'all',mode:'d',q:'',inactive:false},crk:{mode:'d',q:''},v:{tab:'jogos',mode:'d'}};
@@ -534,7 +563,7 @@ let refreshing=null;
 async function accessToken(){if(!sess||sess.kind==='member')return null;
  try{const o=JSON.parse(localStorage.getItem('gc_sess'));if(o&&o.exp>sess.exp)sess=o}catch(e){}
  if(Date.now()>sess.exp-60000){refreshing=refreshing||http('/auth/v1/token?grant_type=refresh_token',{method:'POST',body:{refresh_token:sess.refresh_token}}).then(keepSess).finally(()=>refreshing=null);
-  try{await refreshing}catch(e){if(e.status){setSess(null);loaded=null;setDb({});render()}throw e}}
+  try{await refreshing}catch(e){if(e.status){localSignOut();render()}throw e}}
  return sess&&sess.access_token}
 async function api(path,opt={},anon){const token=anon?null:await accessToken();
  if(!anon&&!token)throw Object.assign(new Error('nao_autenticado'),{status:401});
@@ -549,7 +578,7 @@ const ROLE={master:'Master',organizador:'Organizador',placar:'Lançador de placa
 const isMaster=()=>me.role==='master',canEdit=()=>me.role==='master'||me.role==='organizador',canScore=()=>canEdit()||me.role==='placar',canCash=()=>!!me.role&&!!me.caixa,canCashEdit=()=>canEdit()&&!!me.caixa;
 const userName=()=>isMaster()?db.user.name:(me.name||me.username||me.email||'Usuário');
 const ws={rev:0,last:'',busy:false,again:false,state:'ok',empty:false};let srvRev=new Map(),mut=0,loaded=null,loading=null,shSig='';
-const syncTxt=()=>!CLOUD?'Modo local (dados só neste navegador)':({ok:'Salvo',saving:'Salvando…',err:'Sem conexão — tentando salvar',off:'Offline · '+(offCount()?offCount()+' placar(es) aguardando envio':'dados guardados neste aparelho')})[ws.state];
+const syncTxt=()=>!CLOUD?'Modo local (dados só neste navegador)':({ok:(ws.dirty?'Pendente · enviando alterações':'Online · sincronizado')+(offConf.length?' · '+offConf.length+' conflito(s)':''),saving:'Sincronizando…',err:'Erro de sincronização — tentando de novo',serr:'Erro de sincronização · '+offPendN()+' pendente(s)',off:'Offline · '+(offPendN()?offPendN()+' alteração(ões) pendente(s)':'dados locais')})[ws.state];
 function setSync(x){ws.state=x;document.querySelectorAll('.syncv').forEach(e=>e.textContent=syncTxt())}
 function wsData(){const d=JSON.parse(JSON.stringify(db));delete d.caixa;d.champs.forEach(c=>c.phases.forEach(p=>p.rounds.forEach(r=>r.matches.forEach(m=>{delete m.sets;delete m.pending;delete m.history;delete m.rev}))));return d}
 // No banco, a revisão de cada placar vem só da tabela de resultados: zera o que veio no cadastro antes de aplicar os resultados.
@@ -559,12 +588,14 @@ function applyRemote(m,r){m.sets=r.sets||[];m.rev=r.rev||0;const auto=autoStatus
 function mergeResults(rows){let ch=false;const map=new Map(rows.map(r=>[r.match_id,r]));rows.forEach(r=>srvRev.set(r.match_id,r.rev));
  eachM(m=>{const x=map.get(m.id);if(x&&x.rev>(m.rev||0)){applyRemote(m,x);ch=true}});return ch}
 async function loadCloud(){const L=await rpc('gc_load',{});me=(L&&L.me)||{};
- if(!me.role){if(isMember()){setSess(null);throw Object.assign(new Error('nao_autenticado'),{status:401})}throw Object.assign(new Error('sem_acesso'),{noaccess:true})}
+ if(!me.role){if(me.must_change&&isMember()){setDb({});members=[];return}if(isMember()){setSess(null);throw Object.assign(new Error('nao_autenticado'),{status:401})}throw Object.assign(new Error('sem_acesso'),{noaccess:true})}
+ // trabalho offline ainda não enviado neste aparelho: reabre e envia, em vez de carregar o banco por cima
+ if(!ws.offline){const sm=me,u=pendingU;pendingU=null;if(await olPending(u,pendingPw)){me=sm;setTimeout(()=>trySync(true),60);return}}
  const row=L.ws,has=!!(row&&row.data&&row.data.players);ws.rev=row?row.rev:0;ws.empty=!has;srvRev=new Map();setCloudDb(has?row.data:{});mergeResults(L.results||[]);
  db.caixa=cashNorm(L.cash&&L.cash.data);cx.rev=L.cash?L.cash.rev:0;members=L.accounts||[];
  const hm={};(L.history||[]).forEach(h=>(hm[h.match_id]=hm[h.match_id]||[]).push({at:Date.parse(h.at),by:h.origin,sets:h.sets}));eachM(m=>m.history=hm[m.id]||[]);
  ws.last=has?JSON.stringify(wsData()):'';setSync('ok');
- if(canEdit()){if(buildAll()){ws.dirty=true;setTimeout(()=>{if(ws.dirty)pushWs()},Math.random()*3000)}}else elimSyncAll();offPersist()}
+ if(canEdit()){if(buildAll()){ws.dirty=true;setTimeout(()=>{if(ws.dirty)pushWs()},Math.random()*3000)}}else elimSyncAll();offPersist();if(pendingPw){const w=pendingPw;pendingPw=null;olEnroll(w)}}
 async function saveCash(){if(!CLOUD)return save();if(ws.offline){off.cxDirty=true;offPersist();return}if(cx.busy){cx.again=true;return}cx.busy=true;setSync('saving');
  try{const r=await rpc('gc_save_cash',{p_data:db.caixa,p_expected_rev:cx.rev});
   if(r.ok){cx.rev=r.rev;cx.err=false;setSync(ws.state==='err'&&ws.t?'err':'ok')}
@@ -579,15 +610,52 @@ function sharedDb(j){setCloudDb({players:j.players,teams:j.teams,champs:[j.champ
 let off=null;const OFFK='gc_off';
 const offUser=()=>sess?(sess.kind==='member'?'m:'+sess.username:'o:'+(sess.email||'')):'';
 const offCount=()=>off?Object.keys(off.q).length:0;
-function offPersist(){if(!CLOUD||visitor||!sess||!me.role)return;try{localStorage.setItem(OFFK,JSON.stringify({v:1,user:offUser(),me,members,db,revs:[...srvRev],wsRev:ws.rev,cxRev:cx.rev,off:off?{...off,busy:false}:null,at:Date.now()}))}catch(e){if(ws.offline)toast('Atenção: este aparelho não conseguiu guardar os dados offline (memória cheia). Não feche a página.','err')}}
+/* Nada de senha em texto: guarda-se só um verificador derivado (PBKDF2-SHA256, salt próprio, 210 mil iterações).
+   Os dados locais de cada usuário são cifrados com uma chave que só a senha dele (ou a sessão aberta dele) libera. */
+const OL_K='gc_olog',DK_K='gc_dk',OL_IT=210000,hasCrypto=()=>!!(window.crypto&&crypto.subtle);
+const b64e=buf=>{const u=new Uint8Array(buf);let t='';for(let i=0;i<u.length;i+=0x8000)t+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(t)},b64d=t=>Uint8Array.from(atob(t),ch=>ch.charCodeAt(0));
+const olAll=()=>{try{return JSON.parse(localStorage.getItem(OL_K))||{}}catch(e){return{}}},olPut=o=>{try{localStorage.setItem(OL_K,JSON.stringify(o))}catch(e){}};
+const olFind=u=>{const id=clean(u).toLowerCase().replace(/\s+/g,''),all=olAll();for(const k in all)if(all[k]&&arr(all[k].login).includes(id))return[k,all[k],all];return null};
+async function olDerive(pw,salt,iter){const km=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveBits']),bits=new Uint8Array(await crypto.subtle.deriveBits({name:'PBKDF2',hash:'SHA-256',salt,iterations:iter},km,512));
+ return{ver:b64e(await crypto.subtle.digest('SHA-256',bits.slice(0,32))),kek:await crypto.subtle.importKey('raw',bits.slice(32),'AES-GCM',false,['encrypt','decrypt'])}}
+async function aesEnc(key,obj){const iv=crypto.getRandomValues(new Uint8Array(12));return b64e(iv)+'.'+b64e(await crypto.subtle.encrypt({name:'AES-GCM',iv},key,new TextEncoder().encode(JSON.stringify(obj))))}
+async function aesDec(key,str){const[i,c]=String(str).split('.');return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:b64d(i)},key,b64d(c))))}
+let dk=null,offQ=Promise.resolve(),offConf=[],pendingPw=null,pendingU=null,offCred=null;
+async function dkLoad(){if(dk||!hasCrypto())return dk;try{const r=localStorage.getItem(DK_K);if(r)dk=await crypto.subtle.importKey('raw',b64d(r),'AES-GCM',false,['encrypt','decrypt'])}catch(e){}return dk}
+async function dkSet(raw){localStorage.setItem(DK_K,b64e(raw));dk=await crypto.subtle.importKey('raw',raw,'AES-GCM',false,['encrypt','decrypt'])}
+const offKey=()=>'gc_off:'+offUser();
+// Habilita (ou renova) o login offline deste usuário neste aparelho. Só é chamado depois de o banco confirmar a senha e o perfil.
+async function olEnroll(pw){try{if(!hasCrypto()||!CLOUD||!sess||!me.role||me.must_change||!pw)return;const id=offUser(),all=olAll(),old=localStorage.getItem(DK_K),raw=old?b64d(old):crypto.getRandomValues(new Uint8Array(32));await dkSet(raw);
+  const salt=crypto.getRandomValues(new Uint8Array(16)),d=await olDerive(pw,salt,OL_IT),login=[...new Set([sess.kind==='member'?sess.username:(sess.email||''),sess.email||''].map(x=>String(x).toLowerCase()).filter(Boolean))];
+  all[id]={v:1,login,salt:b64e(salt),iter:OL_IT,ver:d.ver,wrap:await aesEnc(d.kek,{sess,dk:b64e(raw)}),name:userName(),at:Date.now(),fails:0,lock:0};olPut(all);try{localStorage.removeItem(OFFK)}catch(e){}offPersist()}catch(e){console.error(e)}}
+// Confere a senha no próprio aparelho. Devolve a sessão e a chave dos dados só quando a senha está certa.
+async function olOpen(u,pw,online){if(!hasCrypto())return{err:'none'};const f=olFind(u);if(!f)return{err:'none'};const[k,rec,all]=f;if(rec.stale&&!online)return{err:'stale'};if(rec.lock&&rec.lock>Date.now())return{err:'lock'};
+ const d=await olDerive(pw,b64d(rec.salt),rec.iter||OL_IT);if(d.ver!==rec.ver){rec.fails=(rec.fails||0)+1;if(rec.fails>=5){rec.fails=0;rec.lock=Date.now()+60000}olPut(all);return{err:'bad'}}
+ rec.fails=0;rec.lock=0;olPut(all);try{return{ok:true,id:k,data:await aesDec(d.kek,rec.wrap)}}catch(e){return{err:'bad'}}}
+async function offRead(){await dkLoad();let o=null;if(dk){const t=localStorage.getItem(offKey());if(t){try{o=await aesDec(dk,t)}catch(e){o=null}}}if(!o){try{o=JSON.parse(localStorage.getItem(OFFK))}catch(e){}}
+ return o&&o.v===1&&o.user===offUser()&&o.db&&o.me&&o.me.role?o:null}
+function offApply(o){setDb(o.db);me=o.me;members=o.members||[];srvRev=new Map(o.revs||[]);ws.rev=o.wsRev||0;cx.rev=o.cxRev||0;offConf=arr(o.conf);off=o.off||{q:{},wsRev:ws.rev,cxRev:cx.rev,wsDirty:false,cxDirty:false,since:Date.now()};ws.offline=true;ws.dirty=false;ws.busy=false;ws.state='off';if(canEdit()&&buildAll())off.wsDirty=true;return true}
+async function offRestoreAny(){const o=await offRead();return o?offApply(o):false}
+const offPendN=()=>off?offCount()+(off.wsDirty?1:0)+(off.cxDirty?1:0):0;
+// Login sem internet: só para quem já entrou online neste aparelho; senha errada não entra.
+async function olLogin(u,pw){const r=await olOpen(u,pw);if(!r.ok)return r;offCred={u,pw};await dkSet(b64d(r.data.dk));setSess(r.data.sess);const ok=await offRestoreAny();if(!ok){dk=null;try{localStorage.removeItem(DK_K)}catch(e){}setSess(null);return{err:'nodata'}}return{ok:true}}
+// Login online de quem deixou trabalho offline pendente neste aparelho: reabre esse trabalho para enviar, em vez de descartá-lo.
+async function olPending(u,pw){try{let raw=null;if(u&&pw){const r=await olOpen(u,pw,true);if(r.ok&&r.id===offUser())raw=r.data.dk}raw=raw||localStorage.getItem(DK_K)||localStorage.getItem('gc_dkk:'+offUser());if(raw)await dkSet(b64d(raw));const o=await offRead();if(!o)return false;if(!o.off||!(Object.keys(o.off.q||{}).length||o.off.wsDirty||o.off.cxDirty)){offConf=arr(o.conf);return false}return offApply(o)}catch(e){return false}}
+// Quando a conexão volta depois de um login offline, refaz o login online com a senha digitada (guardada só na memória desta página).
+async function olReauth(){if(!offCred)return false;const{u,pw}=offCred;try{if(u.includes('@'))keepSess(await http('/auth/v1/token?grant_type=password',{method:'POST',body:{email:u,password:pw}}));
+  else{const r=await http('/rest/v1/rpc/gc_login',{method:'POST',body:{p_username:norm(u).replace(/\s+/g,''),p_password:pw}});if(!r.ok)return false;setSess({kind:'member',token:r.token,username:r.username})}pendingPw=pw;return true}catch(e){return e.status?false:null}}
+const olStale=()=>{const all=olAll(),k=offUser();if(all[k]&&!all[k].stale){all[k].stale=true;olPut(all)}};
+function localSignOut(){try{const k=offUser(),raw=localStorage.getItem(DK_K);if(k&&raw&&off&&offPendN()&&(olAll()[k]||{}).stale)localStorage.setItem('gc_dkk:'+k,raw)}catch(e){}offCred=null;dk=null;try{localStorage.removeItem(DK_K);localStorage.removeItem(OFFK)}catch(e){}ws.offline=false;off=null;offConf=[];ws.state='ok';ws.dirty=false;pendingPw=null;pendingU=null;setSess(null);loaded=null;setDb({})}
+function offPersist(){if(!CLOUD||visitor||!sess||!me.role)return;if(ws.offline&&ws.state==='off')setSync('off');const user=offUser(),mk=()=>({v:1,user,me,members,db,revs:[...srvRev],wsRev:ws.rev,cxRev:cx.rev,off:off?{...off,busy:false}:null,conf:offConf,at:Date.now()});
+ offQ=offQ.then(async()=>{await dkLoad();if(!sess||offUser()!==user)return;try{if(dk)localStorage.setItem('gc_off:'+user,await aesEnc(dk,mk()));else localStorage.setItem(OFFK,JSON.stringify(mk()))}catch(e){if(ws.offline)toast('Atenção: este aparelho não conseguiu guardar os dados offline (memória cheia). Não feche a página.','err')}})}
 function goOffline(){if(ws.offline||!CLOUD||visitor)return;off={q:{},wsRev:ws.rev,cxRev:cx.rev,wsDirty:!!ws.dirty,cxDirty:!!cx.err,since:Date.now()};ws.offline=true;ws.busy=false;ws.again=false;ws.dirty=false;cx.busy=false;cx.err=false;clearTimeout(ws.t);clearTimeout(cx.t);ws.state='off';offPersist();
  toast('Sem internet: pode continuar. Tudo fica guardado neste aparelho e será enviado sozinho quando a conexão voltar.');if(!stack.length)render();else setSync('off')}
-function offRestore(){let o=null;try{o=JSON.parse(localStorage.getItem(OFFK))}catch(e){}if(!o||o.v!==1||o.user!==offUser()||!o.db||!o.me||!o.me.role)return false;
- setDb(o.db);me=o.me;members=o.members||[];srvRev=new Map(o.revs||[]);ws.rev=o.wsRev||0;cx.rev=o.cxRev||0;off=o.off||{q:{},wsRev:ws.rev,cxRev:cx.rev,wsDirty:false,cxDirty:false,since:Date.now()};ws.offline=true;ws.dirty=false;ws.busy=false;ws.state='off';if(canEdit()&&buildAll())off.wsDirty=true;return true}
+function offClear(){try{localStorage.removeItem(OFFK);localStorage.removeItem(offKey());localStorage.removeItem('gc_dkk:'+offUser())}catch(e){}}
+
 const offBar=()=>'<div class="offbar" role="status"><b>Você está offline.</b> <span>'+(offCount()?offCount()+' placar(es)':'')+(offCount()&&off.wsDirty?' e ':'')+(off.wsDirty?'alterações de cadastro/fase':'')+(offCount()||off.wsDirty||off.cxDirty?' guardados neste aparelho, aguardando envio.':'Nada pendente de envio.')+'</span><span style="flex:1"></span><button class="pill sm" data-a="offSync">Tentar enviar agora</button></div>';
-async function trySync(manual){if(!ws.offline||!off||off.busy)return;off.busy=true;const div=[];
- try{let PL;try{PL=await rpc('gc_poll',{})}catch(e){if(manual)toast(e.status?errTxt(e):'Ainda sem conexão. Os dados continuam guardados neste aparelho.','err');return}
-  if(!PL||!PL.ok){if(manual||!off.warned){off.warned=true;toast('A conexão voltou, mas a sessão expirou. Saia e entre de novo com o mesmo usuário: os dados offline continuam guardados e serão enviados.','err')}return}
+async function trySync(manual,again){if(!ws.offline||!off||off.busy)return;off.busy=true;const div=[];
+ try{let PL;try{PL=await rpc('gc_poll',{})}catch(e){if(e.status===401||e.status===403)PL={ok:false};else{if(manual)toast(e.status?errTxt(e):'Ainda sem conexão. Os dados continuam guardados neste aparelho.','err');return}}
+  if(!PL||!PL.ok){const ra=again?false:await olReauth();if(ra){off.busy=false;return trySync(manual,true)}if(ra===null)return;olStale();setSync('serr');if(manual||!off.warned){off.warned=true;toast('A conexão voltou, mas o acesso deste aparelho não vale mais no servidor (sessão encerrada, senha alterada ou acesso retirado). Saia e entre de novo com internet: os dados offline continuam guardados e protegidos, e serão enviados depois do login.','err')}return}
   setSync('saving');
   if(canEdit()&&off.wsDirty){let exp=off.wsRev;
    if(PL.ws_rev!==exp){if(stack.length)return;if(!await confirmBox({title:'Cadastros alterados online',msg:'Enquanto este aparelho estava offline, os cadastros (duplas, fases ou partidas) foram alterados em outro aparelho.<br><br>Enviar os dados <b>deste aparelho</b> substitui o que está online. Os placares continuam sendo conferidos um a um.',ok:'Enviar os dados deste aparelho',cancel:'Agora não',danger:true})){off.hold=Date.now()+60000;return}exp=PL.ws_rev}
@@ -595,13 +663,14 @@ async function trySync(manual){if(!ws.offline||!off||off.busy)return;off.busy=tr
    ws.rev=r.rev;off.wsRev=r.rev;off.wsDirty=offCount()>0;offPersist()}
   for(const id of Object.keys(off.q)){const q=off.q[id],x=findMatch(id);if(!x){delete off.q[id];continue}const nm=dl(T(x.m.a))+' × '+dl(T(x.m.b));let r;
    try{r=await rpc('gc_save_score_admin',{p_match_id:id,p_sets:q.sets||[],p_expected_rev:q.base||0})}catch(e){if(!e.status)throw e;div.push('<li><b>'+esc(nm)+'</b>: '+esc(errTxt(e))+'</li>');delete off.q[id];offPersist();continue}
-   if(r.ok){x.m.rev=r.rev;x.m.stRev=r.rev;srvRev.set(id,r.rev)}else div.push('<li><b>'+esc(nm)+'</b>: neste aparelho '+esc(setsTxt(q.sets)||'sem placar')+'; online já estava '+esc(setsTxt(r.sets)||'sem placar')+'. <b>Valeu o que estava online.</b></li>');
+   if(!r.ok&&JSON.stringify(r.sets||[])===JSON.stringify(q.sets||[]))r={ok:true,rev:r.rev||x.m.rev};/* o banco já tinha exatamente este placar (reenvio): não é conflito */
+   if(r.ok){x.m.rev=r.rev;x.m.stRev=r.rev;srvRev.set(id,r.rev)}else{div.push('<li><b>'+esc(nm)+'</b>: neste aparelho '+esc(setsTxt(q.sets)||'sem placar')+'; online já estava '+esc(setsTxt(r.sets)||'sem placar')+'.</li>');offConf=offConf.filter(z=>z.id!==id);offConf.push({id,names:nm,mine:q.sets||[],theirs:r.sets||[],at:Date.now(),by:userName()})}
    delete off.q[id];offPersist()}
   if(canEdit()&&(off.wsDirty||ws.rev===off.wsRev)){try{const r=await rpc('gc_save_workspace',{p_data:wsData(),p_expected_rev:ws.rev});if(r.ok){ws.rev=r.rev;off.wsRev=r.rev}}catch(e){if(!e.status)throw e}off.wsDirty=false}
   if(off.cxDirty&&canCashEdit()){const r=await rpc('gc_save_cash',{p_data:db.caixa,p_expected_rev:off.cxRev});if(!r.ok)div.push('<li><b>Caixa</b>: foi alterado online enquanto você estava offline; os lançamentos de caixa feitos offline não foram enviados. Confira e lance de novo.</li>')}
-  ws.offline=false;off=null;ws.state='ok';try{localStorage.removeItem(OFFK)}catch(e){}while(stack.length)closeModal(true);await loadCloud();render();
-  if(div.length)alertBox('Envio concluído com divergências','A conexão voltou e os dados foram enviados, com exceção de:<ul>'+div.join('')+'</ul>Confira esses confrontos. Se uma fase foi finalizada offline com um resultado diferente, reabra a fase e finalize de novo.');else toast('Conexão restabelecida: tudo o que foi feito offline está salvo online.')}
- catch(e){if(off){setSync('off');if(manual)toast('O envio foi interrompido. O que faltou continua guardado e será reenviado.','err')}}
+  const keepConf=offConf;ws.offline=false;off=null;ws.state='ok';offClear();while(stack.length)closeModal(true);await loadCloud();offConf=keepConf;offPersist();render();
+  if(div.length)alertBox('Envio concluído com conflitos','A conexão voltou e os dados foram enviados, com exceção de:<ul>'+div.join('')+'</ul>Nada foi sobrescrito: por enquanto vale o que estava online, e a versão deste aparelho ficou guardada. Use a faixa <b>“Conflitos de placar”</b> no topo para escolher qual resultado deve valer. Se uma fase foi finalizada offline com um resultado diferente, reabra a fase e finalize de novo.');else toast('Conexão restabelecida: tudo o que foi feito offline está salvo online.')}
+ catch(e){if(off){setSync(e&&e.status?'serr':'off');if(manual||(e&&e.status))toast(e&&e.status?'Erro de sincronização: '+errTxt(e)+' O que faltou continua guardado; nada foi duplicado.':'O envio foi interrompido. O que faltou continua guardado e será reenviado.','err')}}
  finally{if(off)off.busy=false}}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 // Garante que os cadastros pendentes chegaram ao banco antes de gravar algo que depende deles (ex.: placar de partida recém-criada).
@@ -629,7 +698,7 @@ let migAsked=false;
 async function offerMigration(){if(migAsked||!ws.empty)return;migAsked=true;let d=null;try{d=JSON.parse(localStorage.getItem(KEY))}catch(e){}
  if(!d||!((d.players||[]).length+(d.champs||[]).length))return;
  if(await confirmBox({title:'Enviar dados para o banco?',msg:`Encontrei dados salvos neste navegador (${(d.players||[]).length} jogadores, ${(d.teams||[]).length} equipes, ${(d.champs||[]).length} campeonatos) e o banco está vazio. Deseja enviar esses dados para o banco?`,ok:'Enviar'}))await importData(d)}
-const SRV={link_invalido:'Link inválido ou expirado.',campeonato_finalizado:'O campeonato está finalizado.',lancamento_nao_permitido:'O lançamento desta rodada está reservado ao organizador.',partida_sem_duplas:'Esta partida ainda não tem as duas duplas.',partida_inexistente:'Esta partida não existe mais. Recarregue a página.',dados_muito_grandes:'Os dados ficaram grandes demais para gravar.',placar_invalido:'Placar inválido.',nao_autenticado:'Sessão expirada. Entre novamente.',sem_permissao:'Seu perfil não permite esta ação.',usuario_invalido:'Nome de usuário inválido.',senha_curta:'A senha precisa ter pelo menos 6 caracteres.',nome_obrigatorio:'Informe o nome.'};
+const SRV={senha_igual:'A nova senha precisa ser diferente da senha provisória.',link_invalido:'Link inválido ou expirado.',campeonato_finalizado:'O campeonato está finalizado.',lancamento_nao_permitido:'O lançamento desta rodada está reservado ao organizador.',partida_sem_duplas:'Esta partida ainda não tem as duas duplas.',partida_inexistente:'Esta partida não existe mais. Recarregue a página.',dados_muito_grandes:'Os dados ficaram grandes demais para gravar.',placar_invalido:'Placar inválido.',nao_autenticado:'Sessão expirada. Entre novamente.',sem_permissao:'Seu perfil não permite esta ação.',usuario_invalido:'Nome de usuário inválido.',senha_curta:'A senha precisa ter pelo menos 6 caracteres.',nome_obrigatorio:'Informe o nome.'};
 const errTxt=e=>SRV[(e.message||'').split(':')[0].trim()]||(e.status?'Não foi possível concluir ('+e.message+').':'Sem conexão com o servidor. Nada foi gravado.');
 const conflictMsg=m=>`Outra pessoa alterou esta partida enquanto você digitava. Placar atual: ${setsTxt(m.sets)||'sem placar'}${m.pending?' (há um resultado aguardando aprovação)':''}. Nada foi gravado: feche e abra a partida para conferir.`;
 async function scoreAdmin(m,sets,by,status){mut++;const previousSets=(m.sets||[]).map(x=>x?[...x]:x),previousStatus=m.status||mStatus(m);
@@ -641,12 +710,12 @@ async function scoreAdmin(m,sets,by,status){mut++;const previousSets=(m.sets||[]
 function ensure(key,fn){const root=document.getElementById('root');
  root.innerHTML=`<header class="top">${I.trophy}<span>Gerenciamento de Campeonatos</span></header><div class="vis"><div class="box center" id="ldg">Carregando…</div></div>`;
  if(loading===key)return;loading=key;
- fn().then(()=>{loading=null;loaded=key;render();if(key==='admin')offerMigration()},
+ fn().then(()=>{loading=null;loaded=key;render();if(key==='admin'&&!me.must_change)offerMigration()},
   e=>{loading=null;if(!key.startsWith('s:')&&!sess)return render();
-   if(key==='admin'&&!e.status&&!e.noaccess&&offRestore()){loaded='admin';render();return toast('Sem internet: abrindo os dados guardados neste aparelho. O que você fizer será enviado quando a conexão voltar.')}const b=document.getElementById('ldg');
+   if(key==='admin'&&!e.status&&!e.noaccess){loading=key;return offRestoreAny().then(okk=>{loading=null;if(okk){loaded='admin';render();return toast('Sem internet: abrindo os dados guardados neste aparelho. O que você fizer será enviado quando a conexão voltar.')}const b2=document.getElementById('ldg');if(b2)b2.innerHTML=`<b>Não foi possível carregar os dados.</b><span class="muted">${esc(errTxt(e))}</span><button class="pill" data-a="retry">Tentar novamente</button><button class="pill ghost" data-a="sair2">Sair</button>`})}const b=document.getElementById('ldg');
    if(b&&e.noaccess)b.innerHTML=`<b>Este login não tem acesso a este sistema.</b><span class="muted">${esc((sess&&sess.email)||'')} — o sistema já tem um usuário master. Peça a ele um nome de usuário e senha.</span><button class="pill" data-a="sair2">Sair</button>`;
    else if(b)b.innerHTML=`<b>Não foi possível carregar os dados.</b><span class="muted">${esc(errTxt(e))}</span><button class="pill" data-a="retry">Tentar novamente</button>`})}
-setInterval(async()=>{if(!CLOUD||document.hidden||ws.poll||loading||!loaded)return;if(ws.offline){if(!off.hold||Date.now()>off.hold)trySync();return}ws.pc=(ws.pc||0)+1;if(ws.pc%4===0&&loaded==='admin'&&!ws.dirty&&!ws.busy)offPersist();ws.poll=true;const m0=mut;
+setInterval(async()=>{if(!CLOUD||document.hidden||ws.poll||loading||!loaded||me.must_change)return;if(ws.offline){if(!off.hold||Date.now()>off.hold)trySync();return}ws.pc=(ws.pc||0)+1;if(ws.pc%4===0&&loaded==='admin'&&!ws.dirty&&!ws.busy)offPersist();ws.poll=true;const m0=mut;
  try{if(loaded==='admin'&&sess){const PL=await rpc('gc_poll',{});
    if(!PL.ok){loaded=null;ws.poll=false;while(stack.length)closeModal(true);return render()}
    if(m0===mut&&loaded==='admin'){
@@ -749,6 +818,7 @@ function computeRanking(st){
    [[m.a,g.a,g.b],[m.b,g.b,g.a]].forEach(([tid,forPts,against])=>{const t=T(tid);if(!t)return;ents(t).forEach(id=>{const R=row(id),k=cell(R,c.id),win=g.winner===tid;
     R.j++;k.j++;R.pg+=forPts;R.pc+=against;R.dp=R.pg-R.pc;k.pg+=forPts;k.pc+=against;
     if(win){R.v++;k.v++;const w=db.settings.ppw;k.pts+=w;R.total+=w}else{R.d++;k.d++}})})}}
+ for(const c of tours)champPodium(c).forEach((tid,i)=>{const t=tid&&T(tid);if(!t)return;ents(t).forEach(id=>{const R=row(id),k=cell(R,c.id);k.bonus=BONUS[i];k.place=i+1;R.total+=BONUS[i];R.bonus=(R.bonus||0)+BONUS[i]})});
  let list;
  if(st.mode==='d'){list=db.teams.filter(t=>t.players.length===2||rows.has(t.id)).map(t=>{const r=row(t.id);r.name=dl(t);r.active=t.active&&t.players.length===2;
    if(st.champ==='all'){r.tr=(t.transfers||[]).filter(x=>st.season==='all'||String(x.season)===String(st.season)).reduce((a,x)=>a+x.points,0);r.total+=r.tr}return r})}
@@ -763,8 +833,8 @@ function rankHTML(st){const{tours,list}=computeRanking(st),q=norm(st.q),rows=lis
  const d=`data-mode="${st.mode}" data-season="${st.season}"`;
  if(!rows.length)return`<p class="empty">${st.mode==='d'?'Nenhuma dupla encontrada. Forme duplas com dois jogadores em Cadastro de equipes.':'Nenhum jogador encontrado.'}</p>`;
  return`<div class="tw"><table class="rk"><thead><tr><th>Pos.</th><th class="l">${st.mode==='d'?'Dupla':'Jogador'}</th><th>Partidas</th><th>Vitórias</th><th>Derrotas</th><th>Pontos ganhos</th><th>Pontos sofridos</th><th>Saldo</th>${tours.map(c=>`<th>${esc(c.name)}</th>`).join('')}<th>Total de pontos</th></tr></thead><tbody>${
- rows.map(r=>`<tr class="${r.q?'q':r.qt?'qt':''}"><td><span class="posb blue">${r.pos?r.pos+'º':'—'}</span></td><td class="l"><button class="name" data-a="rkTot" data-id="${r.id}" data-champ="${st.champ}" ${d} title="Ver o histórico de torneios">${esc(r.name)}</button> ${r.q?'<span class="tag ok">Classificada</span>':''}${r.qt?'<span class="tag pend" title="Empate na última vaga: a definição depende do desempate">Empate na vaga</span>':''}${r.active?'':'<span class="tag off">Inativa</span>'}</td><td>${r.j}</td><td>${r.v}</td><td>${r.d}</td><td>${r.pg}</td><td>${r.pc}</td><td>${r.dp}</td>${
-  tours.map(c=>`<td>${r.per[c.id]?`<button class="cellb" data-a="rkCell" data-id="${r.id}" data-cid="${c.id}" ${d}>${r.per[c.id].pts}</button>`:'—'}</td>`).join('')
+ rows.map(r=>`<tr class="${r.q?'q':r.qt?'qt':''}"><td><span class="posb blue" title="${r.q?'Classificada para o torneio final':r.qt?'Empate na última vaga: depende do desempate':''}">${r.pos?r.pos+'º':'—'}</span></td><td class="l"><button class="name" data-a="rkTot" data-id="${r.id}" data-champ="${st.champ}" ${d} title="Ver o histórico de torneios">${esc(r.name)}</button> ${r.active?'':'<span class="tag off">Inativa</span>'}</td><td>${r.j}</td><td>${r.v}</td><td>${r.d}</td><td>${r.pg}</td><td>${r.pc}</td><td>${r.dp}</td>${
+  tours.map(c=>`<td>${r.per[c.id]?`<button class="cellb" data-a="rkCell" data-id="${r.id}" data-cid="${c.id}" ${d}>${r.per[c.id].pts+(r.per[c.id].bonus||0)}</button>`:'—'}</td>`).join('')
  }<td class="tot"><button class="cellb" data-a="rkTot" data-id="${r.id}" data-champ="${st.champ}" ${d}>${fmt(r.total)}</button></td></tr>`).join('')}</tbody></table></div>`}
 
 /* ===================== Interface base ===================== */
@@ -802,7 +872,7 @@ const authed=()=>!CLOUD||!!sess;
 const vLogin=()=>`<header class="top">${I.trophy}<span>Gerenciamento de Campeonatos</span></header><div class="wrap"><form class="modal" data-f="login" style="margin-top:6vh;box-shadow:0 8px 30px #16473420">
  <span class="mico">${I.shield}</span><h3 style="margin:12px 0 2px;font-size:22px">Entrar</h3><p class="muted" style="margin:0 0 8px">Informe usuário e senha para acessar o sistema.</p>
  <label class="field"><span>Usuário ou e-mail</span><input class="inp" name="u" autocomplete="username" autocapitalize="none" autofocus></label>
- <label class="field"><span>Senha</span><input class="inp" name="p" type="password" autocomplete="current-password"></label>
+ <label class="field"><span>Senha</span>${pwInp('p','current-password')}</label>
  <p class="err" role="alert"></p><div class="acts"><button class="pill big" style="width:100%">Entrar</button></div></form></div>`;
 
 /* ===================== Roteamento ===================== */
@@ -812,6 +882,7 @@ function render(){const root=document.getElementById('root'),h=location.hash.rep
  if(h[0]==='s'){visitor=true;if(CLOUD&&loaded!=='s:'+h[1])return ensure('s:'+h[1],()=>loadShared(h[1]));root.innerHTML=h[2]==='telao'&&db.champs[0]?vTelao(db.champs[0],true):vVisitor(h[1]);return}
  if(!authed()){if(CLOUD)me={role:null,caixa:false};root.innerHTML=vLogin();const u=root.querySelector('[name=u]');u&&u.focus();return}
  if(CLOUD&&loaded!=='admin')return ensure('admin',loadCloud);
+ if(CLOUD&&me.must_change){if(!root.querySelector('form[data-f=firstPw]'))root.innerHTML=vFirst();return}
  let side,main;
  if(h[0]==='c'){const c=C(h[1]);if(!c){location.hash='#/campeonatos';return}
   if(h[2]==='telao'){root.innerHTML=vTelao(c,false);return}
@@ -827,7 +898,7 @@ function render(){const root=document.getElementById('root'),h=location.hash.rep
   side=`<h4>${canEdit()?'Organizar campeonatos':'Campeonatos'}</h4>${it('campeonatos','Meus campeonatos',I.trophy)}${canEdit()?it('jogadores','Cadastro de jogadores',I.user)+it('equipes','Cadastro de equipes',I.users):''}${it('ranking','Ranking Geral',I.chart)}${canCash()?it('caixa','Caixa',I.cash):''}<h4>Usuário</h4>${it('usuario','Meu usuário',I.shield)}<div class="foot"><span>${I.user}${esc(userName())}</span><button data-a="sair">${I.logout}Sair</button></div>`;
   main=({campeonatos:vChamps,jogadores:vPlayers,equipes:vTeams,ranking:vRank,caixa:vCaixa,usuario:vUser})[p]()}
  root.innerHTML=`<header class="top app"><button class="burger" data-a="nav" aria-label="Abrir menu">${I.menu}</button><span id="sync" class="syncv" aria-live="polite" style="margin-left:auto;font-size:12px;font-weight:400;opacity:.85">${syncTxt()}</span></header>
- <div class="wrap"><div class="panel"><nav class="side" aria-label="Menu">${side}<div class="syncv sidesync" aria-live="polite">${syncTxt()}</div></nav><div class="scrim" data-a="nav"></div><main class="main">${ws.offline&&off?offBar():''}${main}</main></div></div>`;
+ <div class="wrap"><div class="panel"><nav class="side" aria-label="Menu">${side}<div class="syncv sidesync" aria-live="polite">${syncTxt()}</div></nav><div class="scrim" data-a="nav"></div><main class="main">${ws.offline&&off?offBar():''}${!ws.offline&&offConf.length?confBar():''}${main}</main></div></div>`;
  document.querySelector('.main').scrollTop=sc;
  if(fk){const n=root.querySelector('[data-i="'+fk.k+'"]');if(n){n.focus();try{n.setSelectionRange(fk.p,fk.p)}catch(e){}}}}
 
@@ -864,6 +935,11 @@ function seasons(){return[...new Set([String(new Date().getFullYear()),...db.cha
 function rkWhy(s){if(s.mode!=='d')return'';if(s.season==='all')return' <b>Em “Histórico geral” não há classificados: escolha uma temporada.</b>';if(s.champ!=='all')return' <b>Com um torneio só selecionado não há classificados: escolha “Todos”.</b>';
  const L=computeRanking({...s,q:'',inactive:false}).list;if(L.some(r=>r.q||r.qt))return'';const played=L.filter(r=>r.j>0||r.tr>0);if(!played.length)return'';
  const mx=Math.max(...played.map(r=>Object.keys(r.per).length));return db.settings.minT>mx?' <b>Nenhuma dupla aparece como classificada porque o mínimo exigido é de '+db.settings.minT+' torneio(s) e as duplas disputaram no máximo '+mx+'. Ajuste em Meu usuário → “Mínimo de torneios disputados para classificar”.</b>':''}
+// Painel "Colocações dos Torneios": um card por campeonato oficialmente finalizado, respeitando os filtros do ranking.
+function podiumHTML(s){const cs=db.champs.filter(c=>statusKey(c)==='done'&&c.result&&(s.season==='all'||String(c.season)===s.season)&&(s.champ==='all'||c.id===s.champ)).sort((a,b)=>when(b)-when(a));
+ const at=`data-mode="${s.mode}" data-season="${s.season}" data-champ="all"`,who=tid=>{const t=tid&&T(tid);if(!t)return'<span class="muted">Não definido</span>';return s.mode==='d'?`<button class="name" data-a="rkTot" data-id="${t.id}" ${at}>${esc(dl(t))}</button>`:t.players.map(p=>`<button class="name" data-a="rkTot" data-id="${p}" ${at}>${esc(P(p)?.name||'?')}</button>`).join('<span class="muted">/</span>')};
+ const MD=['🥇','🥈','🥉','4º'],LB=['Campeão','Vice-campeão','Terceiro colocado','Quarto colocado'];
+ return`<h2 style="margin-top:22px">Colocações dos Torneios</h2>${cs.length?`<div class="podg">${cs.map(c=>{const pd=champPodium(c);return`<div class="podc"><b class="podt">${esc(c.name)}</b><small class="muted">Temporada ${esc(c.season)}</small>${[0,1,2,3].map(i=>`<div class="podr"><span class="podm${i===3?' p4':''}" aria-hidden="true">${MD[i]}</span><span class="podl">${LB[i]}</span><span class="podn">${who(pd[i])}</span></div>`).join('')}</div>`}).join('')}</div>`:'<p class="muted">Nenhum torneio finalizado com os filtros atuais. As colocações aparecem aqui depois da finalização oficial do campeonato.</p>'}`}
 function vRank(){const s=ui.rk;if(s.champ!=='all'&&!db.champs.some(c=>c.id===s.champ&&(s.season==='all'||String(c.season)===s.season)))s.champ='all';
  const ts=db.champs.filter(c=>!c.isFinal&&(s.season==='all'||String(c.season)===s.season)).sort((a,b)=>when(a)-when(b));
  const none=s.season!=='all'&&!db.champs.some(c=>String(c.season)===s.season);
@@ -874,17 +950,18 @@ function vRank(){const s=ui.rk;if(s.champ!=='all'&&!db.champs.some(c=>c.id===s.c
  <label>Pesquisar<input class="inp" style="height:40px;width:200px" type="search" data-i="rkQ" value="${esc(s.q)}" placeholder="Nome da dupla ou jogador"></label>
  ${s.mode==='d'?`<label class="chk" style="flex-direction:row;margin-top:18px"><input type="checkbox" data-a="rkIna" ${s.inactive?'checked':''}>Mostrar duplas inativas</label>`:''}</div>
  <div id="rkBody">${rankHTML(s)}</div>
- <p class="note">${s.mode==='d'?`No Ranking Geral, cada vitória vale 3 pontos e a derrota vale 0, em pontos corridos e no mata-mata. As ${db.settings.slots} melhores duplas ativas da temporada${db.settings.minT>0?`, com pelo menos ${db.settings.minT} torneio(s) disputado(s),`:''} ficam com a posição em verde-claro e a marca “Classificada” para o torneio final.${rkWhy(s)} Clique em um valor para ver o detalhamento.`:'O ranking individual é informativo e não inclui pontos transferidos. Clique em um valor para ver o detalhamento.'}</p>`}
+ ${podiumHTML(s)}
+ <p class="note">${s.mode==='d'?`No Ranking Geral, cada partida vencida vale 3 pontos e a derrota vale 0, em pontos corridos e no mata-mata. Ao finalizar o campeonato, somam-se os bônus de colocação: 1º 15 · 2º 9 · 3º 6 · 4º 3. As ${db.settings.slots} melhores duplas ativas da temporada${db.settings.minT>0?`, com pelo menos ${db.settings.minT} torneio(s) disputado(s),`:''} aparecem com o quadrado da posição em verde-claro (classificadas para o torneio final); as demais ficam em azul. Quadrado amarelo indica empate na última vaga.${rkWhy(s)} Clique em um valor para ver o detalhamento.`:'No ranking individual cada jogador recebe os 3 pontos por partida vencida e o bônus integral da colocação da sua dupla (sem dividir com o parceiro). Não inclui pontos transferidos. Clique em um nome ou valor para ver o detalhamento.'}</p>`}
 function usersHTML(){if(!CLOUD)return'<h2 style="margin-top:26px">Usuários e permissões</h2><p class="note">Disponível quando o sistema está ligado ao banco.</p>';
  return`<h2 style="margin-top:26px">Usuários e permissões</h2><p class="note">Cada pessoa entra com o nome de usuário e a senha que você definir aqui, sem precisar de e-mail. Você (master) continua entrando com o seu e-mail.</p>
  <div class="tw"><table><thead><tr><th class="l">Nome</th><th class="l">Usuário</th><th>Perfil</th><th>Caixa</th><th></th></tr></thead><tbody>
  <tr><td class="l">${esc(db.user.name)} <span class="tag ok">você</span></td><td class="l">${esc(me.email||'')}</td><td>Master</td><td>Sim</td><td></td></tr>
- ${members.map(m=>`<tr><td class="l">${esc(m.name)}</td><td class="l">${esc(m.username)}</td><td>${ROLE[m.role]}</td><td>${m.caixa?'Sim':'Não'}</td><td><button class="ibtn" data-a="mbEdit" data-e="${esc(m.username)}" aria-label="Editar ${esc(m.name)}">${I.edit}</button><button class="ibtn" data-a="mbDel" data-e="${esc(m.username)}" aria-label="Remover ${esc(m.name)}">${I.trash}</button></td></tr>`).join('')}</tbody></table></div>
+ ${members.map(m=>`<tr><td class="l">${esc(m.name)}${m.must_change?' <span class="tag pend" title="Ainda não criou a senha pessoal">Aguardando 1º acesso</span>':''}</td><td class="l">${esc(m.username)}</td><td>${ROLE[m.role]}</td><td>${m.caixa?'Sim':'Não'}</td><td><button class="ibtn" data-a="mbEdit" data-e="${esc(m.username)}" aria-label="Editar ${esc(m.name)}">${I.edit}</button><button class="ibtn" data-a="mbDel" data-e="${esc(m.username)}" aria-label="Remover ${esc(m.name)}">${I.trash}</button></td></tr>`).join('')}</tbody></table></div>
  <div class="acts" style="justify-content:flex-start"><button class="pill" data-a="mbEdit" data-e="">Adicionar usuário</button></div>
  <details class="note"><summary>O que cada perfil pode fazer</summary><p><b>Master</b> (você): tudo, incluindo Configurações do campeonato, usuários, regras do ranking e backup.<br><b>Organizador</b>: cadastra jogadores e duplas, cria campeonatos, monta fases e partidas, lança e corrige placares.<br><b>Lançador de placares</b>: consulta tudo e lança ou corrige placares.<br><b>Somente leitura</b>: apenas consulta.<br><b>Caixa</b>: marcado, a pessoa vê o Caixa; para lançar no Caixa também precisa ser Organizador.</p></details>`}
 function vUser(){const s=db.settings,who=`<p class="muted">${CLOUD?`Conectado como <b>${esc(me.username||me.email||(sess&&sess.email)||'')}</b> · Perfil: <b>${ROLE[me.role]||''}</b>`:'Modo local, sem login.'}</p>`;
  if(!isMaster())return`<h1>Meu usuário</h1>${who}<p class="note">As regras do ranking, os usuários e a cópia de segurança são gerenciados pelo usuário master.</p>
- ${isMember()?`<h2 style="margin-top:22px">Trocar minha senha</h2><form data-f="pwSave" style="max-width:420px"><label class="field"><span>Senha atual</span><input class="inp" name="o" type="password" autocomplete="current-password"></label><label class="field"><span>Nova senha (mínimo 6 caracteres)</span><input class="inp" name="n" type="password" autocomplete="new-password"></label><p class="err" role="alert"></p><div class="acts" style="justify-content:flex-start"><button class="pill">Trocar senha</button></div></form>`:''}`;
+ ${isMember()?`<h2 style="margin-top:22px">Trocar minha senha</h2><form data-f="pwSave" style="max-width:420px"><label class="field"><span>Senha atual</span>${pwInp('o','current-password')}</label><label class="field"><span>Nova senha (mínimo 6 caracteres)</span>${pwInp('n','new-password')}</label><p class="err" role="alert"></p><div class="acts" style="justify-content:flex-start"><button class="pill">Trocar senha</button></div></form>`:''}`;
  return`<h1>Meu usuário</h1>${who}
  <form data-f="uSave" style="max-width:520px"><label class="field"><span>Nome (aparece como organizador)</span><input class="inp" name="name" value="${esc(db.user.name)}" maxlength="60" required></label>
  <label class="field"><span>E-mail de contato</span><input class="inp" name="email" type="email" value="${esc(db.user.email)}"></label>
@@ -1036,11 +1113,10 @@ function vConfig(c){const ph=getPhase(c);cur.ph=ph;const pd=pendings(c),ts=champ
  const row=(i,l,a,b='Editar')=>`<li><span style="color:var(--g1);display:flex">${i}</span><span style="flex:1">${l}</span><button class="pill ghost sm" data-a="${a}">${b}</button></li>`;
  return`<div class="cfg"><div style="display:flex;gap:10px;align-items:center"><a class="ibtn" href="#/c/${c.id}/inicio" aria-label="Voltar para o campeonato" title="Voltar">${I.back}</a><h1 style="margin:0">Configurações</h1></div>
  <section class="box"><h2>Dados básicos</h2><form data-f="cSave"><label class="field"><span>Título</span><input class="inp" name="name" value="${esc(c.name)}" maxlength="80"></label>
- <label class="field"><span>Data de início</span><input class="inp" name="start" type="date" value="${esc(c.startDate||'')}"></label>
- <label class="field"><span>Data de término</span><input class="inp" name="end" type="date" value="${esc(c.endDate||'')}"></label>
+ <div class="two2"><label class="field"><span>Data de início</span><input class="inp" name="start" type="date" value="${esc(c.startDate||'')}"></label><label class="field"><span>Data de término</span><input class="inp" name="end" type="date" value="${esc(c.endDate||'')}"></label></div>
  <p class="note">Temporada do ranking: ${esc(c.season)} (segue o ano da data de início).</p><p class="err" role="alert"></p><div class="acts"><button class="pill">Salvar alterações</button></div></form></section>
- <section class="box"><h2>Campeonato</h2>${c.phases.length>1?`<label class="field"><span>Fase em edição</span><select data-c="selPhase" style="width:100%">${c.phases.map(p=>`<option value="${p.id}" ${p===ph?'selected':''}>${esc(p.name)} — ${TYPE[p.type]}</option>`).join('')}</select></label>`:''}
- <ul class="rows">${row(I.users,`Duplas <small class="muted">(${ts.length} no campeonato · ${ph.teamIds.length} nesta fase)</small>`,'cDuplas')}${row(I.user,`Jogadores <small class="muted">(${np})</small>`,'cfgPlayers','Editar')}${row(I.layers,'Grupos','cGrupos')}${row(I.list,'Fases','cFases')}${row(I.flag,'Critério de classificação','cCrit')}${row(I.chart,'Ranking de jogadores','cfgRank','Consultar')}</ul></section>
+ <section class="box"><h2>Campeonato</h2>
+ <ul class="rows">${row(I.users,`Duplas <small class="muted">(${ts.length} no campeonato)</small>`,'cfgPh" data-v="cDuplas')}${row(I.user,`Jogadores <small class="muted">(${np})</small>`,'cfgPlayers','Editar')}${row(I.layers,'Grupos','cfgPh" data-v="cGrupos')}${row(I.list,'Fases','cFases')}${row(I.flag,'Critério de classificação','cfgPh" data-v="cCrit')}${row(I.chart,'Ranking de jogadores','cfgRank','Consultar')}</ul></section>
  <section class="box"><h2>Opções avançadas</h2>
  <label class="chk"><input type="checkbox" data-a="cOpt" data-k="isFinal" ${c.isFinal?'checked':''}><span>Este é o torneio final da temporada <small class="muted">(não soma pontos no Ranking Geral)</small></span></label>
  <label class="chk"><input type="checkbox" data-a="cOpt" data-k="requireApproval" ${c.requireApproval?'checked':''}><span>Exigir minha aprovação para resultados enviados pelo link compartilhado</span></label>
@@ -1060,21 +1136,27 @@ function vVisitor(tk){const c=tk&&db.champs.find(x=>x.shareToken===tk);
 
 /* ===================== Ações ===================== */
 const A={},F={};
-const VIS=new Set(['tvOpen','tvExit','tvNext','tvPause','tGames','clsView','retry','closeM','vTab','vMode','mOpen','rkCell','rkTot','selPhase','selRound']);
+const VIS=new Set(['pwEye','tvOpen','tvExit','tvNext','tvPause','tGames','clsView','retry','closeM','vTab','vMode','mOpen','rkCell','rkTot','selPhase','selRound']);
 A.closeM=()=>closeModal();
 A.nav=()=>document.body.classList.toggle('nav');
 A.retry=()=>render();
 A.sair=async()=>{if(!await confirmBox({title:'Sair',msg:CLOUD?(ws.dirty||ws.busy||cx.busy||cx.err?'<b class="neg">Há alterações que ainda não foram gravadas no banco.</b> Se sair agora, elas serão perdidas. ':'')+'Deseja encerrar a sessão?':'Esta é a versão local, sem login. Voltar para a lista de campeonatos?',ok:'Sair'}))return;
  if(!CLOUD){location.hash='#/campeonatos';return}
+ try{await offQ}catch(e){}
  try{if(isMember())await http('/rest/v1/rpc/gc_logout',{method:'POST',body:{p_session:sess.token}});else await http('/auth/v1/logout',{method:'POST',token:sess.access_token})}catch(e){}
- setSess(null);loaded=null;setDb({});render()};
+ localSignOut();render()};
 F.login=async f=>{const b=f.querySelector('.pill');if(b.disabled)return;const u=clean(f.u.value),pw=f.p.value;if(!u||!pw)return setErr(f,'Informe usuário e senha.');b.disabled=true;setErr(f,'');
+ const fail=m=>{b.disabled=false;f.p.value='';setErr(f,m)};let online=true;
  try{if(u.includes('@'))keepSess(await http('/auth/v1/token?grant_type=password',{method:'POST',body:{email:u,password:pw}}));
   else{const r=await http('/rest/v1/rpc/gc_login',{method:'POST',body:{p_username:norm(u).replace(/\s+/g,''),p_password:pw}});
-   if(!r.ok){b.disabled=false;f.p.value='';return setErr(f,r.reason==='bloqueado'?`Muitas tentativas. Aguarde ${Math.max(1,Math.ceil(r.seconds/60))} minuto(s).`:'Usuário ou senha incorretos.')}
-   setSess({kind:'member',token:r.token,username:r.username})}
-  render()}
- catch(e){b.disabled=false;f.p.value='';setErr(f,e.status===429?'Muitas tentativas. Aguarde alguns minutos.':e.status?'Usuário ou senha incorretos.':'Sem conexão com o servidor.')}};
+   if(!r.ok)return fail(r.reason==='bloqueado'?`Muitas tentativas. Aguarde ${Math.max(1,Math.ceil(r.seconds/60))} minuto(s).`:'Usuário ou senha incorretos.');
+   setSess({kind:'member',token:r.token,username:r.username})}}
+ catch(e){if(e.status)return fail(e.status===429?'Muitas tentativas. Aguarde alguns minutos.':'Usuário ou senha incorretos.');online=false}
+ if(!online){let r;try{r=await olLogin(u,pw)}catch(e){r={err:'none'}}
+  if(r.ok){loaded='admin';render();return toast('Sem internet: você entrou no modo offline deste aparelho. O que fizer fica guardado aqui e será enviado quando a conexão voltar.')}
+  return fail(r.err==='none'?'Sem conexão com o servidor. Este usuário ainda não foi habilitado para entrar offline neste aparelho: o primeiro acesso precisa ser feito com internet.':r.err==='lock'?'Muitas tentativas. Aguarde 1 minuto.':r.err==='stale'?'O acesso offline deste usuário foi suspenso neste aparelho, porque o servidor recusou a sessão. Entre uma vez com internet para reativá-lo.':r.err==='nodata'?'Senha correta, mas não há dados guardados neste aparelho para abrir sem internet.':'Usuário ou senha incorretos.')}
+ pendingPw=pw;pendingU=u;
+ render()};
 A.openC=d=>{location.hash='#/c/'+d.id+'/inicio'};
 
 /* ----- jogadores ----- */
@@ -1154,12 +1236,16 @@ function champTiers(c){if(statusKey(c)!=='done'||!c.result)return null;const tie
    for(let k=ph.rounds.length-1;k>=0;k--)put(ph.rounds[k].matches.filter(m=>!m.third&&winner(m)).map(m=>winner(m)===m.a?m.b:m.a));put([...ph.teamIds])}
   else rankGroups(ph,phaseStats(ph),ph.teamIds.filter(id=>!placed.has(id))).forEach(g=>put([...g]))}
  return tiers}
+// Bônus do Ranking Geral pela colocação final (uma vez por campeonato, só depois da finalização oficial).
+const BONUS=[15,9,6,3],PLL=['1º — Campeão','2º — Vice-campeão','3º — Terceiro colocado','4º — Quarto colocado'];
+// Pódio oficial: 1º a 4º. Para na primeira colocação empatada: não se presume colocação sem informação suficiente.
+function champPodium(c){const t=champTiers(c),out=[];if(!t)return out;for(const g of t){if(out.length>=4||g.length!==1)break;out.push(g[0])}return out}
 function champPlace(c,teamId){const t=champTiers(c);if(!t||!teamId)return null;let pos=1;for(const g of t){if(g.includes(teamId))return pos;pos+=g.length}return null}
 function entMatches(id,mode,c){const out=[];c.phases.forEach(ph=>ph.rounds.forEach(r=>r.matches.forEach(m=>{if(!m.a||!m.b)return;const side=[m.a,m.b].find(tid=>mode==='d'?tid===id:T(tid)?.players.includes(id));if(!side)return;resultGames(ph,m).forEach((g,index)=>out.push({ph,r,m,side,win:g.winner===side,g,index,pts:g.winner===side?db.settings.ppw:0}))})));return out}
 A.rkCell=d=>{if(!C(d.cid))return render();const c=C(d.cid),ms=entMatches(d.id,d.mode,c),name=d.mode==='d'?dl(T(d.id)):P(d.id)?.name,v=ms.filter(x=>x.win).length;
  const partners=d.mode==='i'?[...new Set(champTeams(c).map(T).filter(t=>t&&t.players.includes(d.id)).map(t=>t.players.filter(x=>x!==d.id).map(x=>P(x)?.name).join('')||'—'))]:[];
  modal(`${mHead(esc(c.name),'Data: '+champDate(c))}<p><b>${esc(name)}</b>${partners.length?`<br><span class="muted">Parceiro(a): ${esc(partners.join(', '))}</span>`:''}</p>
- <div class="kpis" style="margin:8px 0 14px"><div class="kpi" style="min-width:0"><small>PARTIDAS</small><b>${ms.length}</b></div><div class="kpi" style="min-width:0"><small>VITÓRIAS</small><b>${v}</b></div><div class="kpi" style="min-width:0"><small>DERROTAS</small><b>${ms.length-v}</b></div><div class="kpi" style="min-width:0"><small>PONTOS DE CLASSIFICAÇÃO</small><b>${ms.reduce((a,x)=>a+x.pts,0)}</b></div></div>
+ <div class="kpis" style="margin:8px 0 14px"><div class="kpi" style="min-width:0"><small>PARTIDAS</small><b>${ms.length}</b></div><div class="kpi" style="min-width:0"><small>VITÓRIAS</small><b>${v}</b></div><div class="kpi" style="min-width:0"><small>DERROTAS</small><b>${ms.length-v}</b></div><div class="kpi" style="min-width:0"><small>PONTOS DAS PARTIDAS</small><b>${ms.reduce((a,x)=>a+x.pts,0)}</b></div>${(()=>{const k=computeRanking({season:'all',champ:c.id,mode:d.mode,q:'',inactive:true}).list.find(x=>x.id===d.id)?.per[c.id],bn=(k&&k.bonus)||0;return`<div class="kpi" style="min-width:0"><small>BÔNUS DE COLOCAÇÃO</small><b>${bn}${k&&k.place?' <small class="muted" style="display:inline;letter-spacing:0">('+k.place+'º)</small>':''}</b></div><div class="kpi" style="min-width:0"><small>TOTAL NO TORNEIO</small><b>${ms.reduce((a,x)=>a+x.pts,0)+bn}</b></div>`})()}</div>
  ${ms.length?`<ul class="rows">${ms.map(x=>`<li style="display:block"><small class="muted">${esc(x.ph.name)} · ${esc(x.r.title)}</small><br>${esc(dl(T(x.m.a)))} <b>${x.g.a}-${x.g.b}</b> ${esc(dl(T(x.m.b)))} · Partida ${x.index+1} — <span class="tag ${x.win?'ok':'off'}">${x.win?'Vitória'+(x.pts?' +3 pontos':''):'Derrota'}</span></li>`).join('')}</ul>`:'<p class="muted">Nenhuma partida finalizada neste torneio.</p>'}
  <div class="acts"><button class="pill" data-a="closeM">Fechar</button></div>`,{cls:'wide'})};
 A.rkTot=d=>{const st={season:d.season,champ:d.champ,mode:d.mode,q:'',inactive:true},{tours,list}=computeRanking(st),r=list.find(x=>x.id===d.id);if(!r)return;let body;
@@ -1168,16 +1254,16 @@ A.rkTot=d=>{const st={season:d.season,champ:d.champ,mode:d.mode,q:'',inactive:tr
  else{const ds=db.teams.filter(t=>t.players.includes(d.id));body=`<h2>Duplas do jogador</h2>${ds.length?`<ul class="rows">${ds.map(t=>`<li>${esc(dl(t))} <span class="tag ${t.active?'ok':'off'}">${t.active?'Ativa':'Inativa'}</span></li>`).join('')}</ul>`:'<p class="muted">Sem duplas.</p>'}`}
  const played=[...tours].filter(c=>r.per[c.id]&&r.per[c.id].j>0).sort((a,b)=>when(b)-when(a)),sum=k=>played.reduce((a,c)=>a+r.per[c.id][k],0);
  const teamIn=c=>d.mode==='d'?d.id:champTeams(c).find(tid=>T(tid)&&T(tid).players.includes(d.id)),partner=c=>{const t=T(teamIn(c));return t?(t.players.filter(x=>x!==d.id).map(x=>P(x)?.name||'?').join(' / ')||'—'):'—'};
- const place=c=>{const p=champPlace(c,teamIn(c));return p?p+'º lugar':'Em andamento'};
+ const place=c=>{if(statusKey(c)!=='done')return'Em andamento';const k=r.per[c.id];if(k.place)return PLL[k.place-1];const tid=teamIn(c),g=(champTiers(c)||[]).find(z=>z.includes(tid)),p=champPlace(c,tid);return p?p+'º lugar'+(g&&g.length>1?' (empate)':''):'—'},bn=c=>r.per[c.id].bonus||0,sumB=played.reduce((a,c)=>a+bn(c),0);
  const kp=(l,v)=>`<div class="kpi" style="min-width:0;flex:1"><small>${l}</small><b>${v}</b></div>`;
  modal(`${mHead('Detalhamento da pontuação',esc(r.name))}
  <div class="kpis" style="margin:6px 0 14px">${kp('TRANSFERIDOS',fmt(r.tr))}${kp('TORNEIOS',played.length)}${kp('PONTOS CONQUISTADOS',fmt(r.total-r.tr))}${kp('TOTAL ATUAL',fmt(r.total))}</div>
  <h2>Histórico de participação nos torneios</h2>
- ${played.length?`<div class="tw"><table class="cls" id="rkHist"><thead><tr><th class="l">Torneio</th><th>Temporada</th>${d.mode==='i'?'<th class="l">Dupla / Parceiro</th>':''}<th>Colocação</th><th title="Jogos disputados">J</th><th title="Vitórias">V</th><th title="Derrotas">D</th><th title="Pontos de Classificação">Pontos</th></tr></thead><tbody>${
-  played.map(c=>{const k=r.per[c.id];return`<tr><td class="l" style="white-space:normal">${esc(c.name)}</td><td>${esc(c.season)}</td>${d.mode==='i'?`<td class="l" style="white-space:normal">${esc(partner(c))}</td>`:''}<td>${place(c)}</td><td>${k.j}</td><td>${k.v}</td><td>${k.d}</td><td class="tot">${k.pts}</td></tr>`}).join('')}
-  <tr style="font-weight:700"><td class="l">Total</td><td></td>${d.mode==='i'?'<td></td>':''}<td>${played.length} torneio${played.length===1?'':'s'}</td><td>${sum('j')}</td><td>${sum('v')}</td><td>${sum('d')}</td><td class="tot">${sum('pts')}</td></tr></tbody></table></div>`:'<p class="muted">Nenhum torneio disputado com os filtros atuais.</p>'}
+ ${played.length?`<div class="tw"><table class="cls" id="rkHist"><thead><tr><th class="l">Torneio</th><th>Temporada</th><th class="l">${d.mode==='i'?'Dupla / Parceiro':'Dupla'}</th><th>Colocação</th><th title="Partidas disputadas">J</th><th title="Vitórias">V</th><th title="Derrotas">D</th><th title="Pontos conquistados nas partidas (3 por vitória)">Pontos</th><th title="Bônus pela colocação final">Bônus</th><th>Total</th></tr></thead><tbody>${
+  played.map(c=>{const k=r.per[c.id];return`<tr><td class="l" style="white-space:normal">${esc(c.name)}</td><td>${esc(c.season)}</td><td class="l" style="white-space:normal">${d.mode==='i'?esc(partner(c)):esc(dl(T(teamIn(c))))}</td><td style="white-space:normal">${place(c)}</td><td>${k.j}</td><td>${k.v}</td><td>${k.d}</td><td>${k.pts}</td><td>${bn(c)}</td><td class="tot">${k.pts+bn(c)}</td></tr>`}).join('')}
+  <tr style="font-weight:700"><td class="l">Total</td><td></td><td></td><td>${played.length} torneio${played.length===1?'':'s'}</td><td>${sum('j')}</td><td>${sum('v')}</td><td>${sum('d')}</td><td>${sum('pts')}</td><td>${sumB}</td><td class="tot">${sum('pts')+sumB}</td></tr></tbody></table></div>`:'<p class="muted">Nenhum torneio disputado com os filtros atuais.</p>'}
  <div style="margin-top:14px">${body}</div>
- <p class="note">A colocação aparece quando o campeonato é finalizado. Pontos transferidos ficam separados dos conquistados em quadra.</p>
+ <p class="note">Total no torneio = vitórias × 3 + bônus da colocação final (1º: 15 · 2º: 9 · 3º: 6 · 4º: 3). A colocação e o bônus só aparecem depois que o campeonato é finalizado. Pontos transferidos ficam separados dos conquistados em quadra.</p>
  <div class="acts"><button class="pill" data-a="closeM">Fechar</button></div>`,{cls:'wide'})};
 
 /* ----- usuário / backup ----- */
@@ -1234,13 +1320,14 @@ A.cpDel=async()=>{if(!cpSel.size)return;ui.selP=new Set(cpSel);await A.pDel();cp
 F.cfgPAdd=f=>{const n=clean(f.n.value);if(!n)return setErr(f,'Informe o nome do jogador.');
  if(dupP(n))return setErr(f,'Este jogador já está cadastrado. Verifique a lista antes de realizar uma nova inclusão.');
  db.players.push({id:uid(),name:n,pending:null});save();closeModal(true);render();A.cfgPlayers();toast('Jogador cadastrado.')};
-A.sair2=()=>{setSess(null);loaded=null;setDb({});render()};
+A.sair2=()=>{localSignOut();render()};
 const mbReload=async()=>{members=((await rpc('gc_load',{}))||{}).accounts||[]};
 A.mbEdit=d=>{const m=members.find(x=>x.username===d.e)||{username:'',name:'',role:'organizador',caixa:false};
  modal(`<form data-f="mbSave" autocomplete="off">${mHead(d.e?'Editar usuário':'Adicionar usuário')}<input type="hidden" name="old" value="${esc(m.username)}">
  <label class="field"><span>Nome</span><input class="inp" name="name" value="${esc(m.name)}" maxlength="60" autofocus></label>
  <label class="field"><span>Nome de usuário (para entrar)</span><input class="inp" name="user" value="${esc(m.username)}" maxlength="30" autocapitalize="none" autocomplete="off" placeholder="ex.: joao.silva"></label>
- <label class="field"><span>${d.e?'Nova senha (deixe em branco para manter a atual)':'Senha (mínimo 6 caracteres)'}</span><input class="inp" name="pw" type="text" autocomplete="off" maxlength="72"></label>
+ <label class="field"><span>${d.e?'Nova senha provisória (deixe em branco para manter a atual)':'Senha provisória (mínimo 6 caracteres)'}</span>${pwInp('pw','new-password')}</label>
+ <p class="note" style="margin-top:-4px">Sempre que você define uma senha aqui, a pessoa é obrigada a criar a própria senha no próximo acesso, antes de usar o sistema.</p>
  <label class="field"><span>Perfil</span><select name="role" style="width:100%">${['organizador','placar','leitura'].map(r=>`<option value="${r}" ${m.role===r?'selected':''}>${ROLE[r]}</option>`).join('')}</select></label>
  <p class="note" style="margin-top:-4px"><b>Organizador:</b> campeonatos, jogadores, duplas, placares e finalização.<br><b>Lançador de placares:</b> só campeonatos e ranking; lança placar de partida aberta.<br><b>Somente leitura:</b> só consulta campeonatos e ranking.<br>O <b>Caixa</b> aparece apenas para quem tiver a opção de Caixa marcada abaixo.</p>
  <label class="chk"><input type="checkbox" name="caixa" ${m.caixa?'checked':''}><span>Pode acessar o Caixa</span></label>
@@ -1259,7 +1346,7 @@ F.mbSave=async f=>{const name=clean(f.name.value),user=norm(f.user.value).replac
 A.mbDel=async d=>{const m=members.find(x=>x.username===d.e);if(!m||!await confirmBox({title:'Remover usuário',msg:`<b>${esc(m.name)}</b> (${esc(m.username)}) deixará de ter acesso ao sistema imediatamente.`,ok:'Remover',danger:true}))return;
  try{await rpc('gc_account_delete',{p_username:m.username});await mbReload()}catch(e){return toast(errTxt(e),'err')}render();toast('Usuário removido.')};
 F.pwSave=async f=>{const b=f.querySelector('.pill');if(b.disabled)return;if(f.n.value.length<6)return setErr(f,'A nova senha precisa ter pelo menos 6 caracteres.');b.disabled=true;
- try{const r=await rpc('gc_change_password',{p_old:f.o.value,p_new:f.n.value});b.disabled=false;if(!r.ok)return setErr(f,'Senha atual incorreta.');f.reset();setErr(f,'');toast('Senha trocada.')}
+ try{const r=await rpc('gc_change_password',{p_old:f.o.value,p_new:f.n.value});b.disabled=false;if(!r.ok)return setErr(f,'Senha atual incorreta.');olEnroll(f.n.value);f.reset();setErr(f,'');toast('Senha trocada.')}
  catch(e){b.disabled=false;setErr(f,errTxt(e))}};
 A.cxScope=(d,el)=>{ui.cxScope=el.value;render()};
 F.cxCota=f=>{const raw=f.v.value.trim(),v=raw===''?0:parseMoney(raw);if(!(v>=0))return toast('Valor da cota inválido. Use, por exemplo, 50 ou 1.250,00.','err');
@@ -1318,7 +1405,7 @@ A.clsView=d=>{ui.cls=d.v==='all'?'all':'g';render()};
 A.cMenu=()=>menu([['cDuplas','Duplas',I.users],['cGrupos','Grupos',I.layers],['cFases','Fases',I.list],['cExp','Exportar',I.down],['cTabela','Tabela',I.table],['cCrit','Critério de classificação',I.flag],['cReord','Reordenar',I.order]]);
 let dw;
 A.cDuplas=()=>{const ph=cur.ph,c=cur.c;dw={sel:new Set(ph.teamIds),q:'',grp:{},origin:{...(ph.origin||{})}};ph.groups.forEach(g=>g.teamIds.forEach(id=>dw.grp[id]=g.id));
- const el=modal(`${mHead('Duplas','Selecione as duplas participantes de '+esc(ph.name)+'.'+(ph.groups.length?' O grupo de cada dupla aparece ao lado e pode ser alterado.':''))}<input class="inp" type="search" placeholder="Pesquisar pelo nome dos integrantes" data-i="dQ" data-nodirty aria-label="Pesquisar duplas">
+ const el=modal(`${mHead('Duplas','Selecione as duplas participantes do campeonato'+(cur.c.phases.length>1?' ('+esc(ph.name)+'). As fases seguintes recebem as classificadas automaticamente.':'.')+(ph.groups.length?' O grupo de cada dupla aparece ao lado e pode ser alterado.':''))}<input class="inp" type="search" placeholder="Pesquisar pelo nome dos integrantes" data-i="dQ" data-nodirty aria-label="Pesquisar duplas">
  <div class="selbar" style="margin:10px 0 6px"><label class="chk" style="margin:0;align-items:center"><input type="checkbox" data-a="dAll" id="dAll" data-nodirty><span>Selecionar todos</span></label><span class="muted" id="dCnt"></span></div><div style="max-height:46vh;overflow:auto;padding:2px"><ul class="rows cols3 two" id="dList"></ul></div><p class="err" role="alert"></p>
  <div class="acts"><button class="pill ghost" data-a="closeM">Cancelar</button><button class="pill" data-a="dSave">Salvar</button></div>`,{cls:'wide w2',guard:true});dDraw(el)};
 function dDraw(){const ph=cur.ph,q=norm(dw.q),l=db.teams.filter(t=>t.players.length===2&&(t.active||ph.teamIds.includes(t.id))).filter(t=>!q||norm(dl(t)+' '+t.name).includes(q)).sort((a,b)=>cmpN(dl(a),dl(b)));
@@ -1341,7 +1428,7 @@ A.dSave=()=>{const ph=cur.ph,el=stack[stack.length-1].ov,ids=[...dw.sel].filter(
 let gw;
 A.cGrupos=()=>{const ph=cur.ph;gw={n:Math.max(1,ph.groups.length),names:ph.groups.map(g=>g.name),asg:{},open:null,seeds:new Set((ph.seeds||[]).filter(id=>ph.teamIds.includes(id))),sorted:false,redo:false};
  ph.groups.forEach((g,i)=>g.teamIds.forEach(id=>gw.asg[id]=i));const max=32;if(gw.n>max)gw.n=max;gFix();
- modal(`${mHead('Grupos',esc(ph.name))}<label class="field"><span>Quantidade de grupos: <b id="gNum">${gw.n}</b></span><span style="display:flex;gap:10px;align-items:center"><button type="button" class="sqb" data-a="gStep" data-v="-1" aria-label="Menos um grupo">−</button><input type="range" id="gRange" min="1" max="${max}" value="${gw.n}" data-i="gN" style="flex:1;accent-color:var(--g1)" aria-label="Quantidade de grupos"><button type="button" class="sqb" data-a="gStep" data-v="1" aria-label="Mais um grupo">+</button></span></label>
+ modal(`${mHead('Grupos',phPick('cGrupos',ph))}<label class="field"><span>Quantidade de grupos: <b id="gNum">${gw.n}</b></span><span style="display:flex;gap:10px;align-items:center"><button type="button" class="sqb" data-a="gStep" data-v="-1" aria-label="Menos um grupo">−</button><input type="range" id="gRange" min="1" max="${max}" value="${gw.n}" data-i="gN" style="flex:1;accent-color:var(--g1)" aria-label="Quantidade de grupos"><button type="button" class="sqb" data-a="gStep" data-v="1" aria-label="Mais um grupo">+</button></span></label>
  <div id="gOpts"></div><p class="err" role="alert"></p><div class="acts"><button class="pill ghost" data-a="closeM">Cancelar</button><button class="pill" data-a="gSave">Salvar</button></div>`,{cls:'wide w2',guard:true});gDraw()};
 function gFix(){for(let i=0;i<gw.n;i++)if(!gw.names[i])gw.names[i]='Grupo '+(i<26?String.fromCharCode(65+i):i+1);gw.names.length=gw.n;for(const k in gw.asg)if(gw.asg[k]>=gw.n)delete gw.asg[k];while(gw.seeds.size>gw.n)gw.seeds.delete([...gw.seeds].pop())}
 function gDraw(){const ph=cur.ph,dis=gw.n<2?'disabled':'',o=gw.n<2?null:gw.open;
@@ -1385,6 +1472,15 @@ A.gSave=()=>{const ph=cur.ph,el=stack[stack.length-1].ov;let groups=[];
 function fasesModal(){const c=cur.c;modal(`${mHead('Fases')}<ul class="slist">${c.phases.map((p,i)=>`<li><span><b>${i+1}ª Fase${p.name!==(i+1)+'ª Fase'?' — '+esc(p.name):''}</b><br><small class="muted">${TYPE[p.type]}</small></span><button class="ibtn" data-a="fEdit" data-id="${p.id}" aria-label="Editar fase">${I.edit}</button></li>`).join('')}</ul>
  <div class="acts"><button class="pill" data-a="fEdit" data-id="">Nova fase</button></div>`,{cls:'gray'})}
 A.cFases=fasesModal;
+// Em Configurações não existe mais "Fase em edição": quando há mais de uma fase, cada operação pergunta em qual fase atuar.
+const CFGN={cDuplas:'Duplas',cGrupos:'Grupos',cCrit:'Critério de classificação'};
+// Duplas: sempre na 1ª fase (as seguintes recebem os classificados automaticamente). Grupos: 1ª fase de pontos corridos;
+// o seletor só aparece se existir MAIS de uma fase de pontos corridos. Critério: qualquer fase.
+const cfgList=v=>{const c=cur.c;return v==='cDuplas'?[c.phases[0]]:v==='cGrupos'?(c.phases.filter(p=>p.type==='pc').length?c.phases.filter(p=>p.type==='pc'):[c.phases[0]]):c.phases};
+A.cfgPh=d=>{if(!CFGN[d.v])return;const c=cur.c,L=cfgList(d.v),ph=L.find(p=>p.id===d.id)||(d.v==='cCrit'&&L.includes(cur.ph)?cur.ph:L[0]);if(ui.phase[c.id]!==ph.id){ui.phase[c.id]=ph.id;render()}const lk=phaseLock(c,ph);
+ if(lk&&L.length>1)return modal(mHead(CFGN[d.v],phPick(d.v,ph))+'<p style="margin:14px 0"><b>'+lk[0]+'.</b> '+lk[1]+'</p><div class="acts"><button class="pill ghost" data-a="closeM">Fechar</button></div>',{cls:'gray'});run(d.v,{})};
+const phPick=(v,ph)=>{const c=cur.c,L=cfgList(v);return L.length<2?(c.phases.length>1?'Fase: <b>'+esc(ph.name)+'</b>':''):'<label class="phpick">Fase em configuração <select class="inp" data-c="cfgPhGo" data-v="'+v+'" data-nodirty aria-label="Fase em configuração">'+L.map(p=>'<option value="'+p.id+'"'+(p.id===ph.id?' selected':'')+'>'+esc((c.phases.indexOf(p)+1)+'ª — '+p.name)+' · '+TYPE[p.type]+(p.status==='done'?' · finalizada':'')+'</option>').join('')+'</select></label>'};
+A.cfgPhGo=(d,el)=>{const id=el&&el.value||d.id;if(!CFGN[d.v])return;while(stack.length)closeModal(true);run('cfgPh',{v:d.v,id})};
 function advSimText(c,p,f){const next=c.phases[c.phases.indexOf(p)+1];if(!next||!f)return'';const grouped=p.groups.length>0,mode=grouped&&f.advMode&&f.advMode.value==='group'?'group':'total',parts=[];let n=0;
  if(mode==='total')n=Math.max(0,Math.floor(+(f.advTotal&&f.advTotal.value)||0));else p.groups.forEach(g=>{const e=f.elements['adv_'+g.id],v=Math.max(0,Math.floor(+(e&&e.value)||0));n+=v;parts.push(v)});
  if(n<1)return'Informe as quantidades para simular a fase seguinte.';
@@ -1443,7 +1539,7 @@ A.fDel=async d=>{const c=cur.c,p=c.phases.find(x=>x.id===d.id);
 A.cTabela=()=>{const ph=cur.ph,el=modal(`${mHead('Tabela','Marque as colunas exibidas e arraste para ordenar.')}<ul class="slist" id="colL">${ph.cols.map(x=>`<li data-k="${x.k}"><span>${COL[x.k][0]}</span><input type="checkbox" ${x.on?'checked':''} aria-label="Exibir ${COL[x.k][0]}" style="width:18px;height:18px;accent-color:var(--g1)">${grip}</li>`).join('')}</ul>
  <p class="note">As colunas Posição e Dupla ficam sempre visíveis. Colunas ocultas continuam valendo nos cálculos.</p><div class="acts"><button class="pill" data-a="closeM">Fechar</button></div>`);
  const ul=el.querySelector('#colL');sortable(ul);ul.addEventListener('change',()=>{ph.cols=[...ul.children].map(li=>({k:li.dataset.k,on:li.querySelector('input').checked}));save();render();stack[stack.length-1].dirty=false})};
-A.cCrit=()=>{const ph=cur.ph,el=modal(`${mHead('Critério de classificação',esc(ph.name))}<ol class="slist" id="crL">${ph.criteria.map(k=>`<li data-k="${k}"><span>${CRIT[k]}${k==='h2h'?` <button type="button" class="ibtn" data-a="crInfo" aria-label="Sobre o confronto direto" style="vertical-align:middle">${I.info}</button>`:''}</span>${grip}</li>`).join('')}</ol>
+A.cCrit=()=>{const ph=cur.ph,el=modal(`${mHead('Critério de classificação',phPick('cCrit',ph))}<ol class="slist" id="crL">${ph.criteria.map(k=>`<li data-k="${k}"><span>${CRIT[k]}${k==='h2h'?` <button type="button" class="ibtn" data-a="crInfo" aria-label="Sobre o confronto direto" style="vertical-align:middle">${I.info}</button>`:''}</span>${grip}</li>`).join('')}</ol>
  <p class="note" id="crInfo" hidden>Confronto direto: entre duplas ainda empatadas, vale quem venceu mais partidas disputadas entre elas nesta fase. Com três ou mais duplas empatadas, só é aplicado quando os resultados entre elas permitem diferenciar.</p>
  <p class="note">Segure e arraste para alterar.</p><div class="acts"><button class="pill" data-a="crSave">Salvar</button></div>`,{cls:'gray',guard:true});sortable(el.querySelector('#crL'))};
 A.crInfo=()=>{const e=document.getElementById('crInfo');e.hidden=!e.hidden};
@@ -1626,12 +1722,13 @@ A.elimGo=()=>{const ph=cur.ph,pl=eplan;closeModal(true);if(!pl)return;const chk=
 A.brReset=async()=>{const c=cur.c,ph=cur.ph;if(hasRes(ph))return alertBox('Não é possível refazer','O chaveamento já possui resultados.');if(!await confirmBox({title:'Refazer chaveamento',msg:'Todas as rodadas desta fase (ainda sem resultados) serão removidas para você gerar o chaveamento de novo.',ok:'Refazer',danger:true}))return;ph.rounds=[];ph.expectedPairs=[];delete ui.round[ph.id];phaseAudit(c,ph,'reset-bracket',{summary:'Chaveamento refeito antes de qualquer resultado.'});save();render()};
 A.rEdit=()=>{const r=cur.r;if(!r)return toast('Nenhuma rodada selecionada.','err');
  modal(`<form data-f="rSave">${mHead('Editar Rodada')}<label class="field"><span>Título</span><input class="inp" name="n" value="${esc(r.title)}" maxlength="40" autofocus></label>
+ <label class="field"><span>Data da rodada <small class="muted" style="font-weight:400">(opcional; aparece na exportação dos jogos)</small></span><input class="inp" type="date" name="dt" value="${esc(r.date||'')}"></label>
  <label class="chk"><input type="checkbox" name="h" ${r.hidden?'checked':''}><span>Ocultar jogos da rodada no link compartilhado</span></label>
  <label class="chk"><input type="checkbox" name="l" ${r.allowLink?'checked':''}><span>Permitir que pessoas com o link compartilhem resultados<br><small class="muted">Os resultados serão publicados após aprovação, quando essa exigência estiver habilitada.</small></span></label>
  <p class="err" role="alert"></p><div class="acts"><button type="button" class="pill red" data-a="rDel" style="margin-right:auto">Remover</button><button class="pill">Salvar</button></div></form>`,{cls:'gray',guard:true})};
 F.rSave=f=>{const r=cur.r,n=clean(f.n.value);if(!n)return setErr(f,'O título é obrigatório.');
  if(cur.ph.rounds.some(x=>x!==r&&norm(x.title)===norm(n)))return setErr(f,'Já existe uma rodada com este título nesta fase.');
- Object.assign(r,{title:n,hidden:f.h.checked,allowLink:f.l.checked});save();closeModal(true);render();toast('Rodada salva.')};
+ Object.assign(r,{title:n,hidden:f.h.checked,allowLink:f.l.checked,date:/^\d{4}-\d{2}-\d{2}$/.test(f.dt.value)?f.dt.value:''});save();closeModal(true);render();toast('Rodada salva.')};
 A.rDel=async()=>{const r=cur.r,ph=cur.ph;if(r.matches.some(m=>hasConfirmedResult(m)||m.pending))return alertBox('Não é possível remover.','Esta rodada possui resultados registrados.');
  if(!await confirmBox({title:'Remover rodada',msg:`Remover <b>${esc(r.title)}</b>${r.matches.length?' e suas '+r.matches.length+' partida(s) sem resultado':''}?`,ok:'Remover',danger:true}))return;
  ph.rounds=ph.rounds.filter(x=>x!==r);delete ui.round[ph.id];save();closeModal(true);render()};
@@ -1652,7 +1749,7 @@ async function finalizePhase(c,ph){const v=phaseCompletion(ph,c);if(!v.scheduleV
   if(!ok){ph.promptedSig=sig;save();return false}archive=clearDependentPhases(c,i,ids)}
  if(next){next.teamIds=[...ids];next.origin=qualifierOrigins(ph,ids);if(!needsRebuild)next.groups.forEach(g=>g.teamIds=g.teamIds.filter(id=>ids.includes(id)))}
  ph.status='done';ph.finalizedSnapshot={ids:[...ids],signature:sig,at:Date.now(),by:userName()};ph.promptedSig=sig;
- if(!next){c.result={champion:finalInfo.champion||null,vice:finalInfo.vice||null,third:finalInfo.third||null,fourth:finalInfo.fourth||null,phaseId:ph.id,finalizedAt:Date.now(),by:userName()};c.status='done'}else{if(c.status==='done')c.status='live';delete c.result};
+ if(!next){c.result={champion:finalInfo.champion||null,vice:finalInfo.vice||null,third:finalInfo.third||null,fourth:finalInfo.fourth||null,phaseId:ph.id,finalizedAt:Date.now(),by:userName()};c.status='done'}else{if(c.status==='done')c.status='live';delete c.result;const LP=c.phases[c.phases.length-1];if(!needsRebuild&&c.phases.slice(i+1).every(q=>q.status==='done')){const fi=phaseFinalInfo(LP);if(!fi.error&&!(fi.ties||[]).length&&fi.champion){c.result={champion:fi.champion,vice:fi.vice||null,third:fi.third||null,fourth:fi.fourth||null,phaseId:LP.id,finalizedAt:Date.now(),by:userName()};c.status='done'}}};
  phaseAudit(c,ph,next?'finalize-phase':'finalize-championship',{summary:next?'Fase finalizada e classificados transferidos.':'Campeonato finalizado.',qualified:[...ids],champion:finalInfo?.champion||null,vice:finalInfo?.vice||null,archive});
  save();if(CLOUD){await flushWs();if(ws.dirty||ws.state==='err'){toast('Finalização pendente de confirmação do Supabase. Confira o indicador de sincronização antes de continuar.','err');return false}}
  closeModal(true);render();toast(next?'Fase finalizada. Classificados transferidos para '+next.name+'.':'Campeonato finalizado. Campeã identificada.');return true}
@@ -1785,7 +1882,7 @@ function jpegBytes(cv){const b=atob(cv.toDataURL('image/jpeg',.92).split(',')[1]
 function makePdf(cvs){const enc=new TextEncoder(),parts=[],xref=[];let off=0;const push=d=>{if(typeof d==='string')d=enc.encode(d);parts.push(d);off+=d.length};
  const obj=(n,fn)=>{xref[n]=off;push(n+' 0 obj\n');fn();push('\nendobj\n')};push('%PDF-1.4\n');
  obj(1,()=>push('<< /Type /Catalog /Pages 2 0 R >>'));obj(2,()=>push(`<< /Type /Pages /Count ${cvs.length} /Kids [${cvs.map((_,i)=>(3+i*3)+' 0 R').join(' ')}] >>`));
- cvs.forEach((cv,i)=>{const n=3+i*3,land=cv.width>cv.height,w=land?842:595,h=land?595:842,img=jpegBytes(cv),cont=`q ${w} 0 0 ${h} 0 0 cm /Im0 Do Q`;
+ cvs.forEach((cv,i)=>{const n=3+i*3,land=cv.width>cv.height,w=cv.pw||(land?842:595),h=cv.ph||(land?595:842),img=jpegBytes(cv),cont=`q ${w} 0 0 ${h} 0 0 cm /Im0 Do Q`;
   obj(n,()=>push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${w} ${h}] /Contents ${n+1} 0 R /Resources << /XObject << /Im0 ${n+2} 0 R >> >> >>`));
   obj(n+1,()=>push(`<< /Length ${cont.length} >>\nstream\n${cont}\nendstream`));
   obj(n+2,()=>{push(`<< /Type /XObject /Subtype /Image /Width ${cv.width} /Height ${cv.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${img.length} >>\nstream\n`);push(img);push('\nendstream')})});
@@ -1795,18 +1892,130 @@ function exportDoc(doc,name,fmtK){try{if(fmtK==='pdf')download(makePdf(renderDoc
   else renderDoc(doc,false)[0].toBlob(b=>b?download(b,name+'.jpeg'):toast('Não foi possível gerar a imagem.','err'),'image/jpeg',.92);toast('Download iniciado.')}
  catch(e){console.error(e);toast('Não foi possível gerar o arquivo.','err')}}
 const expModal=a=>modal(`${mHead('Exportar')}<div class="acts" style="justify-content:stretch;flex-direction:column"><button class="pill dark big" data-a="${a}" data-v="pdf" data-close="1">Exportar PDF</button><button class="pill dark big" data-a="${a}" data-v="jpeg" data-close="1">Exportar JPEG</button></div>`);
-A.cExp=()=>expModal('cExpGo');A.jExp=()=>{if(!cur.r)return toast('Não há rodada para exportar.','err');expModal('jExpGo')};
-A.cExpGo=d=>{const c=cur.c,ph=cur.ph,cols=ph.cols.filter(x=>x.on),i=c.phases.indexOf(ph)+1;
- exportDoc({title:c.name,sub:`Classificação · ${ph.name} · Exportado em ${dt(Date.now())}`,sections:standData(ph).map(s=>({title:s.title,head:['Pos.','Dupla',...cols.map(x=>COL[x.k][0])],align:['c','l'],bold:2+cols.findIndex(x=>x.k==='pts'),rows:s.rows.map(r=>[r.pos+'º',r.name,...cols.map(x=>r.s[x.k])])}))},`Classificacao_${slug(c.name)}_${i}Fase`,d.v)};
-A.jExpGo=d=>{const c=cur.c,ph=cur.ph,r=cur.r,i=c.phases.indexOf(ph)+1,j=ph.rounds.indexOf(r)+1;
- exportDoc({title:c.name,sub:`Jogos · ${ph.name} · ${r.title} · Exportado em ${dt(Date.now())}`,sections:[{title:r.title,head:['Disputa','Dupla 1','Partidas','Placar','Dupla 2','Situação'],align:['c','l','c','c','l','c'],bold:2,
-  rows:r.matches.map((m,k)=>[k+1,dl(T(m.a)),hasSets(m)?setsWon(m).join(' × '):'—',setsTxt(m.sets)||'—',dl(T(m.b)),ST[mStatus(m)]])}]},`Jogos_${slug(c.name)}_${i}Fase_${j}Rodada`,d.v)};
+/* ----- exportações: Jogos (cartaz), Classificação e Mata-mata — só leem os dados; nada é gravado ----- */
+const XF='Inter,Roboto,Arial,sans-serif',XNAVY='#162C59';
+function xCanvas(w,h){const c=document.createElement('canvas');c.width=Math.round(w);c.height=Math.round(h);const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.textBaseline='middle';return[c,x]}
+function xWrap(x,text,maxW){const out=[];let cur='';for(const w of String(text).split(' ')){const t=cur?cur+' '+w:w;if(!cur||x.measureText(t).width<=maxW)cur=t;else{out.push(cur);cur=w}}if(cur)out.push(cur);return out}
+function xRR(x,X,Y,W,H,r){x.beginPath();if(x.roundRect)x.roundRect(X,Y,W,H,r);else x.rect(X,Y,W,H)}
+function xLines(x,lines,X,Y,lh,align){x.textAlign=align;lines.forEach((l,i)=>x.fillText(l,X,Y+(i-(lines.length-1)/2)*lh))}
+const xDate=d=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(d||''))return'';const wd=['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'][new Date(d+'T12:00:00').getDay()];return periodLabel({startDate:d,endDate:d})+' · '+wd};
+const xIni=id=>{const t=id&&T(id);return t&&t.players.length?t.players.map(p=>firstInitial(P(p)?.name)).join('/'):'?'};
+const xName=id=>id&&T(id)?dl(T(id)):'A definir';
+function zipStore(files){const tb=[];for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;tb[n]=c>>>0}const crc=u=>{let c=~0;for(let i=0;i<u.length;i++)c=tb[(c^u[i])&255]^(c>>>8);return(~c)>>>0},enc=new TextEncoder(),parts=[],cen=[],u16=n=>[n&255,n>>>8&255],u32=n=>[n&255,n>>>8&255,n>>>16&255,n>>>24&255];let off=0;
+ for(const f of files){const nm=enc.encode(f.name),cr=crc(f.data),sz=f.data.length,h=new Uint8Array([0x50,0x4b,3,4,20,0,0,8,0,0,0,0,0x21,0,...u32(cr),...u32(sz),...u32(sz),...u16(nm.length),0,0]);parts.push(h,nm,f.data);
+  cen.push(new Uint8Array([0x50,0x4b,1,2,20,0,20,0,0,8,0,0,0,0,0x21,0,...u32(cr),...u32(sz),...u32(sz),...u16(nm.length),0,0,0,0,0,0,0,0,0,0,0,0,...u32(off)]),nm);off+=h.length+nm.length+sz}
+ const cs=cen.reduce((a,b)=>a+b.length,0);return new Blob([...parts,...cen,new Uint8Array([0x50,0x4b,5,6,0,0,0,0,...u16(files.length),...u16(files.length),...u32(cs),...u32(off),0,0])],{type:'application/zip'})}
+// Entrega os arquivos: PDF único; JPEG único; ou ZIP quando há várias imagens. Cada página do PDF tem a proporção exata da imagem.
+function xDeliver(cvs,name,fmtK){try{if(!cvs.length)return toast('Não há conteúdo para exportar.','err');
+  if(fmtK==='pdf'){cvs.forEach(cv=>{const land=cv.width>cv.height;cv.pw=land?842:595;cv.ph=Math.round(cv.pw*cv.height/cv.width)});download(makePdf(cvs),name+'.pdf')}
+  else if(cvs.length===1)download(new Blob([jpegBytes(cvs[0])],{type:'image/jpeg'}),name+'.jpeg');
+  else download(zipStore(cvs.map((cv,i)=>({name:name+'_'+String(i+1).padStart(2,'0')+'.jpeg',data:jpegBytes(cv)}))),name+'.zip');
+  toast(fmtK==='pdf'?'PDF gerado ('+cvs.length+' página'+(cvs.length>1?'s':'')+').':cvs.length>1?cvs.length+' imagens geradas em um arquivo ZIP.':'Imagem gerada.')}
+ catch(e){console.error(e);toast('Não foi possível gerar o arquivo.','err')}}
+
+/* --- Jogos: cartaz vertical de 1080px; uma rodada nunca é dividida entre páginas/imagens --- */
+function jgRound(x,ph,r,y,multi){const W=1080,M=48,CW=W-2*M,cx=W/2;
+ x.font='700 30px '+XF;const tw=Math.max(260,x.measureText(r.title).width+72);x.fillStyle='#DDF5E3';xRR(x,cx-tw/2,y,tw,58,29);x.fill();x.fillStyle='#164734';x.textAlign='center';x.fillText(r.title,cx,y+30);y+=58;
+ const dts=xDate(r.date);if(dts){x.font='500 22px '+XF;x.fillStyle='#66756B';x.fillText(dts,cx,y+24);y+=40}y+=18;
+ for(const m of r.matches){const bo3=m.bo!==1,st=mStatus(m),sets=(m.sets||[]).filter(Boolean),[wa,wb]=setsWon(m),w=winner(m);
+  x.font='600 25px '+XF;const NW=268,la=xWrap(x,xName(m.a),NW),lb=xWrap(x,xName(m.b),NW),nl=Math.max(la.length,lb.length),top=m.third?30:0,body=Math.max(96,nl*31+30),extra=(bo3&&sets.length?36:0)+(st!=='done'?28:0),H=top+body+extra,mid=y+top+body/2;
+  x.fillStyle='#fff';xRR(x,M,y,CW,H,18);x.fill();x.strokeStyle='#DDE4DF';x.lineWidth=2;x.stroke();
+  if(m.third){x.font='700 17px '+XF;x.fillStyle='#30634B';x.textAlign='center';x.fillText('DISPUTA DE 3º LUGAR',cx,y+22)}
+  [[m.a,M+50,la,'left',M+96],[m.b,W-M-50,lb,'right',W-M-96]].forEach(([id,ccx,ln,al,tx])=>{x.beginPath();x.arc(ccx,mid,32,0,Math.PI*2);x.fillStyle='#E8F2EC';x.fill();x.strokeStyle='#164734';x.lineWidth=2;x.stroke();x.fillStyle='#164734';x.font='700 19px '+XF;x.textAlign='center';x.fillText(xIni(id),ccx,mid+1);
+   x.font=(w&&w===id?'700':'600')+' 25px '+XF;x.fillStyle=id&&T(id)?'#25332B':'#9AA7A0';xLines(x,ln,tx,mid,31,al)});
+  const has=sets.length>0,va=!has?'—':bo3?wa:sets[0][0],vb=!has?'—':bo3?wb:sets[0][1];
+  [[va,cx-88],[vb,cx+20]].forEach(([v,bx])=>{x.fillStyle='#F3F5F4';xRR(x,bx,mid-32,68,64,14);x.fill();x.strokeStyle='#C9D3CD';x.lineWidth=2;x.stroke();x.fillStyle='#164734';x.font='800 34px '+XF;x.textAlign='center';x.fillText(String(v),bx+34,mid+2)});
+  x.fillStyle='#66756B';x.font='700 26px '+XF;x.textAlign='center';x.fillText('×',cx,mid+1);let ey=y+top+body;
+  if(bo3&&sets.length){x.font='500 20px '+XF;x.fillStyle='#25332B';x.fillText(sets.map((g,i)=>'Partida '+(i+1)+': '+g[0]+' × '+g[1]).join('     '),cx,ey+8);ey+=36}
+  if(st!=='done'){x.font='600 18px '+XF;x.fillStyle=st==='live'?'#8A5A00':'#66756B';x.fillText((bo3?'Melhor de 3 · ':'')+ST[st],cx,ey+4)}
+  y+=H+14}
+ const notes=[];if((r.byes||[]).length)notes.push('Avançam direto: '+r.byes.map(xName).join('; '));if((r.rest||[]).length)notes.push('Folga nesta rodada: '+r.rest.map(xName).join('; '));
+ for(const n of notes){x.font='500 21px '+XF;x.fillStyle='#66756B';const ln=xWrap(x,n,CW-20);xLines(x,ln,cx,y+14+(ln.length-1)*13,26,'center');y+=ln.length*26+14}
+ return y+(multi?34:10)}
+function jgHead(x,c,ph,title){const cx=540;x.fillStyle='#2ECD71';x.fillRect(0,0,1080,14);x.fillStyle='#DDF5E3';x.beginPath();x.arc(1080,0,150,0,Math.PI*2);x.fill();x.beginPath();x.arc(0,0,96,0,Math.PI*2);x.fill();
+ x.fillStyle='#164734';x.font='700 34px '+XF;const ln=xWrap(x,c.name,880);let y=70;xLines(x,ln,cx,y+(ln.length-1)*20,40,'center');y+=ln.length*40+26;
+ x.font='800 62px '+XF;x.fillText(title,cx,y+26);y+=74;x.font='500 28px '+XF;x.fillStyle='#30634B';x.fillText(ph.name+' · '+TYPE[ph.type],cx,y+14);return y+56}
+function jgFoot(x,c,H,txt){x.strokeStyle='#DDE4DF';x.lineWidth=2;x.beginPath();x.moveTo(48,H-74);x.lineTo(1032,H-74);x.stroke();x.fillStyle='#66756B';x.font='500 20px '+XF;x.textAlign='center';x.fillText(txt||c.name,540,H-40);x.fillStyle='#2ECD71';x.fillRect(0,H-10,1080,10)}
+function jogosPages(c,ph,rounds,fmtK){const scr=xCanvas(1080,10)[1],rs=rounds.filter(r=>r.matches.length||(r.byes||[]).length||(r.rest||[]).length);if(!rs.length)return[];
+ const multi=rs.length>1,title=multi?'JOGOS DA FASE':'JOGOS DA RODADA',H0=jgHead(scr,c,ph,title),FOOT=96,TARGET=fmtK==='pdf'?1527:1920,hs=rs.map(r=>jgRound(scr,ph,r,0,multi)),pages=[];let cur=[],h=H0;
+ rs.forEach((r,i)=>{if(cur.length&&h+hs[i]+FOOT>TARGET){pages.push(cur);cur=[];h=H0}cur.push(i);h+=hs[i]});if(cur.length)pages.push(cur);
+ return pages.map((idx,pi)=>{const need=H0+idx.reduce((a,i)=>a+hs[i],0)+FOOT,H=Math.max(TARGET,need),[cv,x]=xCanvas(1080,H);let y=jgHead(x,c,ph,title)+Math.max(0,(H-need)/2);
+  idx.forEach(i=>{y=jgRound(x,ph,rs[i],y,multi)});const one=!multi?xDate(rs[0].date):'';jgFoot(x,c,H,(one?one+'  ·  ':'')+c.name+(pages.length>1?'  ·  '+(pi+1)+'/'+pages.length:''));cv.rounds=idx.map(i=>rs[i].title);return cv})}
+
+/* --- Classificação: fundo branco, títulos azul-escuros, um grupo abaixo do outro --- */
+function clsGroup(x,ph,sec,cols,y){const W=1080,M=40,TW=W-2*M,PW=92,SW=Math.min(84,Math.floor(460/Math.max(1,cols.length))),NWd=TW-PW-SW*cols.length,cx=W/2;
+ if(sec.title){x.font='700 30px '+XF;x.fillStyle=XNAVY;x.textAlign='center';x.fillText(sec.title,cx,y+20);y+=52}
+ x.font='700 21px '+XF;x.fillStyle=XNAVY;x.textAlign='center';x.fillText('Pos.',M+PW/2,y+26);x.textAlign='left';x.fillText('Dupla',M+PW+10,y+26);cols.forEach((k,i)=>{x.textAlign='center';x.fillText(COL[k.k][1],M+PW+NWd+SW*i+SW/2,y+26)});y+=52;x.fillStyle=XNAVY;x.fillRect(M,y-2,TW,2);
+ if(!sec.rows.length){x.font='500 22px '+XF;x.fillStyle='#555';x.textAlign='center';x.fillText('Sem duplas neste grupo.',cx,y+30);y+=60}
+ sec.rows.forEach((r,i)=>{x.font='500 24px '+XF;const ln=xWrap(x,r.name,NWd-24),H=Math.max(58,ln.length*30+24);x.fillStyle=i%2?'#F5F6F8':'#FFFFFF';x.fillRect(M,y,TW,H);x.fillStyle='#E3E6EB';x.fillRect(M,y+H-1,TW,1);
+  x.fillStyle=XNAVY;xRR(x,M+PW/2-27,y+H/2-21,54,42,10);x.fill();x.fillStyle='#fff';x.font='700 20px '+XF;x.textAlign='center';x.fillText(r.pos+'º',M+PW/2,y+H/2+1);
+  x.fillStyle='#000';x.font='500 24px '+XF;xLines(x,ln,M+PW+10,y+H/2+1,30,'left');cols.forEach((k,j)=>{x.font=(k.k==='pts'?'700':'500')+' 24px '+XF;x.textAlign='center';x.fillText(String(r.s[k.k]),M+PW+NWd+SW*j+SW/2,y+H/2+1)});y+=H});
+ return y+34}
+function clsHead(x,c,ph,sub){x.fillStyle=XNAVY;x.font='700 38px '+XF;const ln=xWrap(x,c.name,960);let y=56;xLines(x,ln,540,y+(ln.length-1)*22,44,'center');y+=ln.length*44+10;x.font='500 26px '+XF;x.fillText(sub,540,y+14);return y+58}
+function classPages(c,ph,fmtK){const all=ui.cls==='all'||!ph.groups.length,secs=standData(ph,all),cols=ph.cols.filter(k=>k.on),scr=xCanvas(1080,10)[1],sub=ph.name+' · Classificação'+(ph.groups.length?(all?' geral':' por grupo'):''),H0=clsHead(scr,c,ph,sub),hs=secs.map(s=>clsGroup(scr,ph,s,cols,0)),BOT=20;
+ if(!ph.teamIds.length)return[];let pages=[];if(fmtK==='pdf'){let cur=[],h=H0;secs.forEach((s,i)=>{if(cur.length&&h+hs[i]+BOT>1527){pages.push(cur);cur=[];h=H0}cur.push(i);h+=hs[i]});if(cur.length)pages.push(cur)}else pages=[secs.map((_,i)=>i)];
+ return pages.map(idx=>{const need=H0+idx.reduce((a,i)=>a+hs[i],0)+BOT,H=fmtK==='pdf'?Math.max(1527,need):need,[cv,x]=xCanvas(1080,H);let y=clsHead(x,c,ph,sub);idx.forEach(i=>{y=clsGroup(x,ph,secs[i],cols,y)});cv.groups=idx.map(i=>secs[i].title);return cv})}
+
+/* --- Mata-mata: o chaveamento da tela é medido e redesenhado em branco; funciona com a chave em branco --- */
+// Fase usada no desenho: a real, se já tem rodadas; senão uma cópia provisória (nunca gravada) só com a estrutura.
+function bracketPhase(c,ph){if(ph.rounds.length)return ph;const i=c.phases.indexOf(ph),pv=c.phases[i-1],a=pv&&pv.advance;let n=ph.teamIds.length;
+ if(n<2&&a)n=a.mode==='total'||!pv.groups.length?Math.floor(+a.total||0):pv.groups.reduce((s,g)=>s+Math.max(0,Math.floor(+(a.byGroup?.[g.id]??a.total)||0)),0);if(n<2)return null;
+ const tmp=newPhase(1,'elim');tmp.name=ph.name;tmp.bo=ph.bo;tmp.em=ph.em;tmp.teamIds=Array.from({length:n},(_,k)=>'?vaga'+k);const pl=elimPlan(tmp,tmp.em==='bye'?'bye':'all');if(pl.alert)return null;
+ const r=newRound(pl.title);r.slots=pl.pairs.map(([p,q])=>{if(!q)return{t:p};const m=newMatch(p,q,tmp.bo);r.matches.push(m);return{m:m.id}});r.byes=pl.pairs.filter(z=>!z[1]).map(z=>z[0]);tmp.rounds=[r];elimBuild(tmp);return tmp}
+function bracketCanvas(c,ph){const src=bracketPhase(c,ph);if(!src)return null;const host=document.createElement('div');host.style.cssText='position:absolute;left:-30000px;top:0;width:max-content;background:#fff';
+ host.innerHTML=bracketHTML(src,false);document.body.appendChild(host);
+ try{const br=host.querySelector('.bracket');if(!br)return null;br.style.cssText='overflow:visible;border:0;padding:0;width:max-content;background:#fff';drawBracket();
+  const inn=host.querySelector('.br-in'),B=inn.getBoundingClientRect(),W=Math.ceil(inn.scrollWidth),Hh=Math.ceil(inn.scrollHeight),S=2,M=44,TOT=Math.max(W+2*M,760),ox=(TOT-W)/2;
+  const scr=xCanvas(10,10)[1];scr.font='700 30px '+XF;const tl=xWrap(scr,c.name,TOT-80),HEAD=40+tl.length*36+52,[cv,x]=xCanvas(TOT*S,(Hh+HEAD+M)*S);x.scale(S,S);
+  x.fillStyle=XNAVY;x.font='700 30px '+XF;xLines(x,tl,TOT/2,44+(tl.length-1)*18,36,'center');x.font='500 19px '+XF;x.fillText(ph.name+' · Mata-mata · '+BOT[ph.bo]+(src!==ph?' · estrutura prevista':''),TOT/2,44+tl.length*36+8);
+  x.translate(ox,HEAD);const R=e=>{const q=e.getBoundingClientRect();return{x:q.left-B.left,y:q.top-B.top,w:q.width,h:q.height}};
+  inn.querySelectorAll('.br-svg path').forEach(p=>{x.strokeStyle='#8E97A8';x.lineWidth=1.5;x.setLineDash(p.getAttribute('stroke-dasharray')?[5,5]:[]);x.stroke(new Path2D(p.getAttribute('d')))});x.setLineDash([]);
+  inn.querySelectorAll('.br-title').forEach(e=>{const q=R(e);x.fillStyle=XNAVY;x.font='700 12px '+XF;x.textAlign='center';x.fillText(e.textContent.toUpperCase(),q.x+q.w/2,q.y+q.h/2)});
+  const txt=(e,font,color)=>{const q=R(e),al=getComputedStyle(e).textAlign==='right'?'right':getComputedStyle(e).textAlign==='center'?'center':'left';x.font=font;x.fillStyle=color;const ln=xWrap(x,e.textContent.trim(),q.w+2);xLines(x,ln,al==='right'?q.x+q.w:al==='center'?q.x+q.w/2:q.x,q.y+q.h/2+.5,15.6,al)};
+  inn.querySelectorAll('.br-m,.br-champ').forEach(e=>{const q=R(e),third=e.classList.contains('third'),champ=e.classList.contains('br-champ');x.fillStyle='#fff';xRR(x,q.x,q.y,q.w,q.h,champ?14:11);x.fill();x.strokeStyle=champ&&e.classList.contains('on')?XNAVY:'#B9C0CC';x.lineWidth=champ?1.6:1.2;x.setLineDash(third||(champ&&!e.classList.contains('on'))?[5,4]:[]);x.stroke();x.setLineDash([]);
+   if(champ){const s=e.querySelector('small'),bb=e.querySelector('b'),qs=R(s);x.fillStyle=XNAVY;x.font='700 11px '+XF;x.textAlign='center';x.fillText('CAMPEÃO',qs.x+qs.w/2,qs.y+qs.h/2);if(bb){const qb=R(bb);x.font='700 15px '+XF;x.fillStyle='#000';const ln=xWrap(x,bb.textContent.trim(),q.w-16);xLines(x,ln,q.x+q.w/2,qb.y+qb.h/2,18,'center')}return}
+   const sub=e.querySelector('.br-sub');if(sub){const qs=R(sub);x.fillStyle=XNAVY;x.font='700 10.5px '+XF;x.textAlign='left';x.fillText(sub.textContent.toUpperCase(),qs.x+8,qs.y+qs.h/2+1)}
+   [...e.querySelectorAll('.br-t')].forEach((row,ri)=>{const qr=R(row);if(ri){x.fillStyle='#E3E6EB';x.fillRect(q.x+1,qr.y,q.w-2,1)}const n=row.querySelector('.br-n');if(n){const und=!!n.querySelector('.ph');txt(n,(row.classList.contains('win')?'700':und?'italic 500':'500')+' 13px '+XF,und?'#8A93A3':'#000')}
+    const sb=row.querySelector('.sbox');if(sb){const qb=R(sb);x.fillStyle='#fff';xRR(x,qb.x,qb.y,qb.w,qb.h,7);x.fill();x.strokeStyle='#B9C0CC';x.lineWidth=1;x.stroke();x.fillStyle='#000';x.font='700 14px '+XF;x.textAlign='center';x.fillText(sb.textContent,qb.x+qb.w/2,qb.y+qb.h/2+.5)}
+    const pb=row.querySelector('.posb');if(pb){const qb=R(pb);x.fillStyle=XNAVY;xRR(x,qb.x,qb.y,qb.w,qb.h,7);x.fill();x.fillStyle='#fff';x.font='700 13px '+XF;x.textAlign='center';x.fillText(pb.textContent,qb.x+qb.w/2,qb.y+qb.h/2+.5)}
+    const sm=row.querySelector('small');if(sm){const qm=R(sm);x.fillStyle='#555';x.font='500 12px '+XF;x.textAlign='right';x.fillText(sm.textContent,qm.x+qm.w,qm.y+qm.h/2)}});
+   const ft=e.querySelector('.br-foot');if(ft){const qf=R(ft);x.fillStyle='#E3E6EB';x.fillRect(q.x+1,qf.y,q.w-2,1);x.fillStyle='#444';x.font='600 11px '+XF;const rt=getComputedStyle(ft).flexDirection==='row-reverse';x.textAlign=rt?'right':'left';x.fillText([...ft.children].map(z=>z.textContent.trim()).filter(Boolean).join('  ·  '),rt?qf.x+qf.w-8:qf.x+8,qf.y+qf.h/2)}});
+  cv.preview=src!==ph;return cv}
+ finally{host.remove();try{drawBracket()}catch(e){}}}
+
+A.cExp=()=>{const ph=cur.ph;if(ph.type==='elim'){if(!bracketPhase(cur.c,ph))return alertBox('Não há estrutura para exportar','O chaveamento precisa de pelo menos 2 duplas. Adicione as duplas a esta fase ou defina, na fase anterior, quantas se classificam (+ → Fases → Editar).')}else if(!ph.teamIds.length)return alertBox('Não há classificação para exportar','Adicione duplas a esta fase antes de exportar.');expModal('cExpGo')};
+A.cExpGo=d=>{const c=cur.c,ph=cur.ph,i=c.phases.indexOf(ph)+1;
+ if(ph.type==='elim'){const cv=bracketCanvas(c,ph);if(!cv)return toast('Não foi possível montar o chaveamento.','err');return xDeliver([cv],`MataMata_${slug(c.name)}_${i}Fase`,d.v)}
+ xDeliver(classPages(c,ph,d.v),`Classificacao_${slug(c.name)}_${i}Fase`,d.v)};
+A.jExp=()=>{if(!cur.r)return toast('Não há rodada para exportar.','err');expModal('jExpPick')};
+A.jExpPick=d=>{const ph=cur.ph,r=cur.r,pdf=d.v==='pdf';modal(mHead('Exportar jogos — '+(pdf?'PDF':'JPEG'),'Escolha o conteúdo do arquivo.')+
+ '<label class="radio" style="align-items:flex-start"><input type="radio" name="jx" value="all" style="margin-top:3px"><span><b>'+esc(ph.name)+' — Todas as rodadas</b><br><small class="muted">'+ph.rounds.length+' rodada(s). Cada rodada sai inteira: nunca é dividida entre '+(pdf?'páginas':'imagens')+'.</small></span></label>'+
+ '<label class="radio" style="align-items:flex-start"><input type="radio" name="jx" value="one" checked style="margin-top:3px"><span><b>'+esc(r.title)+' — Somente esta rodada</b><br><small class="muted">'+r.matches.length+' confronto(s).</small></span></label>'+
+ '<div class="acts"><button class="pill ghost" data-a="closeM">Cancelar</button><button class="pill" data-a="jExpGo" data-v="'+(pdf?'pdf':'jpeg')+'">Exportar '+(pdf?'PDF':'JPEG')+'</button></div>')};
+A.jExpGo=d=>{const c=cur.c,ph=cur.ph,r=cur.r,all=!!document.querySelector('.ov:last-child input[name=jx][value=all]:checked'),i=c.phases.indexOf(ph)+1,j=ph.rounds.indexOf(r)+1;closeModal(true);
+ const cvs=jogosPages(c,ph,all?ph.rounds:[r],d.v);if(!cvs.length)return alertBox('Não há jogos para exportar',all?'Esta fase ainda não tem confrontos cadastrados.':'Esta rodada ainda não tem confrontos.');
+ xDeliver(cvs,all?`Jogos_${slug(c.name)}_${i}Fase`:`Jogos_${slug(c.name)}_${i}Fase_${j}Rodada`,d.v)};
 
 /* ===================== Eventos ===================== */
-const READ=new Set([...VIS,'nav','sair','sair2','openC','rkSet','rkMode','rkIna','rkQ','pSort','crInfo','cxScope','offSync','cExp','jExp','cExpGo','jExpGo']);
-const SCORE=new Set(['mState','mAuto','mGame']),MASTER=new Set(['mbEdit','mbDel','cOpt','cDel','cfgPlayers','cpAll','cpSel','cpDel','cfgRank','wipe','bkImp','bkExp']),CASH=new Set(['cxAdd','cxEdit','cxDel']),MASTERF=new Set(['uSave','cSave','tieSave','mbSave']);
+const READ=new Set([...VIS,'nav','sair','sair2','openC','rkSet','rkMode','rkIna','rkQ','pSort','crInfo','cxScope','offSync','confOpen','confKeep','cExp','jExp','cExpGo','jExpGo','jExpPick']);
+const SCORE=new Set(['mState','mAuto','mGame','confMine']),MASTER=new Set(['mbEdit','mbDel','cOpt','cDel','cfgPlayers','cpAll','cpSel','cpDel','cfgRank','wipe','bkImp','bkExp']),CASH=new Set(['cxAdd','cxEdit','cxDel']),MASTERF=new Set(['uSave','cSave','tieSave','mbSave']);
 const DENY='Seu perfil não permite esta ação.';
 A.offSync=()=>trySync(true);
+// Conflitos de placar (lançado offline × o que já estava online): as duas versões ficam guardadas até alguém autorizado decidir.
+const confBar=()=>'<div class="offbar" role="status" style="background:#FDECEC;border-color:#F2A9A4;color:#7A2E2A"><b>Conflitos de placar.</b> <span>'+offConf.length+' resultado(s) lançado(s) offline neste aparelho diferem do que está online.</span><span style="flex:1"></span><button class="pill sm" data-a="confOpen">Resolver</button></div>';
+A.confOpen=()=>{offConf=offConf.filter(z=>findMatch(z.id));if(!offConf.length){offPersist();return render()}
+ modal('<form data-f="confNoop">'+mHead('Conflitos de placar','Nada foi sobrescrito. Escolha, para cada confronto, qual resultado deve valer.')+'<ul class="slist">'+offConf.map((z,i)=>{const x=findMatch(z.id),now=setsTxt(x.m.sets)||'sem placar';return'<li style="display:block"><b>'+esc(dl(T(x.m.a))+' × '+dl(T(x.m.b)))+'</b><br><small class="muted">'+esc(x.ph.name)+' · '+esc(x.r.title)+' · lançado offline por '+esc(z.by||'—')+' em '+dt(z.at)+'</small><div class="cfv"><span><small>Neste aparelho (offline)</small><b>'+esc(setsTxt(z.mine)||'sem placar')+'</b></span><span><small>Online agora</small><b>'+esc(now)+'</b></span></div><div class="acts" style="margin-top:8px"><button type="button" class="pill ghost sm" data-a="confKeep" data-k="'+i+'">Manter o online</button><button type="button" class="pill sm" data-a="confMine" data-k="'+i+'">Usar o deste aparelho</button></div></li>'}).join('')+'</ul><p class="err" role="alert"></p><div class="acts"><button type="button" class="pill ghost" data-a="closeM">Fechar</button></div></form>',{cls:'wide'})};
+const confDone=(i,how)=>{const z=offConf[i],x=z&&findMatch(z.id);if(x&&canEdit())phaseAudit(x.c,x.ph,'resolve-conflict',{summary:'Conflito de placar offline resolvido: '+how+'.',matchId:z.id,offline:z.mine,online:z.theirs,chosen:how});offConf.splice(i,1);offPersist();if(canEdit())save();while(stack.length)closeModal(true);render();if(offConf.length)A.confOpen();else toast('Conflitos resolvidos.')};
+A.confKeep=d=>confDone(+d.k,'mantido o resultado online');
+A.confMine=async(d,el)=>{const i=+d.k,z=offConf[i],x=z&&findMatch(z.id),f=el.closest('form');if(!x)return confDone(i,'confronto não existe mais');const lk=phaseLock(x.c,x.ph);if(lk)return setErr(f,lk[0]+': '+lk[1]);
+ const st=autoStatus(x.m,z.mine);await commitScore(f,x,z.mine.map(g=>[g[0],g[1]]),st,el);if(JSON.stringify(x.m.sets||[])===JSON.stringify(z.mine))confDone(offConf.indexOf(z),'adotado o resultado lançado offline');else if(!stack.length){toast(canEdit()?'O resultado não foi trocado.':'Só o organizador pode trocar um resultado já encerrado.','err');A.confOpen()}};
+F.confNoop=()=>{};
+A.pwEye=(d,el)=>{const i=el.parentElement.querySelector('input');if(!i)return;const show=i.type==='password';i.type=show?'text':'password';el.innerHTML=show?I.eye:I.eyeOff;el.setAttribute('aria-pressed',String(show));el.setAttribute('aria-label',show?'Ocultar senha':'Mostrar senha')};
+// Primeiro acesso: enquanto a senha pessoal não for criada, o banco não entrega nenhum dado e esta é a única tela.
+const vFirst=()=>`<header class="top">${I.trophy}<span>Gerenciamento de Campeonatos</span></header><div class="wrap"><form class="modal" data-f="firstPw" style="margin-top:6vh;box-shadow:0 8px 30px #16473420"><h3 style="margin:0 0 6px">Criação de nova senha — Primeiro acesso</h3><p class="muted" style="margin:0 0 10px">Olá, ${esc(me.name||me.username||'')}. Antes de usar o sistema, crie a sua senha pessoal. A senha provisória deixa de valer.</p><label class="field"><span>Nova senha (mínimo 6 caracteres)</span>${pwInp('n','new-password','autofocus')}</label><label class="field"><span>Confirmar nova senha</span>${pwInp('c','new-password')}</label><p class="err" role="alert"></p><div class="acts"><button type="button" class="pill ghost" data-a="sair2">Sair</button><button class="pill">Salvar nova senha</button></div></form></div>`;
+F.firstPw=async f=>{const b=f.querySelector('.acts .pill:not(.ghost)');if(b.disabled)return;if(f.n.value.length<6)return setErr(f,'A nova senha precisa ter pelo menos 6 caracteres.');if(f.n.value!==f.c.value)return setErr(f,'As duas senhas não são iguais. Digite de novo.');b.disabled=true;
+ try{const r=await rpc('gc_change_password',{p_old:null,p_new:f.n.value});if(!r||!r.ok){b.disabled=false;return setErr(f,'Não foi possível salvar a nova senha. Saia e entre de novo.')}me.must_change=false;pendingPw=f.n.value;loaded=null;render();toast('Senha criada. O acesso está liberado.')}
+ catch(e){b.disabled=false;setErr(f,errTxt(e))}};
 /* ----- modo telão: tela cheia, só leitura, alterna sozinho entre classificação, jogos e chaveamento ----- */
 function vTelao(c,ro){cur.c=c;const ph=c.phases.find(p=>p.status!=='done'&&p.teamIds.length)||c.phases[c.phases.length-1];cur.ph=ph;const S=[];
  if(statusKey(c)==='done'&&c.result&&T(c.result.champion)){const R=c.result;S.push(['Classificação final','<div class="tv-pod">'+[['1º',R.champion],['2º',R.vice],['3º',R.third],['4º',R.fourth]].filter(x=>x[1]&&T(x[1])).map(([p,id],i)=>'<div class="tv-pl'+(i?'':' first')+'"><span class="posb">'+p+'</span><b>'+esc(dl(T(id)))+'</b>'+(i?'':I.trophy)+'</div>').join('')+'</div>'])}
@@ -1832,14 +2041,14 @@ function run(name,d,el,e){if(visitor){if(!VIS.has(name))return}
  else if(!READ.has(name)&&!(MASTER.has(name)?isMaster():CASH.has(name)?canCashEdit():SCORE.has(name)?canScore():canEdit())){if(el&&el.type==='checkbox')el.checked=!el.checked;return toast(DENY,'err')}
  if(!visitor&&BRLOCK.has(name)&&cur.ph&&isBracket(cur.ph))return alertBox('Chaveamento automático','No mata-mata as rodadas e os confrontos são montados e preenchidos automaticamente. Para refazer, use “REFAZER CHAVEAMENTO” enquanto não houver resultados.');
  if(!visitor&&PHLOCK.has(name)&&cur.c&&cur.ph){const lk=phaseLock(cur.c,cur.ph);if(lk)return alertBox(lk[0],lk[1])}
- if(name==='sair'&&ws.offline&&off&&(offCount()||off.wsDirty||off.cxDirty))return alertBox('Há dados offline a enviar','Este aparelho guarda placares ou alterações que ainda não foram enviados. Conecte-se à internet e aguarde o envio antes de sair; se sair agora, só será possível enviar entrando de novo com o mesmo usuário neste mesmo aparelho.');
+ if(name==='sair'&&ws.offline&&off&&(offCount()||off.wsDirty||off.cxDirty)&&!olAll()[offUser()])return alertBox('Há dados offline a enviar','Este aparelho guarda placares ou alterações que ainda não foram enviados. Conecte-se à internet e aguarde o envio antes de sair; se sair agora, só será possível enviar entrando de novo com o mesmo usuário neste mesmo aparelho.');
  const fn=A[name];fn&&fn(d,el,e)}
 document.addEventListener('click',e=>{const link=e.target.closest('.side a');if(link)document.body.classList.remove('nav');const el=e.target.closest('[data-a]');if(!el||el.disabled)return;
  if(el.tagName==='BUTTON')e.preventDefault();if(el.dataset.close)closeModal(true);run(el.dataset.a,el.dataset,el,e)});
 document.addEventListener('change',e=>{const el=e.target.closest('[data-c]');el&&run(el.dataset.c,el.dataset,el,e)});
 document.addEventListener('input',e=>{const el=e.target.closest('[data-i]');el&&run(el.dataset.i,el.dataset,el,e)});
 document.addEventListener('submit',e=>{e.preventDefault();const k=e.target.dataset.f;if(visitor){if(k!=='mSave')return}
- else if(k!=='login'&&!(k==='pwSave'?!!me.role:MASTERF.has(k)?(k==='cSave'||k==='tieSave'?canEdit():isMaster()):(k==='mSave'||k==='mGameForm')?canScore():k==='cxSave'||k==='cxCota'?canCashEdit():canEdit()))return toast(DENY,'err');
+ else if(k!=='login'&&k!=='confNoop'&&!(k==='firstPw'?!!sess:k==='pwSave'?!!me.role:MASTERF.has(k)?(k==='cSave'||k==='tieSave'?canEdit():isMaster()):(k==='mSave'||k==='mGameForm')?canScore():k==='cxSave'||k==='cxCota'?canCashEdit():canEdit()))return toast(DENY,'err');
  F[k]&&F[k](e.target)});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(stack.length)closeModal();else if(document.querySelector('.tv'))A.tvExit();else document.body.classList.remove('nav')}
  if(e.key==='Tab'&&stack.length){const m=stack[stack.length-1].ov,fs=[...m.querySelectorAll('button,input:not([type=hidden]),select,textarea,a[href],summary')].filter(x=>!x.disabled&&x.offsetParent!==null);if(!fs.length)return;
@@ -1858,3 +2067,4 @@ render();
 </script>
 </body>
 </html>
+
