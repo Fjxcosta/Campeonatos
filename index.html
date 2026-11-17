@@ -483,6 +483,7 @@ table.rk tr.qt .posb{background:#FFE08A;color:#5C4300}
 @media (max-width:640px){.lkt thead{display:none}.lkt,.lkt tbody,.lkt tr,.lkt td{display:block;width:auto}.lkt tr{padding:10px 12px;border-bottom:1px solid var(--line)}.lkt td{height:auto!important;min-height:0!important;line-height:1.4!important;border:0!important;padding:1px 0!important;white-space:normal!important;text-align:left!important;background:none!important}
  .lkt td[data-l]:not(:first-child)::before{content:attr(data-l) ': ';color:var(--t2);font-size:12px}.lkt td:nth-child(2){font-size:14px}.lkt .lkact{margin-top:6px}}.lkhist li{font-size:14px}
 .byme{margin:0 0 10px}
+.cline{flex:1 1 100%;width:100%;grid-column:1/-1;box-sizing:border-box;display:flex;gap:6px;align-items:flex-start;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);font-size:13px;color:#7A5200;line-height:1.4}.cline svg{width:15px;height:15px;flex:none;margin-top:1px}.cline.div{color:#9B2C24}
 </style>
 </head>
 <body>
@@ -1180,8 +1181,8 @@ function matchCard(m,r,ro){const st=mStatus(m),[sa,sb]=setsWon(m),has=hasSets(m)
  return '<div class="match"><button class="mt l" data-a="'+action+'" data-id="'+m.id+'" '+(ro||!canEdit()?'disabled':'')+'>'+nm(m.a)+'</button>'+
  '<button class="score" data-a="'+action+'" data-id="'+m.id+'" '+(can?'':'disabled')+' aria-label="'+(ro?'Informar placar':'Opções do confronto')+'"><span class="sbox">'+va+'</span>×<span class="sbox">'+vb+'</span></button>'+
  '<button class="mt r" data-a="'+action+'" data-id="'+m.id+'" '+(ro||!canEdit()?'disabled':'')+'>'+nm(m.b)+'</button>'+
- '<div class="mfoot"><span><span class="tag '+st+'">'+ST[st]+'</span> '+(m.lq?'<span class="tag lq">Aguardando envio</span>':m.pending?'<span class="tag pend">Aguardando aprovação</span>':claimTag(m))+(m.third?' <span class="tag pend">Disputa de 3º lugar</span>':'')+' <small class="muted">'+esc(fmt)+'</small></span>'+
- (ro?(can?'<button class="pill sm" data-a="mOpen" data-id="'+m.id+'">Informar placar</button>':''):'')+'</div>'+games+'</div>'}
+ '<div class="mfoot"><span><span class="tag '+st+'">'+ST[st]+'</span> '+(m.lq?'<span class="tag lq">Aguardando envio</span>':m.pending?'<span class="tag pend">Aguardando aprovação</span>':'')+(m.third?' <span class="tag pend">Disputa de 3º lugar</span>':'')+' <small class="muted">'+esc(fmt)+'</small></span>'+
+ (ro?(can?'<button class="pill sm" data-a="mOpen" data-id="'+m.id+'">Informar placar</button>':''):'')+'</div>'+(m.lq||m.pending?'':claimLine(m))+games+'</div>'}
 
 // Confrontos aguardando a confirmação da outra dupla (ou com placares divergentes), em todo o campeonato.
 function confList(c,ro){const out=[];c.phases.forEach(ph=>ph.rounds.forEach(r=>{if(ro&&r.hidden)return;r.matches.forEach(m=>{const cl=m.claims;if(!cl||!m.a||!m.b||mStatus(m)==='done')return;const ks=['A','B'].filter(k=>cl[k]);if(!ks.length)return;
@@ -1233,7 +1234,7 @@ function jogosHTML(c,ph,ro){const r=getRound(ph,ro),rs=ro?ph.rounds.filter(x=>!x
  const last=ph.rounds[ph.rounds.length-1],canNext=!ro&&ph.type==='elim'&&last&&last.matches.length&&last.matches.every(m=>mStatus(m)==='done')&&(last.byes||[]).length+last.matches.length>1;
  const phaseBtns=ro||!canEdit()||(tmOn(c)&&!isMaster())?'':ph.status==='done'||statusKey(c)==='done'?'<button class="pill ghost" data-a="phReopen" data-id="'+ph.id+'">REABRIR FASE</button>':'<button class="pill dark" data-a="phFinish" data-id="'+ph.id+'">FINALIZAR FASE</button>';
  const head='<header>Jogos<select data-c="selPhase" aria-label="Fase">'+c.phases.map(p=>'<option value="'+p.id+'" '+(p===ph?'selected':'')+'>'+esc(p.name)+'</option>').join('')+'</select>'+
-  (rs.length?'<select data-c="selRound" aria-label="Rodada">'+rs.map(x=>'<option value="'+x.id+'" '+(x===r?'selected':'')+'>'+esc(x.title)+'</option>').join('')+'</select>':'')+'</header>';
+  (rs.length?'<select data-c="selRound" aria-label="Rodada">'+rs.map(x=>{const w=x.matches.filter(m=>m.claims&&(m.claims.A||m.claims.B)&&mStatus(m)!=='done'&&m.a&&m.b),dv=w.filter(m=>m.claims.A&&m.claims.B).length;return'<option value="'+x.id+'" '+(x===r?'selected':'')+'>'+esc(x.title)+(dv?' ⚠ '+w.length:w.length?' ⏳ '+w.length:'')+'</option>'}).join('')+'</select>':'')+'</header>';
  const add=ro||!canEdit()?'':'<div class="jg-add-row"><button class="panel-plus" data-a="jMenu" aria-label="Gerenciar jogos" title="Gerenciar jogos">+</button></div>';
  let content='';
  if(!rs.length)content=ro||!canEdit()?'<p class="empty">Ainda não há jogos disponíveis.</p>':'<div class="center" style="padding:14px 0"><button class="pill dark big" data-a="gen">GERAR PARTIDAS</button><span class="muted">Ou</span><button class="pill ghost big" data-a="addRound">ADICIONAR RODADA</button></div>';
@@ -1245,7 +1246,7 @@ function jogosHTML(c,ph,ro){const r=getRound(ph,ro),rs=ro?ph.rounds.filter(x=>!x
  (!phMatches(ph).length?'<button class="pill dark" data-a="gen">GERAR PARTIDAS</button>':'')+
  (ph.type==='elim'&&phMatches(ph).length&&!hasRes(ph)?'<button class="pill ghost" data-a="brReset">REFAZER CHAVEAMENTO</button>':'')+
  phaseBtns)}
- return '<section class="jg">'+head+'<div class="in">'+add+confBox(c,ro)+content+'</div></section>'}
+ return '<section class="jg">'+head+'<div class="in">'+add+content+'</div></section>'}
 
 function vClass(c){const ph=getPhase(c);cur.ph=ph;
  return '<div class="split'+(ph.type==='elim'?' elim':'')+'">'+classBlock(c,ph,canEdit())+jogosHTML(c,ph,false)+'</div>'}
@@ -1968,6 +1969,10 @@ F.tieSave=async f=>{const c=cur.c,ph=cur.ph,type=f.elements.type.value,key=f.ele
 A.mMenu=d=>{const x=findMatch(d.id);if(!x)return toast('Este confronto não existe mais.','err');
  modal('<div style="display:flex;flex-direction:column;gap:6px"><button data-a="mOpen" data-id="'+d.id+'" data-close="1">'+I.edit+'Editar resultado</button><button data-a="mDel" data-id="'+d.id+'" data-close="1">'+I.trash+'Excluir confronto</button></div>',{cls:'menu'})};
 // Confirmação pelas duas duplas: uma informou → aguarda a outra; as duas informaram valores diferentes → divergência.
+// Linha discreta embaixo do confronto: falta uma dupla informar / placares diferentes.
+function claimLine(m){const c=m.claims,ks=c?['A','B'].filter(k=>c[k]):[];if(!ks.length||mStatus(m)==='done'||!m.a||!m.b)return'';const tv=/\/telao$/.test(location.hash),nm=k=>esc(dl(T(k==='A'?m.a:m.b)));
+ if(ks.length<2)return'<div class="cline">'+I.info+'<span>Aguardando confirmação'+(tv?'':' — falta <b>'+nm(ks[0]==='A'?'B':'A')+'</b> informar')+'</span></div>';
+ return'<div class="cline div">'+I.alert+'<span><b>Placar informado divergente</b>'+(!tv&&c.A.sets&&c.B.sets?' — '+nm('A')+' informou <b>'+esc(setsTxt(c.A.sets))+'</b> · '+nm('B')+' informou <b>'+esc(setsTxt(c.B.sets))+'</b>':'')+'</span></div>'}
 function claimTag(m){const c=m.claims,ks=c?Object.keys(c).filter(k=>k==='A'||k==='B'):[];if(!ks.length||mStatus(m)==='done')return'';
  if(ks.length<2)return'<span class="tag pend">Aguardando confirmação</span>';
  return'<span class="tag div">Placar informado divergente</span>'+(c.A.sets&&c.B.sets&&!/\/telao$/.test(location.hash)?'<small class="cdiv">'+esc(dl(T(m.a)))+' informou <b>'+esc(setsTxt(c.A.sets))+'</b> · '+esc(dl(T(m.b)))+' informou <b>'+esc(setsTxt(c.B.sets))+'</b></small>':'')}
@@ -2287,3 +2292,4 @@ render();
 </script>
 </body>
 </html>
+
