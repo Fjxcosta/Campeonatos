@@ -494,6 +494,16 @@ table.rk tr.qt .posb{background:#FFE08A;color:#5C4300}
 .cpchip.miss b{font-size:13px;color:#7A5200}.cpchip.bad b{color:#9B2C24}.cpa{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
 .cphist{display:flex;flex-direction:column;gap:6px}.cph{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:8px 12px;background:#fff;font-size:14px;line-height:1.4}.cph>i{flex:none;width:9px;height:9px;border-radius:50%;margin-top:6px;background:#9AA59F}.cph.div>i{background:#E0534A}.cph.ok>i{background:#2ECD71}
 .cptabs button{background:#fff;color:var(--g1);font-weight:700;font-size:13px;padding:7px 14px;cursor:pointer;line-height:1.2}.cptabs button.on{background:var(--g1);color:#fff}
+.navhelp{cursor:pointer}.navhelp svg{width:20px;height:20px}
+.hbtn{display:inline-flex;align-items:center;gap:6px;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.45);border-radius:999px;padding:6px 12px;font-weight:700;font-size:13px;cursor:pointer;margin-right:8px}.hbtn svg{width:16px;height:16px}.hbtn:hover{background:rgba(255,255,255,.12)}
+@media (max-width:420px){.hbtn span{display:none}.hbtn{padding:6px 8px}}
+.hlp-tabs{display:flex;flex-wrap:wrap;gap:6px;padding:2px 0 10px;margin:6px 0 4px}.hlp-tabs button{flex:none;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:#fff;color:var(--t1);border-radius:999px;padding:7px 12px;font-weight:600;font-size:13px;cursor:pointer}.hlp-tabs button svg{width:16px;height:16px;color:var(--g2)}
+.hlp-tabs button.on{background:var(--g1);border-color:var(--g1);color:#fff}.hlp-tabs button.on svg{color:#fff}
+.hlp-hero{display:flex;gap:12px;align-items:center;background:linear-gradient(135deg,#E8F6EE,#F6FBF8);border:1px solid #CDEBD9;border-radius:16px;padding:14px 16px;margin-bottom:12px}.hlp-hero>svg{flex:none;width:34px;height:34px;padding:7px;border-radius:12px;background:var(--g1);color:#fff}
+.hlp-hero b{display:block;font-size:17px;color:var(--g1)}.hlp-hero span{font-size:13px;color:var(--t2)}
+.hlp-steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}.hlp-steps li{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:#fff}
+.hlp-n{flex:none;width:26px;height:26px;border-radius:50%;background:#DDF5E3;color:#12683A;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center}.hlp-steps b{font-size:14px}.hlp-steps p{margin:2px 0 0;font-size:13px;color:var(--t2);line-height:1.45}
+.hlp-tip{display:flex;gap:8px;align-items:flex-start;margin-top:12px;background:#FFFBF0;border:1px solid #F2D49B;border-radius:12px;padding:10px 12px;font-size:13px;color:#5C4300;line-height:1.45}.hlp-tip svg{flex:none;width:16px;height:16px;margin-top:1px}
 </style>
 </head>
 <body>
@@ -987,14 +997,14 @@ function render(){const root=document.getElementById('root'),h=location.hash.rep
   if(h[2]==='telao'){root.innerHTML=vTelao(c,false);return}
   const tab=['inicio','classificacao','config'].includes(h[2])&&(h[2]!=='config'||isMaster())?h[2]:'inicio';cur.c=c;
   const it=(k,l,i)=>`<a href="#/c/${c.id}/${k}" class="${tab===k?'on':''}">${i}${l}</a>`;
-  side=`<a href="#/campeonatos">${I.back}Meus campeonatos</a><div class="ctitle" style="padding-top:14px">${I.trophy}<span>${esc(c.name)}</span></div>${it('inicio','Início',I.home)}${it('classificacao','Classificação',I.list)}${isMaster()?it('config','Configurações',I.gear):''}
+  side=`<a href="#/campeonatos">${I.back}Meus campeonatos</a><div class="ctitle" style="padding-top:14px">${I.trophy}<span>${esc(c.name)}</span></div>${it('inicio','Início',I.home)}${it('classificacao','Classificação',I.list)}${isMaster()?it('config','Configurações',I.gear):''}<a class="navhelp" role="button" tabindex="0" data-a="help">${HI.help}Ajuda</a>
    <div class="foot"><span>${I.user}${esc(userName())}</span><button data-a="sair">${I.logout}Sair</button></div>`;
   const names={inicio:'Início',classificacao:'Classificação',config:'Configurações'};
   main=`<div class="crumb"><a href="#/campeonatos">Meus Campeonatos</a>/<span>${esc(c.name)}</span>/<b>${names[tab]}</b><span class="sp"></span><button class="pill ghost" data-a="tvOpen" style="display:inline-flex;gap:6px;align-items:center;margin-right:8px" title="Exibir em uma TV ou projetor">${I.table}Telão</button><button class="pill ghost" data-a="share" ${canEdit()?'':'hidden'} style="display:inline-flex;gap:6px;align-items:center">${I.share}Compartilhar</button></div>`+
    ({inicio:vHome,classificacao:vClass,config:vConfig})[tab](c)}
  else{const p=['campeonatos','jogadores','equipes','ranking','caixa','usuario'].includes(h[0])&&(h[0]!=='caixa'||canCash())&&(!['jogadores','equipes'].includes(h[0])||canEdit())?h[0]:'campeonatos';
   const it=(k,l,i)=>`<a href="#/${k}" class="${p===k?'on':''}">${i}${l}</a>`;
-  side=`<h4>${canEdit()?'Organizar campeonatos':'Campeonatos'}</h4>${it('campeonatos','Meus campeonatos',I.trophy)}${canEdit()?it('jogadores','Cadastro de jogadores',I.user)+it('equipes','Cadastro de equipes',I.users):''}${it('ranking','Ranking Geral',I.chart)}${canCash()?it('caixa','Caixa',I.cash):''}<h4>Usuário</h4>${it('usuario','Meu usuário',I.shield)}<div class="foot"><span>${I.user}${esc(userName())}</span><button data-a="sair">${I.logout}Sair</button></div>`;
+  side=`<h4>${canEdit()?'Organizar campeonatos':'Campeonatos'}</h4>${it('campeonatos','Meus campeonatos',I.trophy)}${canEdit()?it('jogadores','Cadastro de jogadores',I.user)+it('equipes','Cadastro de equipes',I.users):''}${it('ranking','Ranking Geral',I.chart)}${canCash()?it('caixa','Caixa',I.cash):''}<h4>Usuário</h4>${it('usuario','Meu usuário',I.shield)}<a class="navhelp" role="button" tabindex="0" data-a="help">${HI.help}Ajuda</a><div class="foot"><span>${I.user}${esc(userName())}</span><button data-a="sair">${I.logout}Sair</button></div>`;
   main=({campeonatos:vChamps,jogadores:vPlayers,equipes:vTeams,ranking:vRank,caixa:vCaixa,usuario:vUser})[p]()}
  root.innerHTML=`<header class="top app"><button class="burger" data-a="nav" aria-label="Abrir menu">${I.menu}</button><span id="sync" class="syncv" aria-live="polite" style="margin-left:auto;font-size:12px;font-weight:400;opacity:.85">${syncTxt()}</span></header>
  <div class="wrap"><div class="panel"><nav class="side" aria-label="Menu">${side}<div class="syncv sidesync" aria-live="polite">${syncTxt()}</div></nav><div class="scrim" data-a="nav"></div><main class="main">${ws.offline&&off?offBar():''}${!ws.offline&&offConf.length?confBar():''}${main}</main></div></div>`;
@@ -1288,7 +1298,7 @@ function lqBar(t){const o=lqGet(t),n=Object.keys(o.items).length;let h='';
  if(o.conf.length)h+='<div class="offbar" role="alert" style="background:#FDECEC;border-color:#F2A9A4;color:#7A2E2A"><b>Placares não aplicados.</b> <span>'+o.conf.length+' placar(es) guardado(s) sem internet não puderam ser aplicados.</span><span style="flex:1"></span><button class="pill sm" data-a="lqConf">Ver detalhes</button></div>';return h}
 function vVisitor(tk){const c=tk&&db.champs.find(x=>x.shareToken===tk);
  const hp=location.hash.replace(/^#\/?/,'').split('/'),back=hp[0]==='p'?`<a class="vback" href="#/p/${esc(hp[1])}" aria-label="Todos os campeonatos" title="Todos os campeonatos">${I.back||'‹'}</a>`:'';
- const top=`<header class="top">${back}${I.trophy}<span>${c?esc(c.name):'Gerenciamento de Campeonatos'}</span>${c?'<button class="pill sm" data-a="tvOpen" style="margin-left:auto">Telão</button>':''}</header>`;
+ const top=`<header class="top">${back}${I.trophy}<span>${c?esc(c.name):'Gerenciamento de Campeonatos'}</span><button class="hbtn" data-a="help" style="margin-left:auto" aria-label="Ajuda">${HI.help}<span>Ajuda</span></button>${c?'<button class="pill sm" data-a="tvOpen">Telão</button>':''}</header>`;
  if(!c)return top+`<div class="vis"><div class="box center">${I.alert}<b>Link inválido ou expirado.</b><span class="muted">Peça um novo link ao organizador do campeonato.</span></div></div>`;
  cur.c=c;const ph=getPhase(c);cur.ph=ph;const v=ui.v;
  const tab=(k,l)=>`<button class="${v.tab===k?'on':''}" data-a="vTab" data-v="${k}">${l}</button>`;
@@ -1298,10 +1308,94 @@ function vVisitor(tk){const c=tk&&db.champs.find(x=>x.shareToken===tk);
  ${v.tab==='jogos'?jogosHTML(c,ph,true):v.tab==='class'?`<div>${classBlock(c,ph,false)}</div>`
  :`<div><div class="filters"><span class="seg"><button class="${v.mode==='d'?'on':''}" data-a="vMode" data-v="d">Duplas</button><button class="${v.mode==='i'?'on':''}" data-a="vMode" data-v="i">Individual</button></span></div>${rankHTML({season:String(c.season),champ:c.id,mode:v.mode,q:'',inactive:true})}</div>`}</div>`}
 
+/* ===================== Ajuda ===================== */
+// Conteúdo: tópicos com passos numerados e dicas. O que aparece depende de quem abre (sistema, link do campeonato, link geral).
+const HSVG=p=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+p+'</svg>';
+const HI={phone:HSVG('<rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/>'),wifi:HSVG('<path d="M2 2l20 20"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><path d="M5 12.6a10 10 0 0 1 5.2-2.5"/><path d="M19 12.6a10 10 0 0 0-2.3-1.6"/><path d="M12 20h.01"/>'),
+ check:HSVG('<path d="M20 6 9 17l-5-5"/>'),eye:HSVG('<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>'),help:HSVG('<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>'),
+ split:HSVG('<path d="M16 3h5v5"/><path d="M8 3H3v5"/><path d="M21 3l-7 7"/><path d="M3 3l7 7"/><path d="M12 22v-8"/>')};
+const HELP={
+ adm:[
+  {k:'inicio',t:'Primeiros passos',i:()=>I.trophy,d:'O caminho de um campeonato, do cadastro ao campeão.',s:[
+   ['Cadastre jogadores e duplas','Em <b>Cadastro de jogadores</b> e <b>Cadastro de equipes</b>. Cada dupla tem 2 jogadores.'],
+   ['Crie o campeonato','Em <b>Meus campeonatos</b>, toque no <b>+</b> e escolha o formato (grupos, mata-mata ou os dois).'],
+   ['Escolha as duplas','No campeonato: <b>Configurações → Duplas → Editar</b> e marque quem vai jogar.'],
+   ['Monte os grupos','<b>Configurações → Grupos</b>: quantidade de grupos, cabeças de chave e sorteio.'],
+   ['Defina quem se classifica','<b>Configurações → Fases → Editar</b>: quantas duplas passam, por grupo ou na geral.'],
+   ['Gere os jogos','Em <b>Classificação</b>, no painel <b>Jogos</b>: <b>GERAR PARTIDAS</b>.'],
+   ['Lance e finalize','Lance os placares. No fim da fase, <b>FINALIZAR FASE</b>: os classificados vão sozinhos para a próxima fase.'],
+   ['Mata-mata e campeão','Gere o chaveamento da fase seguinte. Ao encerrar a final, o campeão e o Ranking Geral são atualizados.']],
+   tip:'Antes de gerar os jogos, a fase mata-mata já mostra uma prévia do chaveamento com as vagas (1º Grupo A, 2º Grupo B…).'},
+  {k:'placar',t:'Lançar placares',i:()=>I.edit,d:'Como informar, corrigir e acompanhar os resultados.',s:[
+   ['Abra o confronto','Em <b>Classificação → Jogos</b>, toque no placar do confronto e em <b>Editar resultado</b>.'],
+   ['Partida única ou melhor de 3','Na partida única, um placar decide. No melhor de 3, cada partida é salva separadamente.'],
+   ['Corrigir um resultado','Mude a situação para <b>Em andamento</b>, confirme a reabertura, ajuste e salve.'],
+   ['Histórico','Dentro do confronto, <b>Histórico de alterações</b> mostra quem lançou ou corrigiu e quando.']],
+   tip:'A classificação, o chaveamento, o Ranking e o Telão se atualizam sozinhos em todos os aparelhos.'},
+  {k:'duplas',t:'Lançamento pelas duplas',i:()=>HI.phone,d:'Cada dupla informa o placar pelo celular; só vale quando as duas batem.',s:[
+   ['Ligue o modo','<b>Configurações → Opções avançadas → Lançamento pelas duplas (celular vinculado)</b>.'],
+   ['Envie o link do campeonato','No cartão do campeonato, <b>Compartilhar → Copiar link</b> e mande no grupo.'],
+   ['Cada jogador vincula o celular','Abre o link, digita o nome, toca no seu e confirma <b>“Sua dupla é …?”</b>. Pode ser antes do sorteio.'],
+   ['As duas duplas informam','Iguais: vale na hora. Diferentes: tarja vermelha <b>“Placar informado divergente”</b> e as duas lançam de novo até bater.'],
+   ['Seu painel','<b>Configurações → Lançamento pelas duplas</b>: celulares vinculados, aguardando confirmação, divergências e histórico.'],
+   ['Você resolve quando precisar','<b>Usar este placar</b>, <b>Outro placar</b>, <b>Alterar</b>, <b>Desvincular</b> ou <b>Liberar vínculo</b>.']],
+   tip:'Neste modo só o master corrige resultados e finaliza ou reabre fases. O organizador e o mesário lançam apenas jogos em aberto.'},
+  {k:'compart',t:'Compartilhar e Telão',i:()=>I.share,d:'Os dois links e a exibição na TV.',s:[
+   ['Link geral (só ver)','<b>Meus campeonatos → Compartilhar</b> (no topo): todos os campeonatos, Ranking geral e Colocações. Ninguém lança placar por ele.'],
+   ['Link do campeonato (lançar)','<b>Compartilhar</b> no cartão do campeonato: quem tem o link informa placares das rodadas liberadas.'],
+   ['Trocar um link','<b>Gerar novo link</b> invalida o antigo na hora.'],
+   ['Telão','Botão <b>Telão</b>: tela cheia para TV ou projetor, alternando jogos e classificação.'],
+   ['Imagens e PDF','No <b>+</b> de Jogos ou de Classificação: <b>Exportar</b> em JPEG ou PDF, inclusive o chaveamento em branco.']]},
+  {k:'offline',t:'Sem internet',i:()=>HI.wifi,d:'O que continua funcionando quando o sinal cai.',s:[
+   ['Abra uma vez com internet','Cada aparelho precisa abrir o sistema (ou o link) uma vez com sinal para guardar uma cópia.'],
+   ['Continue usando','Sem sinal aparece a faixa <b>“Sem internet”</b>; lance placares normalmente.'],
+   ['Envio automático','Quando o sinal volta, tudo é enviado sozinho. Nada é sobrescrito: se alguém lançou diferente, você escolhe qual vale.'],
+   ['Entrar sem internet','Quem já entrou com login e senha neste aparelho entra de novo mesmo sem sinal.']],
+   tip:'Depois de gerar os jogos, peça para todos abrirem o link com sinal: assim cada celular recebe os confrontos.'},
+  {k:'perfis',t:'Perfis e permissões',i:()=>I.shield,d:'Quem pode fazer o quê.',s:[
+   ['Master','Faz tudo: campeonatos, usuários, caixa, correções e finalizações.'],
+   ['Organizador','Cadastros, rodadas e partidas. Lança placares. No modo pelas duplas, não corrige nem finaliza.'],
+   ['Placar (mesário)','Só lança placar de jogo em aberto; não altera resultado encerrado.'],
+   ['Leitura','Só acompanha. Pode ver o caixa se receber essa permissão.'],
+   ['Criar usuários','<b>Meu usuário</b>: crie o login com senha provisória; no primeiro acesso a pessoa cria a própria senha.']]}],
+ vis:[
+  {k:'vinc',t:'Vincular meu celular',i:()=>HI.phone,only:'team',d:'Para informar os placares da sua dupla.',s:[
+   ['Abra o link com internet','Use sempre o mesmo navegador (ex.: o que abre pelo WhatsApp).'],
+   ['Digite seu nome','Pode ser só uma parte: “fab” acha Fabio. Toque no seu nome.'],
+   ['Confira sua dupla','Aparece <b>“Sua dupla é …?”</b>. Se estiver certo, <b>Sim, é minha dupla</b>.'],
+   ['Dupla errada?','Toque em <b>Minha dupla está errada</b> e procure o organizador.']],
+   tip:'Cada jogador vincula 1 celular. Trocou de celular ou de navegador? Peça ao organizador para liberar.'},
+  {k:'inf',t:'Informar o placar',i:()=>I.edit,d:'Lance o resultado do seu jogo.',s:[
+   ['Ache seu jogo','Na aba <b>Jogos</b>, escolha a rodada. ⚠ e ⏳ no seletor indicam rodadas com pendência.'],
+   ['Toque em “Informar placar”','Digite o placar das duas duplas e salve. Se aparecer <b>“Quem está informando?”</b>, escolha a sua dupla.'],
+   ['Melhor de 3','Preencha as partidas jogadas; a 3ª só se for necessária.']],
+   tip:'Depois que o placar vale, só o organizador corrige.'},
+  {k:'conf',t:'Confirmação',i:()=>HI.check,only:'team',d:'O placar só vale quando as duas duplas informam o mesmo.',s:[
+   ['Você informou','O jogo fica <b>“Aguardando confirmação”</b> até a outra dupla informar. O seu placar não aparece para ninguém.'],
+   ['A outra dupla informou igual','O placar vale na hora e a classificação é atualizada.'],
+   ['Ficou diferente','Aparece a tarja vermelha <b>“Placar informado divergente”</b> com os dois valores. Conversem: quem errou lança de novo.']],
+   tip:'Se a dupla certa lançar o placar errado para “concordar”, o errado vale. Na divergência, quem errou é quem corrige.'},
+  {k:'off',t:'Sem internet',i:()=>HI.wifi,d:'O link funciona mesmo sem sinal.',s:[
+   ['Abra uma vez com sinal','O celular guarda uma cópia do campeonato.'],
+   ['Lance normalmente','Sem sinal, o placar fica <b>“Aguardando envio”</b> no seu celular.'],
+   ['Envio automático','Quando o celular pegar sinal com o link aberto, o placar é enviado sozinho.']]},
+  {k:'acomp',t:'Acompanhar',i:()=>HI.eye,d:'Jogos, classificação, ranking e Telão.',s:[
+   ['Abas','<b>Jogos</b>, <b>Classificação</b> e <b>Ranking</b> se atualizam sozinhas.'],
+   ['Telão','O botão <b>Telão</b> mostra tudo em tela cheia, ideal para TV.'],
+   ['Só quero acompanhar','No link do campeonato, quem não joga toca em <b>Só quero acompanhar</b>.']]}]};
+function helpModal(){const kind=visitor?'vis':'adm',c=cur.c,team=!!(c&&c.teamMode),geral=viewOnly;
+ let L=HELP[kind].filter(t=>!t.only||(t.only==='team'&&team));if(kind==='vis'){if(geral)L=L.filter(t=>t.k==='acomp'||t.k==='off');else if(!team)L=L.filter(t=>t.k!=='conf')}
+ if(!L.some(t=>t.k===ui.helpTab))ui.helpTab=L[0].k;const T0=L.find(t=>t.k===ui.helpTab);
+ const nav='<div class="hlp-tabs" role="tablist">'+L.map(t=>'<button role="tab" class="'+(t===T0?'on':'')+'" data-a="helpTab" data-v="'+t.k+'">'+t.i()+'<span>'+t.t+'</span></button>').join('')+'</div>';
+ const body='<div class="hlp-hero">'+T0.i()+'<div><b>'+T0.t+'</b><span>'+T0.d+'</span></div></div><ol class="hlp-steps">'+T0.s.map((x,n)=>'<li><span class="hlp-n">'+(n+1)+'</span><div><b>'+x[0]+'</b><p>'+x[1]+'</p></div></li>').join('')+'</ol>'+(T0.tip?'<div class="hlp-tip">'+I.info+'<span>'+T0.tip+'</span></div>':'');
+ const ex=stack.length&&document.querySelector('.ov:last-child .hlp');if(ex){ex.querySelector('.hlp-tabs').outerHTML=nav;ex.querySelector('.hlp-body').innerHTML=body;return}
+ modal('<div class="hlp">'+mHead('Ajuda',kind==='vis'?(geral?'Como acompanhar os campeonatos':'Como usar o link do campeonato'):'Como usar o sistema')+nav+'<div class="hlp-body">'+body+'</div><div class="acts"><button class="pill" data-a="closeM">Entendi</button></div></div>',{cls:'wide'})}
+
 /* ===================== Ações ===================== */
 const A={},F={};
-const VIS=new Set(['bindQ','bindAll','bindPick','bindYes','bindWrong','bindWatch','bindBack','byPick','lqSync','lqConf','lqDismiss','pvTab','rkSet','rkMode','rkQ','rkIna','pwEye','tvOpen','tvExit','tvNext','tvPause','tGames','clsView','retry','closeM','vTab','vMode','mOpen','rkCell','rkTot','selPhase','selRound']);
+const VIS=new Set(['help','helpTab','bindQ','bindAll','bindPick','bindYes','bindWrong','bindWatch','bindBack','byPick','lqSync','lqConf','lqDismiss','pvTab','rkSet','rkMode','rkQ','rkIna','pwEye','tvOpen','tvExit','tvNext','tvPause','tGames','clsView','retry','closeM','vTab','vMode','mOpen','rkCell','rkTot','selPhase','selRound']);
 A.closeM=()=>closeModal();
+A.help=()=>helpModal();A.helpTab=d=>{ui.helpTab=d.v;helpModal()};
 A.lkRefresh=()=>lkFetch(cur.c,true);
 A.cpTab=d=>{ui.cpTab=d.v;const el=document.getElementById('lkPanels');if(el)el.innerHTML=lkPanelsIn(cur.c)};
 A.cpUse=async(d,el)=>{const x=findMatch(d.id);if(!x||!x.m.claims||!x.m.claims[d.k]||!x.m.claims[d.k].sets)return toast('Este informe não está mais disponível.','err');if(el.disabled)return;el.disabled=true;
@@ -1590,7 +1684,7 @@ let ptSig='';
 function portalDb(j){setCloudDb({players:j.players,teams:j.teams,champs:j.champs,settings:j.settings||{},user:{name:'Organizador'}});mergeResults(j.results||[]);elimSyncAll()}
 async function loadPortal(tok){let j;try{j=await rpc('gc_get_portal',{p_token:tok},true)}catch(e){if(e.status&&/link_invalido/.test(e.message)){setDb({});ptSig='invalido';return}throw e}ptSig=JSON.stringify(j);portalDb(j)}
 // Página do link geral — SOMENTE VISUALIZAÇÃO: seletor Campeonatos | Ranking geral | Colocações.
-function vPortal(tk,okp){const top=`<header class="top">${I.trophy}<span>Campeonatos</span></header>`;
+function vPortal(tk,okp){const top=`<header class="top">${I.trophy}<span>Campeonatos</span><button class="hbtn" data-a="help" style="margin-left:auto" aria-label="Ajuda">${HI.help}<span>Ajuda</span></button></header>`;
  if(!okp)return top+`<div class="vis"><div class="box center">${I.alert}<b>Link inválido ou expirado.</b><span class="muted">Peça um novo link ao organizador.</span></div></div>`;
  const v=ui.pv||'list',tab=(k,l)=>`<button class="${v===k?'on':''}" data-a="pvTab" data-v="${k}">${l}</button>`;let body;
  if(v==='rank')body=vRank().replace('<h1>Ranking Geral</h1>','').replace(podiumHTML(ui.rk),'');
@@ -2306,3 +2400,4 @@ render();
 </script>
 </body>
 </html>
+
