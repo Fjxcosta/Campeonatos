@@ -459,6 +459,20 @@ table.rk tr.qt .posb{background:#FFE08A;color:#5C4300}
 .mh>div{min-width:0}
 .phpick{display:flex;gap:6px 8px;align-items:center;flex-wrap:wrap;font-weight:600;color:var(--t1);max-width:100%}
 .phpick select{flex:1 1 150px;min-width:0;width:auto;max-width:320px;padding:6px 10px;font-weight:600;text-overflow:ellipsis}
+.rk abbr{text-decoration:none;cursor:help}
+.rk th.rkt span{display:inline-block;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom}
+.rkleg{margin:8px 2px 0;font-size:12px;color:var(--t2);line-height:1.6}.rkleg b{color:var(--t1)}
+.prevnote{display:flex;gap:8px;align-items:flex-start;margin:0 0 10px}.prevnote svg{flex:none;width:16px;height:16px;margin-top:2px}
+.preview .name,.preview .br-n{color:var(--t2);font-style:italic}.preview button{cursor:default}.preview .br-hit:disabled{opacity:1}
+.h1row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.h1row h1{margin-right:auto}.h1row .pill{display:inline-flex;gap:6px;align-items:center}.h1row .pill svg{width:18px;height:18px}
+.vis .card a.go{text-decoration:none;color:inherit}.vis .card a.ibtn{display:inline-flex;align-items:center;justify-content:center;color:inherit}
+.vback{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;margin:-6px 2px -6px -8px;border-radius:50%;color:#fff;font-size:26px;text-decoration:none}.vback:hover{background:rgba(255,255,255,.12)}.vback svg{width:20px;height:20px}
+.vtabs{display:flex;width:max-content;align-self:flex-start;overflow-x:auto;border:1px solid var(--g1);border-radius:999px;overflow:hidden;margin:4px 0 16px;max-width:100%}.vtabs button{border:0;background:#fff;color:var(--g1);font-weight:700;font-size:14px;padding:9px 16px;cursor:pointer;white-space:nowrap}.vtabs button.on{background:var(--g1);color:#fff}
+.vis .filters{flex-wrap:wrap}
+.tag.lq{background:#FFF4D6;color:#7A5200}
+.byf select{font-weight:600}
+.tag.div{background:#FDECEC;color:#9B2C24}
+.cdiv{display:block;margin-top:4px;font-size:12px;color:#7A2E2A;line-height:1.4}
 </style>
 </head>
 <body>
@@ -512,7 +526,8 @@ I.eyeOff=ic('<path d="M3 3l18 18M10.6 5.2A10.6 10.6 0 0 1 12 5c6.4 0 10 7 10 7a1
 // Campo de senha com botão de olho (começa sempre oculto).
 const pwInp=(name,ac,extra='')=>'<span class="pwf"><input class="inp" name="'+name+'" type="password" autocomplete="'+ac+'" maxlength="72" '+extra+'><button type="button" class="eye" data-a="pwEye" aria-label="Mostrar senha" aria-pressed="false" title="Mostrar ou ocultar a senha">'+I.eyeOff+'</button></span>';
 /* ===================== Dados ===================== */
-let db, visitor=false;
+let db, visitor=false, viewOnly=false;/* viewOnly: aberto pelo link geral — nunca lança placar */
+const linkOK=r=>!!r&&r.allowLink&&!viewOnly;
 const ui={tv:{i:0,pause:false},pSort:'az',selP:new Set(),selT:new Set(),phase:{},round:{},rk:{season:String(new Date().getFullYear()),champ:'all',mode:'d',q:'',inactive:false},crk:{mode:'d',q:''},v:{tab:'jogos',mode:'d'}};
 /* ----- banco (Supabase). Com ?local=1 no endereço, o sistema usa só este navegador. ----- */
 const SB=Object.assign({url:'https://wevourgmybqckzarhynq.supabase.co',key:'sb_publishable_0x8t_1nyPNA9Y3_MTQngBg_LvgYnd6K'},window.GC_SB||{});
@@ -581,11 +596,11 @@ const userName=()=>isMaster()?db.user.name:(me.name||me.username||me.email||'Usu
 const ws={rev:0,last:'',busy:false,again:false,state:'ok',empty:false};let srvRev=new Map(),mut=0,loaded=null,loading=null,shSig='';
 const syncTxt=()=>!CLOUD?'Modo local (dados só neste navegador)':({ok:(ws.dirty?'Pendente · enviando alterações':'Online · sincronizado')+(offConf.length?' · '+offConf.length+' conflito(s)':''),saving:'Sincronizando…',err:'Erro de sincronização — tentando de novo',serr:'Erro de sincronização · '+offPendN()+' pendente(s)',off:'Offline · '+(offPendN()?offPendN()+' alteração(ões) pendente(s)':'dados locais')})[ws.state];
 function setSync(x){ws.state=x;document.querySelectorAll('.syncv').forEach(e=>e.textContent=syncTxt())}
-function wsData(){const d=JSON.parse(JSON.stringify(db));delete d.caixa;d.champs.forEach(c=>c.phases.forEach(p=>p.rounds.forEach(r=>r.matches.forEach(m=>{delete m.sets;delete m.pending;delete m.history;delete m.rev}))));return d}
+function wsData(){const d=JSON.parse(JSON.stringify(db));delete d.caixa;d.champs.forEach(c=>c.phases.forEach(p=>p.rounds.forEach(r=>r.matches.forEach(m=>{delete m.sets;delete m.pending;delete m.history;delete m.rev;delete m.claims;delete m.lq}))));return d}
 // No banco, a revisão de cada placar vem só da tabela de resultados: zera o que veio no cadastro antes de aplicar os resultados.
-function setCloudDb(d){setDb(d);eachM(m=>{m.rev=0;m.sets=[];m.pending=null})}
+function setCloudDb(d){setDb(d);eachM(m=>{m.rev=0;m.sets=[];m.pending=null;m.claims=null})}
 const pendObj=x=>x?(typeof x==='object'?x:{sets:[]}):null;
-function applyRemote(m,r){m.sets=r.sets||[];m.rev=r.rev||0;const auto=autoStatus(m,m.sets);m.status=m.stRev===m.rev&&(m.status==='live'||m.status==='done')?m.status:auto;m.pending=pendObj(r.pending);srvRev.set(m.id,m.rev)}
+function applyRemote(m,r){m.sets=r.sets||[];m.rev=r.rev||0;m.claims=r.claims&&typeof r.claims==='object'&&Object.keys(r.claims).length?r.claims:null;const auto=autoStatus(m,m.sets);m.status=m.stRev===m.rev&&(m.status==='live'||m.status==='done')?m.status:auto;m.pending=pendObj(r.pending);srvRev.set(m.id,m.rev)}
 function mergeResults(rows){let ch=false;const map=new Map(rows.map(r=>[r.match_id,r]));rows.forEach(r=>srvRev.set(r.match_id,r.rev));
  eachM(m=>{const x=map.get(m.id);if(x&&x.rev>(m.rev||0)){applyRemote(m,x);ch=true}});return ch}
 async function loadCloud(){const L=await rpc('gc_load',{});me=(L&&L.me)||{};
@@ -604,8 +619,30 @@ async function saveCash(){if(!CLOUD)return save();if(ws.offline){off.cxDirty=tru
    return toast('O caixa foi alterado em outro aparelho. Seu último lançamento não foi gravado; confira e lance de novo.','err')}}
  catch(e){cx.busy=false;if(e.status){setSync('ok');return toast(errTxt(e),'err')}goOffline();off.cxDirty=true;offPersist();return}
  cx.busy=false;if(cx.again){cx.again=false;return saveCash()}}
-async function loadShared(tok){let j;try{j=await rpc('gc_get_shared',{p_token:tok},true)}catch(e){if(e.status&&/link_invalido/.test(e.message)){setDb({});shSig='invalido';return}throw e}
- shSig=JSON.stringify(j);sharedDb(j)}
+/* Link do campeonato sem internet: a última cópia do campeonato fica neste aparelho (gc_ls:) e os placares
+   informados sem conexão entram numa fila (gc_lq:), enviada sozinha quando a internet volta. */
+const LQK=t=>'gc_lq:'+t,LSK=t=>'gc_ls:'+t;let lk={off:false,busy:false};
+const lkTok=()=>{const h=location.hash.replace(/^#\/?/,'').split('/');return h[0]==='s'?h[1]:''};
+const lqGet=t=>{try{const o=JSON.parse(localStorage.getItem(LQK(t)));if(o&&o.items&&typeof o.items==='object')return{items:o.items,conf:arr(o.conf)}}catch(e){}return{items:{},conf:[]}};
+const lqPut=(t,o)=>{try{if(Object.keys(o.items).length||o.conf.length)localStorage.setItem(LQK(t),JSON.stringify(o));else localStorage.removeItem(LQK(t))}catch(e){toast('Este aparelho não conseguiu guardar o placar (memória cheia). Não feche a página.','err')}};
+const lqN=t=>Object.keys(lqGet(t).items).length;
+function lqAdd(t,m,sets,by,base,side){const o=lqGet(t);o.items[m.id]={sets,by,base,side:side||null,at:Date.now(),names:dl(T(m.a))+' × '+dl(T(m.b))};lqPut(t,o);lqOverlay(t)}
+function lqOverlay(t){const o=lqGet(t),req=!!(db.champs[0]&&db.champs[0].requireApproval);for(const id in o.items){const x=findMatch(id);if(!x)continue;const it=o.items[id];x.m.lq=it;if(db.champs[0]&&db.champs[0].confirmBoth)continue;if(req)x.m.pending={sets:it.sets,at:it.at,by:it.by};else{x.m.sets=it.sets;x.m.status='done'}}}
+async function lqFlush(t,manual){if(lk.busy||!t)return null;const o=lqGet(t),ids=Object.keys(o.items);if(!ids.length)return null;lk.busy=true;let sent=0,bad=0;
+ try{for(const id of ids){const it=o.items[id];let res;
+   try{res=await rpc('gc_submit_score_link',{p_token:t,p_match_id:id,p_sets:it.sets,p_expected_rev:it.base,p_by:it.by,p_side:it.side||null},true)}
+   catch(e){if(!e.status)throw e;o.conf.push({id,names:it.names,mine:it.sets,theirs:null,reason:errTxt(e),by:it.by,at:Date.now()});delete o.items[id];lqPut(t,o);bad++;continue}
+   if(res.ok||JSON.stringify(res.sets||[])===JSON.stringify(it.sets))sent++;   // reenvio do mesmo placar não é conflito
+   else{o.conf.push({id,names:it.names,mine:it.sets,theirs:res.sets||[],pend:!!res.pending,by:it.by,at:Date.now()});bad++}
+   delete o.items[id];lqPut(t,o)}
+  lk.off=false}
+ catch(e){lk.off=true;if(manual)toast('Ainda sem internet. Os placares continuam guardados neste aparelho.','err')}
+ finally{lk.busy=false}
+ if(bad)toast(bad+' placar(es) não puderam ser aplicados. Toque em “Ver detalhes”.','err');else if(sent)toast(sent+' placar(es) guardado(s) sem internet foram enviados.');
+ return{sent,bad}}
+async function loadShared(tok){let j;try{j=await rpc('gc_get_shared',{p_token:tok},true)}catch(e){if(e.status&&/link_invalido/.test(e.message)){setDb({});shSig='invalido';return}
+  if(e.status)throw e;let c=null;try{c=JSON.parse(localStorage.getItem(LSK(tok)))}catch(x){}if(!c||!c.champ)throw new Error('sem_copia');lk.off=true;shSig='';sharedDb(c);lqOverlay(tok);return}
+ lk.off=false;try{localStorage.setItem(LSK(tok),JSON.stringify(j))}catch(e){}shSig=JSON.stringify(j);sharedDb(j);lqOverlay(tok);if(lqN(tok))setTimeout(()=>A.lqSync(),50)}
 function sharedDb(j){setCloudDb({players:j.players,teams:j.teams,champs:[j.champ],settings:j.settings||{},user:{name:j.organizer||'Organizador'}});const r=mergeResults(j.results);elimSyncAll();return r}
 /* ----- modo offline (contingência): tudo fica guardado neste aparelho e é enviado sozinho quando a internet volta ----- */
 let off=null;const OFFK='gc_off';
@@ -705,19 +742,20 @@ async function offerMigration(){if(migAsked||!ws.empty)return;migAsked=true;let 
  if(!d||!((d.players||[]).length+(d.champs||[]).length))return;
  if(await confirmBox({title:'Enviar dados para o banco?',msg:`Encontrei dados salvos neste navegador (${(d.players||[]).length} jogadores, ${(d.teams||[]).length} equipes, ${(d.champs||[]).length} campeonatos) e o banco está vazio. Deseja enviar esses dados para o banco?`,ok:'Enviar'}))await importData(d)}
 const SRV={senha_igual:'A nova senha precisa ser diferente da senha provisória.',link_invalido:'Link inválido ou expirado.',campeonato_finalizado:'O campeonato está finalizado.',lancamento_nao_permitido:'O lançamento desta rodada está reservado ao organizador.',partida_sem_duplas:'Esta partida ainda não tem as duas duplas.',partida_inexistente:'Esta partida não existe mais. Recarregue a página.',dados_muito_grandes:'Os dados ficaram grandes demais para gravar.',placar_invalido:'Placar inválido.',nao_autenticado:'Sessão expirada. Entre novamente.',sem_permissao:'Seu perfil não permite esta ação.',usuario_invalido:'Nome de usuário inválido.',senha_curta:'A senha precisa ter pelo menos 6 caracteres.',nome_obrigatorio:'Informe o nome.'};
+SRV.informe_dupla='Escolha qual dupla está informando o placar.';SRV.dupla_ja_informou='Esta dupla já informou o placar deste confronto. Agora falta a outra dupla.';SRV.sem_copia='Sem internet. Para usar este link sem internet, abra-o uma vez com internet neste aparelho.';
 const errTxt=e=>SRV[(e.message||'').split(':')[0].trim()]||(e.status?'Não foi possível concluir ('+e.message+').':'Sem conexão com o servidor. Nada foi gravado.');
 const conflictMsg=m=>`Outra pessoa alterou esta partida enquanto você digitava. Placar atual: ${setsTxt(m.sets)||'sem placar'}${m.pending?' (há um resultado aguardando aprovação)':''}. Nada foi gravado: feche e abra a partida para conferir.`;
 async function scoreAdmin(m,sets,by,status){mut++;const previousSets=(m.sets||[]).map(x=>x?[...x]:x),previousStatus=m.status||mStatus(m);
- if(!CLOUD){m.rev=(m.rev||0)+1;m.sets=sets;m.pending=null}
+ if(!CLOUD){m.rev=(m.rev||0)+1;m.sets=sets;m.pending=null;m.claims=null}
  else{let r=null;if(!ws.offline){if(canEdit())await flushWs();if(!ws.offline){try{r=await rpc('gc_save_score_admin',{p_match_id:m.id,p_sets:sets,p_expected_rev:m.rev||0})}catch(e){if(e.status)throw e;goOffline()}}}
   if(ws.offline){if(!off.q[m.id])off.q[m.id]={base:srvRev.get(m.id)||m.rev||0};off.q[m.id].sets=sets;m.sets=sets;m.pending=null}
-  else{mut++;if(!r.ok){applyRemote(m,r);return false}m.sets=sets;m.pending=null;m.rev=r.rev;srvRev.set(m.id,r.rev)}}
+  else{mut++;if(!r.ok){applyRemote(m,r);return false}m.sets=sets;m.pending=null;m.claims=null;m.rev=r.rev;srvRev.set(m.id,r.rev)}}
  m.status=status||autoStatus(m,sets);m.stRev=m.rev;m.history.push({at:Date.now(),by:by||'organizador',previous:previousSets,sets,status:m.status});const x=findMatch(m.id);if(x)phaseAudit(x.c,x.ph,'update-result',{summary:'Resultado alterado.',roundId:x.r.id,matchId:m.id,previousSets,sets:sets.map(z=>z?[...z]:z),previousStatus,status:m.status});if(x)elimSync(x.ph);if(ws.offline){offPersist();setSync('off')}return true}
 function ensure(key,fn){const root=document.getElementById('root');
  root.innerHTML=`<header class="top">${I.trophy}<span>Gerenciamento de Campeonatos</span></header><div class="vis"><div class="box center" id="ldg">Carregando…</div></div>`;
  if(loading===key)return;loading=key;
  fn().then(()=>{loading=null;loaded=key;render();if(key==='admin'&&!me.must_change)offerMigration()},
-  e=>{loading=null;if(!key.startsWith('s:')&&!sess)return render();
+  e=>{loading=null;if(!/^(s|p):/.test(key)&&!sess)return render();
    if(key==='admin'&&!e.status&&!e.noaccess){loading=key;return offRestoreAny().then(okk=>{loading=null;if(okk){loaded='admin';render();return toast('Sem internet: abrindo os dados guardados neste aparelho. O que você fizer será enviado quando a conexão voltar.')}const b2=document.getElementById('ldg');if(b2)b2.innerHTML=`<b>Não foi possível carregar os dados.</b><span class="muted">${esc(errTxt(e))}</span><button class="pill" data-a="retry">Tentar novamente</button><button class="pill ghost" data-a="sair2">Sair</button>`})}const b=document.getElementById('ldg');
    if(b&&e.noaccess)b.innerHTML=`<b>Este login não tem acesso a este sistema.</b><span class="muted">${esc((sess&&sess.email)||'')} — o sistema já tem um usuário master. Peça a ele um nome de usuário e senha.</span><button class="pill" data-a="sair2">Sair</button>`;
    else if(b)b.innerHTML=`<b>Não foi possível carregar os dados.</b><span class="muted">${esc(errTxt(e))}</span><button class="pill" data-a="retry">Tentar novamente</button>`})}
@@ -730,11 +768,13 @@ setInterval(async()=>{if(!CLOUD||document.hidden||ws.poll||loading||!loaded||me.
     else if(mergeResults(PL.results||[])){ws.stale=true;if(elimSyncAll()&&canEdit())ws.needSync=Date.now()+Math.random()*4000}
     if(ws.needSync&&Date.now()>ws.needSync&&!ws.busy&&!ws.dirty){ws.needSync=0;save()}
     if(ws.stale&&idle){ws.stale=false;render();if(cur.c&&cur.ph&&/^#\/c\/[^/]+\/classificacao/.test(location.hash)&&db.champs.includes(cur.c))maybeAutoFinalize(cur.c,cur.ph)}}}
-  else if(loaded.startsWith('s:')&&visitor){const key=loaded,sig=shSig,j=await rpc('gc_get_shared',{p_token:key.slice(2)},true);
-   if(m0===mut&&loaded===key&&JSON.stringify(j)!==sig){shSig=JSON.stringify(j);sharedDb(j);if(!stack.length)render()}}}
- catch(e){}ws.poll=false},4000);
+  else if(loaded.startsWith('p:')&&visitor){const key=loaded,j=await rpc('gc_get_portal',{p_token:key.slice(2)},true);if(m0===mut&&loaded===key&&JSON.stringify(j)!==ptSig){ptSig=JSON.stringify(j);portalDb(j);if(!stack.length)render()}}
+  else if(loaded.startsWith('s:')&&visitor){const key=loaded,tok=key.slice(2);if(lqN(tok))await lqFlush(tok);const sig=shSig,j=await rpc('gc_get_shared',{p_token:tok},true),was=lk.off;lk.off=false;try{localStorage.setItem(LSK(tok),JSON.stringify(j))}catch(x){}
+   if(m0===mut&&loaded===key&&(JSON.stringify(j)!==sig||was)){shSig=JSON.stringify(j);sharedDb(j);lqOverlay(tok);if(!stack.length)render()}}}
+ catch(e){if(visitor&&!e.status&&/^s:/.test(loaded||'')&&!lk.off){lk.off=true;if(!stack.length)render()}}ws.poll=false},4000);
 window.addEventListener('beforeunload',e=>{if(CLOUD&&(ws.busy||cx.busy||ws.dirty||cx.err||ws.state==='err')){e.preventDefault();e.returnValue=''}});
-const P=id=>db.players.find(p=>p.id===id), T=id=>db.teams.find(t=>t.id===id), C=id=>db.champs.find(c=>c.id===id);
+const SLOTT={};/* vagas de prévia ("1º Grupo A"): existem só na tela, nunca são gravadas */
+const P=id=>db.players.find(p=>p.id===id), T=id=>db.teams.find(t=>t.id===id)||(id&&id[0]==='?'?SLOTT[id]:undefined), C=id=>db.champs.find(c=>c.id===id);
 const dl=t=>!t?'—':t.players.length?t.players.map(id=>P(id)?.name||'?').join(' / '):t.name;
 const DEFCOLS=[['pts',1],['j',1],['v',1],['d',1],['pg',1],['pc',1],['dp',1],['pe',0],['e',0]];
 const COL={pts:['Pontos de Classificação','PTS'],j:['Jogos disputados','J'],v:['Vitórias','V'],d:['Derrotas','D'],pg:['Pontos Pró','PP'],pc:['Pontos Contra','PC'],dp:['Diferença de pontos','DP'],pe:['Pontos Extras','PE'],e:['Empate','E']};
@@ -835,13 +875,14 @@ function computeRanking(st){
  if(st.mode==='d'&&st.champ==='all'&&st.season!=='all'){const E=act.filter(r=>Object.keys(r.per).length>=db.settings.minT&&(r.j>0||r.tr>0)),n=db.settings.slots,key=r=>[r.total,r.v,r.pg,r.j].join('|');
   if(E.length<=n)E.forEach(r=>r.q=true);else{const k=key(E[n-1]);if(k===key(E[n]))E.forEach((r,i)=>{if(key(r)===k)r.qt=true;else if(i<n)r.q=true});else E.slice(0,n).forEach(r=>r.q=true)}}
  return{tours,list:st.inactive?[...act,...ina]:act}}
+const RKH=[['P','Partidas'],['V','Vitórias'],['D','Derrotas'],['PP','Pontos pró (pontos ganhos)'],['PC','Pontos contra (pontos sofridos)'],['DP','Diferença de pontos (saldo)']];
 function rankHTML(st){const{tours,list}=computeRanking(st),q=norm(st.q),rows=list.filter(r=>!q||norm(r.name).includes(q));
  const d=`data-mode="${st.mode}" data-season="${st.season}"`;
  if(!rows.length)return`<p class="empty">${st.mode==='d'?'Nenhuma dupla encontrada. Forme duplas com dois jogadores em Cadastro de equipes.':'Nenhum jogador encontrado.'}</p>`;
- return`<div class="tw"><table class="rk"><thead><tr><th>Pos.</th><th class="l">${st.mode==='d'?'Dupla':'Jogador'}</th><th>Partidas</th><th>Vitórias</th><th>Derrotas</th><th>Pontos ganhos</th><th>Pontos sofridos</th><th>Saldo</th>${tours.map(c=>`<th>${esc(c.name)}</th>`).join('')}<th>Total de pontos</th></tr></thead><tbody>${
+ return`<div class="tw"><table class="rk"><thead><tr><th>Pos.</th><th class="l">${st.mode==='d'?'Dupla':'Jogador'}</th>${RKH.map(([a,t])=>`<th title="${t}"><abbr title="${t}">${a}</abbr></th>`).join('')}${tours.map(c=>`<th class="rkt" title="Pontos no torneio ${esc(c.name)}"><span>${esc(c.name)}</span></th>`).join('')}<th title="Total de pontos"><abbr title="Total de pontos">TP</abbr></th></tr></thead><tbody>${
  rows.map(r=>`<tr class="${r.q?'q':r.qt?'qt':''}"><td><span class="posb blue" title="${r.q?'Classificada para o torneio final':r.qt?'Empate na última vaga: depende do desempate':''}">${r.pos?r.pos+'º':'—'}</span></td><td class="l"><button class="name" data-a="rkTot" data-id="${r.id}" data-champ="${st.champ}" ${d} title="Ver o histórico de torneios">${esc(r.name)}</button> ${r.active?'':'<span class="tag off">Inativa</span>'}</td><td>${r.j}</td><td>${r.v}</td><td>${r.d}</td><td>${r.pg}</td><td>${r.pc}</td><td>${r.dp}</td>${
   tours.map(c=>`<td>${r.per[c.id]?`<button class="cellb" data-a="rkCell" data-id="${r.id}" data-cid="${c.id}" ${d}>${r.per[c.id].pts+(r.per[c.id].bonus||0)}</button>`:'—'}</td>`).join('')
- }<td class="tot"><button class="cellb" data-a="rkTot" data-id="${r.id}" data-champ="${st.champ}" ${d}>${fmt(r.total)}</button></td></tr>`).join('')}</tbody></table></div>`}
+ }<td class="tot"><button class="cellb" data-a="rkTot" data-id="${r.id}" data-champ="${st.champ}" ${d}>${fmt(r.total)}</button></td></tr>`).join('')}</tbody></table></div><p class="rkleg">${RKH.map(([a,t])=>`<b>${a}</b> ${t}`).join(' · ')} · <b>TP</b> Total de pontos</p>`}
 
 /* ===================== Interface base ===================== */
 function toast(msg,type){const t=document.createElement('div');t.className='toast '+(type||'');t.textContent=msg;document.getElementById('toasts').appendChild(t);setTimeout(()=>t.remove(),3800)}
@@ -884,7 +925,11 @@ const vLogin=()=>`<header class="top">${I.trophy}<span>Gerenciamento de Campeona
 /* ===================== Roteamento ===================== */
 let cur={};
 function render(){const root=document.getElementById('root'),h=location.hash.replace(/^#\/?/,'').split('/');
- const sc=document.querySelector('.main')?.scrollTop||0,af=document.activeElement,fk=af&&af.dataset&&af.dataset.i&&af.closest('#root')?{k:af.dataset.i,p:af.selectionStart}:null;visitor=false;cur={};
+ const sc=document.querySelector('.main')?.scrollTop||0,af=document.activeElement,fk=af&&af.dataset&&af.dataset.i&&af.closest('#root')?{k:af.dataset.i,p:af.selectionStart}:null;visitor=false;viewOnly=false;cur={};
+ if(h[0]==='p'){visitor=true;viewOnly=true;
+  if(CLOUD&&loaded!=='p:'+h[1])return ensure('p:'+h[1],()=>loadPortal(h[1]));const okp=CLOUD?ptSig!=='invalido':db.portalToken===h[1];
+  if(h[2]){const c=okp?C(h[2]):null,tk=c?c.shareToken:'';root.innerHTML=h[3]==='telao'&&c?vTelao(c,true):vVisitor(tk);return}
+  root.innerHTML=vPortal(h[1],okp);return}
  if(h[0]==='s'){visitor=true;if(CLOUD&&loaded!=='s:'+h[1])return ensure('s:'+h[1],()=>loadShared(h[1]));root.innerHTML=h[2]==='telao'&&db.champs[0]?vTelao(db.champs[0],true):vVisitor(h[1]);return}
  if(!authed()){if(CLOUD)me={role:null,caixa:false};root.innerHTML=vLogin();const u=root.querySelector('[name=u]');u&&u.focus();return}
  if(CLOUD&&loaded!=='admin')return ensure('admin',loadCloud);
@@ -910,9 +955,9 @@ function render(){const root=document.getElementById('root'),h=location.hash.rep
 
 /* ===================== Telas principais ===================== */
 function vChamps(){const l=[...db.champs].sort((a,b)=>b.createdAt-a.createdAt);
- return`<h1>Meus campeonatos</h1>${l.length?`<div class="cards">${l.map(c=>{const ts=champTeams(c),ps=new Set(ts.flatMap(id=>T(id)?.players||[]));
+ return`<div class="h1row"><h1>Meus campeonatos</h1>${canEdit()?`<button class="pill ghost" data-a="pShare" title="Um link com todos os campeonatos, inclusive os que forem criados depois">${I.share}Compartilhar</button>`:''}</div>${l.length?`<div class="cards">${l.map(c=>{const ts=champTeams(c),ps=new Set(ts.flatMap(id=>T(id)?.players||[]));
   return`<div class="card"><button class="go" data-a="openC" data-id="${c.id}"><span class="trophy">${I.trophy}</span><span><b>${esc(c.name)}</b><small>${champStatus(c)} · Temporada ${esc(c.season)} · ${ts.length} equipe(s) · ${ps.size} jogador(es)${c.isFinal?' · Torneio final':''}</small></span></button>
-  <button class="ibtn" data-a="dupC" ${canEdit()?'':'hidden'} data-id="${c.id}" title="Duplicar campeonato" aria-label="Duplicar campeonato">${I.copy}</button><button class="ibtn" data-a="openC" data-id="${c.id}" aria-label="Abrir campeonato">${I.chev}</button></div>`}).join('')}</div>`
+  <button class="ibtn" data-a="share" ${canEdit()?'':'hidden'} data-id="${c.id}" title="Compartilhar este campeonato" aria-label="Compartilhar ${esc(c.name)}">${I.share}</button><button class="ibtn" data-a="dupC" ${canEdit()?'':'hidden'} data-id="${c.id}" title="Duplicar campeonato" aria-label="Duplicar campeonato">${I.copy}</button><button class="ibtn" data-a="openC" data-id="${c.id}" aria-label="Abrir campeonato">${I.chev}</button></div>`}).join('')}</div>`
   :'<p class="empty">Nenhum campeonato cadastrado.</p>'}<button class="fab" data-a="newC" ${canEdit()?'':'hidden'} aria-label="Novo campeonato" title="Novo campeonato">${I.plus}</button>`}
 const WARN='<p class="warn">Atenção. Para alterar equipes que já estão em campeonatos é necessário alterar a equipe nas configurações do campeonato.</p>';
 function vPlayers(){const dir=ui.pSort,l=[...db.players].sort((a,b)=>cmpN(a.name,b.name)*(dir==='za'?-1:1));
@@ -1054,8 +1099,8 @@ function bracketHTML(ph,ro){if(!ph.rounds.length)return'<div class="center"><spa
    ents.forEach(e=>{if(!e)return;const p=e.m?P.find(q=>(q.m&&q.m.id===e.m)||(q.s.src&&q.s.src.m===e.m)):e.t?(P.find(q=>!q.m&&q.s.t===e.t)||P.find(q=>q.m&&winner(q.m)===e.t)):null;if(p)it.f.push(p)});
    if(it.f.length)it.o=it.f.reduce((a,p)=>a+p.o,0)/it.f.length});if(ri){col.items.sort((a,b)=>a.o-b.o);col.items.forEach((it,i)=>it.o=i)}});
  const name=id=>id&&T(id)?esc(dl(T(id))):'<span class="ph">A definir</span>';
- const mb=(m,col,k,fk,sub)=>{const st=mStatus(m),w=winner(m),[va,vb]=shown(m),can=ro?(col.r.allowLink&&statusKey(cur.c)!=='done'&&st!=='done'&&m.a&&m.b&&!m.pending):canScore(),act=ro?'mOpen':canEdit()?'mMenu':'mOpen',row=(id,v)=>'<div class="br-t'+(w?(w===id?' win':' lose'):'')+'"><span class="br-n">'+name(id)+'</span><span class="sbox">'+v+'</span></div>';
-   return'<div class="br-m '+st+(sub?' third':'')+'" data-k="'+k+'" data-f="'+fk+'"'+(sub?' data-dash="1"':'')+'>'+(sub?'<div class="br-sub">'+sub+'</div>':'')+'<button class="br-hit" data-a="'+act+'" data-id="'+m.id+'" '+(can&&m.a&&m.b?'':'disabled')+' aria-label="Confronto: '+(m.a&&T(m.a)?esc(dl(T(m.a))):'a definir')+' contra '+(m.b&&T(m.b)?esc(dl(T(m.b))):'a definir')+'">'+row(m.a,va)+row(m.b,vb)+'</button><div class="br-foot"><span class="tag '+st+'">'+ST[st]+'</span>'+(m.pending?'<span class="tag pend">Aguardando aprovação</span>':'')+(m.bo!==1?'<small>'+(setsTxt(m.sets)?'Partidas: '+esc(setsTxt(m.sets)):'Melhor de 3 partidas')+'</small>':'')+'</div></div>'};
+ const mb=(m,col,k,fk,sub)=>{const st=mStatus(m),w=winner(m),[va,vb]=shown(m),can=ro?(linkOK(col.r)&&statusKey(cur.c)!=='done'&&(st!=='done'||m.lq)&&m.a&&m.b&&(!m.pending||m.lq)):canScore(),act=ro?'mOpen':canEdit()?'mMenu':'mOpen',row=(id,v)=>'<div class="br-t'+(w?(w===id?' win':' lose'):'')+'"><span class="br-n">'+name(id)+'</span><span class="sbox">'+v+'</span></div>';
+   return'<div class="br-m '+st+(sub?' third':'')+'" data-k="'+k+'" data-f="'+fk+'"'+(sub?' data-dash="1"':'')+'>'+(sub?'<div class="br-sub">'+sub+'</div>':'')+'<button class="br-hit" data-a="'+act+'" data-id="'+m.id+'" '+(can&&m.a&&m.b?'':'disabled')+' aria-label="Confronto: '+(m.a&&T(m.a)?esc(dl(T(m.a))):'a definir')+' contra '+(m.b&&T(m.b)?esc(dl(T(m.b))):'a definir')+'">'+row(m.a,va)+row(m.b,vb)+'</button><div class="br-foot"><span class="tag '+st+'">'+ST[st]+'</span>'+(m.lq?'<span class="tag lq">Aguardando envio</span>':m.pending?'<span class="tag pend">Aguardando aprovação</span>':claimTag(m))+(m.bo!==1?'<small>'+(setsTxt(m.sets)?'Partidas: '+esc(setsTxt(m.sets)):'Melhor de 3 partidas')+'</small>':'')+'</div></div>'};
  const tm=thirdOf(ph);
  const item=(it,col)=>{const fk=it.f.map(p=>p.k).join(' ');
    if(ro&&col.r.hidden)return'<div class="br-m wait" data-k="'+it.k+'" data-f="'+fk+'"><div class="br-t"><span class="br-n"><span class="ph">Rodada oculta</span></span></div></div>';
@@ -1074,23 +1119,31 @@ function bracketHTML(ph,ro){if(!ph.rounds.length)return'<div class="center"><spa
 // Liga cada bloco aos blocos de onde vêm as duplas (medido na tela, por isso acompanha qualquer tamanho).
 function drawBracket(){document.querySelectorAll('.br-in').forEach(inn=>{const svg=inn.querySelector('.br-svg');if(!svg)return;const B=inn.getBoundingClientRect(),K=(inn.offsetWidth&&B.width/inn.offsetWidth)||1,W=inn.scrollWidth,H=inn.scrollHeight;svg.setAttribute('width',W);svg.setAttribute('height',H);svg.setAttribute('viewBox','0 0 '+W+' '+H);let d='';const by={};inn.querySelectorAll('[data-k]').forEach(e=>by[e.dataset.k]=e);
   inn.querySelectorAll('[data-f]').forEach(e=>{if(!e.dataset.f)return;const t=e.getBoundingClientRect(),y2=(t.top-B.top+t.height/2)/K;e.dataset.f.split(' ').forEach(k=>{const s=by[k];if(!s)return;const q=s.getBoundingClientRect();if(e.dataset.v){const cx=Math.round((q.left+q.width/2-B.left)/K);const dn=t.top>q.top;d+='<path d="M'+cx+' '+Math.round(((dn?q.bottom:q.top)-B.top)/K)+'V'+Math.round(((dn?t.top:t.bottom)-B.top)/K)+'" fill="none" stroke="'+(e.classList.contains('on')?'#2ECD71':'#C3CEC8')+'" stroke-width="2"/>';return}const rev=q.left>t.left,x2=((rev?t.right:t.left)-B.left)/K,x1=((rev?q.left:q.right)-B.left)/K,y1=(q.top-B.top+q.height/2)/K,mx=Math.round((x1+x2)/2);d+='<path d="M'+Math.round(x1)+' '+Math.round(y1)+'H'+mx+'V'+Math.round(y2)+'H'+Math.round(x2)+'" fill="none" stroke="'+(s.classList.contains('done')?'#2ECD71':'#C3CEC8')+'" stroke-width="2"'+(e.dataset.dash?' stroke-dasharray="5 5"':'')+'/>'})});svg.innerHTML=d})}
-function classBlock(c,ph,manage){if(ph.type==='elim')return '<div class="cls-top"><div class="cls-ctl"><select data-c="selPhase" aria-label="Fase">'+c.phases.map(p=>'<option value="'+p.id+'" '+(p===ph?'selected':'')+'>'+esc(p.name)+' — '+TYPE[p.type]+'</option>').join('')+'</select><span class="muted" style="font-size:13px">Chaveamento · '+BOT[ph.bo]+'</span></div>'+(manage?'<div class="panel-plus-row"><button class="panel-plus" data-a="cMenu" aria-label="Gerenciar classificação" title="Gerenciar classificação">+</button></div>':'')+'</div><section class="cls-body" aria-label="Chaveamento">'+(ph.teamIds.length?bracketHTML(ph,!manage&&visitor):'<div class="center"><span class="muted">Ainda não há duplas.</span>'+(manage?'<button class="pill dark big" data-a="cDuplas">ADICIONAR DUPLAS</button>':'')+'</div>')+'</section>';const grp=ph.groups.length>0,all=ui.cls==='all'||!grp,Q=qualState(ph);
+const noAct=h=>h.replace(/ data-a="[^"]*"/g,'').replace(/<button class="br-hit"/g,'<button class="br-hit" disabled tabindex="-1"');
+function phasePreview(c,ph){const i=c.phases.indexOf(ph),pv=c.phases[i-1];if(i<1||ph.teamIds.length)return'';
+ const note=n=>'<p class="note prevnote">'+I.info+'<span><b>Prévia.</b> As vagas são preenchidas automaticamente quando a <b>'+esc(pv.name)+'</b> for finalizada ('+esc(qualTxt(pv))+')'+(n?'. '+n:'')+'.</span></p>';
+ if(ph.type==='elim'){const tmp=bracketPhase(c,ph);return tmp?note('O cruzamento mostrado é o que será usado')+'<div class="preview">'+noAct(bracketHTML(tmp,true)).replace(/class="br-m live/g,'class="br-m wait').replace(/<span class="tag live">[^<]*<\/span>/g,'<span class="tag wait">'+ST.wait+'</span>')+'</div>':''}
+ const sl=phaseSlots(c,ph);if(!sl.length)return'';const tmp=newPhase(i+1,'pc');tmp.id='?p'+ph.id;tmp.cols=ph.cols;tmp.criteria=ph.criteria;tmp.teamIds=sl.map(x=>x.id);
+ const prevCls=ui.cls;ui.cls='all';let h=standHTML(tmp);ui.cls=prevCls;
+ return note(ph.groups.length?'A divisão em grupos desta fase é feita depois, em Configurações → Grupos':'')+'<div class="preview">'+noAct(h).replace(/<span class="posb">[^<]*(<small>=<\/small>)?<\/span>/g,'<span class="posb">–</span>').replace(/ title="Empatadas em todos os critérios"/g,'')+'</div>'}
+const emptyPhase=(c,ph,manage)=>phasePreview(c,ph)||('<div class="center"><span class="muted">'+(c.phases.indexOf(ph)>0?'As duplas desta fase chegam da fase anterior. Defina quantas se classificam em + → Fases → Editar fase.':'Ainda não há duplas.')+'</span>'+(manage&&c.phases.indexOf(ph)===0?'<button class="pill dark big" data-a="cDuplas">ADICIONAR DUPLAS</button>':'')+'</div>');
+function classBlock(c,ph,manage){if(ph.type==='elim')return '<div class="cls-top"><div class="cls-ctl"><select data-c="selPhase" aria-label="Fase">'+c.phases.map(p=>'<option value="'+p.id+'" '+(p===ph?'selected':'')+'>'+esc(p.name)+' — '+TYPE[p.type]+'</option>').join('')+'</select><span class="muted" style="font-size:13px">Chaveamento · '+BOT[ph.bo]+'</span></div>'+(manage?'<div class="panel-plus-row"><button class="panel-plus" data-a="cMenu" aria-label="Gerenciar classificação" title="Gerenciar classificação">+</button></div>':'')+'</div><section class="cls-body" aria-label="Chaveamento">'+(ph.teamIds.length?bracketHTML(ph,!manage&&visitor):emptyPhase(c,ph,manage))+'</section>';const grp=ph.groups.length>0,all=ui.cls==='all'||!grp,Q=qualState(ph);
  return '<div class="cls-top"><div class="cls-ctl"><select data-c="selPhase" aria-label="Fase">'+c.phases.map(p=>'<option value="'+p.id+'" '+(p===ph?'selected':'')+'>'+esc(p.name)+' — '+TYPE[p.type]+'</option>').join('')+'</select><span class="seg" role="group" aria-label="Visualização"><button class="'+(all?'':'on')+'" data-a="clsView" data-v="g" '+(grp?'':'disabled title="Esta fase não tem grupos"')+'>Por grupo</button><button class="'+(all?'on':'')+'" data-a="clsView" data-v="all">Geral</button></span></div>'+
   (manage?'<div class="panel-plus-row"><button class="panel-plus" data-a="cMenu" aria-label="Gerenciar classificação" title="Gerenciar classificação">+</button></div>':'')+
   (hasNextPhase(ph)&&Q.on?'<p class="note" style="margin:0 0 8px"><i class="qdot"></i>Posição em verde: duplas na zona de classificação para a próxima fase ('+esc(qualTxt(ph))+').</p>':'')+
-  '</div><section class="cls-body" aria-label="Classificação">'+(ph.teamIds.length?standHTML(ph):'<div class="center"><span class="muted">Ainda não há duplas.</span>'+(manage?'<button class="pill dark big" data-a="cDuplas">ADICIONAR DUPLAS</button>':'')+'</div>')+'</section>'}
+  '</div><section class="cls-body" aria-label="Classificação">'+(ph.teamIds.length?standHTML(ph):emptyPhase(c,ph,manage))+'</section>'}
 // Situação de cada partida de uma disputa Melhor de 3 (as três partidas pertencem ao MESMO confronto).
 function gameState(m,i){const n=(m.sets||[]).filter(Boolean).length,[a,b]=setsWon(m),dec=a>=2||b>=2;return i<n?['done','Encerrada']:dec?['na','Não necessária']:i===2&&n<2?['if','Se necessária']:['wait','Aguardando']}
 function matchCard(m,r,ro){const st=mStatus(m),[sa,sb]=setsWon(m),has=hasSets(m),action=ro?'mOpen':canEdit()?'mMenu':'mOpen';
  const nm=id=>id&&T(id)?esc(dl(T(id))):'<span class="ph">A definir</span>';
- const can=ro?(r.allowLink&&statusKey(cur.c)!=='done'&&st!=='done'&&m.a&&m.b&&!m.pending):canScore();
+ const can=ro?(linkOK(r)&&statusKey(cur.c)!=='done'&&(st!=='done'||m.lq)&&m.a&&m.b&&(!m.pending||m.lq)):canScore();
  const one=m.bo===1,[va,vb]=shown(m);
  const fmt=one?'Partida única':'Melhor de 3 partidas';
  const games=!one&&m.a&&m.b?'<div class="gms">'+[0,1,2].map(i=>{const[k,l]=gameState(m,i),g=m.sets&&m.sets[i];return'<button class="gm '+k+'" data-a="'+action+'" data-id="'+m.id+'" '+(can?'':'disabled')+'><span>Partida '+(i+1)+' — '+l+'</span>'+(g?'<b>'+g[0]+' × '+g[1]+'</b>':'')+'</button>'}).join('')+'</div>':'';
  return '<div class="match"><button class="mt l" data-a="'+action+'" data-id="'+m.id+'" '+(ro||!canEdit()?'disabled':'')+'>'+nm(m.a)+'</button>'+
  '<button class="score" data-a="'+action+'" data-id="'+m.id+'" '+(can?'':'disabled')+' aria-label="'+(ro?'Informar placar':'Opções do confronto')+'"><span class="sbox">'+va+'</span>×<span class="sbox">'+vb+'</span></button>'+
  '<button class="mt r" data-a="'+action+'" data-id="'+m.id+'" '+(ro||!canEdit()?'disabled':'')+'>'+nm(m.b)+'</button>'+
- '<div class="mfoot"><span><span class="tag '+st+'">'+ST[st]+'</span> '+(m.pending?'<span class="tag pend">Aguardando aprovação</span>':'')+(m.third?' <span class="tag pend">Disputa de 3º lugar</span>':'')+' <small class="muted">'+esc(fmt)+'</small></span>'+
+ '<div class="mfoot"><span><span class="tag '+st+'">'+ST[st]+'</span> '+(m.lq?'<span class="tag lq">Aguardando envio</span>':m.pending?'<span class="tag pend">Aguardando aprovação</span>':claimTag(m))+(m.third?' <span class="tag pend">Disputa de 3º lugar</span>':'')+' <small class="muted">'+esc(fmt)+'</small></span>'+
  (ro?(can?'<button class="pill sm" data-a="mOpen" data-id="'+m.id+'">Informar placar</button>':''):'')+'</div>'+games+'</div>'}
 
 function jogosHTML(c,ph,ro){const r=getRound(ph,ro),rs=ro?ph.rounds.filter(x=>!x.hidden):ph.rounds;cur.r=r;
@@ -1104,7 +1157,7 @@ function jogosHTML(c,ph,ro){const r=getRound(ph,ro),rs=ro?ph.rounds.filter(x=>!x
  else{content=(r.byes&&r.byes.length?'<p class="note" style="margin:0">Avançam direto: '+r.byes.map(id=>esc(dl(T(id)))).join('; ')+'</p>':'')+
  (r.rest&&r.rest.length?'<p class="note" style="margin:0">Folga nesta rodada: '+r.rest.map(id=>esc(dl(T(id)))).join('; ')+'</p>':'')+
  (r.matches.map(m=>matchCard(m,r,ro)).join('')||'<p class="empty" style="padding:8px">Nenhuma partida nesta rodada.</p>')+
- (ro||!canEdit()?(!ro||(r.allowLink&&statusKey(c)!=='done')?'':'<p class="note">O lançamento de placares está reservado ao organizador.</p>'):
+ (ro||!canEdit()?(!ro||(linkOK(r)&&statusKey(c)!=='done')?'':viewOnly?'<p class="note">Somente visualização.</p>':'<p class="note">O lançamento de placares está reservado ao organizador.</p>'):
  '<button class="pill ghost" data-a="addMatch">ADICIONAR PARTIDA</button>'+
  (!phMatches(ph).length?'<button class="pill dark" data-a="gen">GERAR PARTIDAS</button>':'')+
  (ph.type==='elim'&&phMatches(ph).length&&!hasRes(ph)?'<button class="pill ghost" data-a="brReset">REFAZER CHAVEAMENTO</button>':'')+
@@ -1126,24 +1179,34 @@ function vConfig(c){const ph=getPhase(c);cur.ph=ph;const pd=pendings(c),ts=champ
  <section class="box"><h2>Opções avançadas</h2>
  <label class="chk"><input type="checkbox" data-a="cOpt" data-k="isFinal" ${c.isFinal?'checked':''}><span>Este é o torneio final da temporada <small class="muted">(não soma pontos no Ranking Geral)</small></span></label>
  <label class="chk"><input type="checkbox" data-a="cOpt" data-k="requireApproval" ${c.requireApproval?'checked':''}><span>Exigir minha aprovação para resultados enviados pelo link compartilhado</span></label>
- <h2 style="margin-top:16px">Resultados aguardando aprovação</h2>${pd.length?`<ul class="rows">${pd.map(({ph,r,m})=>`<li><span style="flex:1;min-width:200px">${esc(ph.name)} · ${esc(r.title)} — <b>${esc(dl(T(m.a)))}</b> ${esc(setsTxt(m.pending.sets))} <b>${esc(dl(T(m.b)))}</b></span><button class="pill sm" data-a="mApprove" data-id="${m.id}">Aprovar</button><button class="pill ghost sm" data-a="mReject" data-id="${m.id}">Rejeitar</button></li>`).join('')}</ul>`:'<p class="muted">Nenhum resultado pendente.</p>'}
+ <label class="chk"><input type="checkbox" data-a="cOpt" data-k="confirmBoth" ${c.confirmBoth?'checked':''}><span>Exigir que <b>as duas duplas</b> informem o placar pelo link — ele só vale quando os dois forem iguais; se forem diferentes, os dois aparecem para elas conferirem</span></label>
+ <h2 style="margin-top:16px">Resultados aguardando aprovação</h2>${pd.length?`<ul class="rows">${pd.map(({ph,r,m})=>`<li><span style="flex:1;min-width:200px">${esc(ph.name)} · ${esc(r.title)} — <b>${esc(dl(T(m.a)))}</b> ${esc(setsTxt(m.pending.sets))} <b>${esc(dl(T(m.b)))}</b>${m.pending.by?` <small class="muted">· informado por ${esc(m.pending.by)}</small>`:''}</span><button class="pill sm" data-a="mApprove" data-id="${m.id}">Aprovar</button><button class="pill ghost sm" data-a="mReject" data-id="${m.id}">Rejeitar</button></li>`).join('')}</ul>`:'<p class="muted">Nenhum resultado pendente.</p>'}
  <h2 style="margin-top:16px">Excluir campeonato</h2><p class="note">Remove o campeonato, suas fases, partidas e os pontos que ele gerou no ranking.</p><button class="pill red" data-a="cDel">Excluir campeonato</button></section></div>`}
 
 /* ===================== Acesso pelo link ===================== */
+function lqBar(t){const o=lqGet(t),n=Object.keys(o.items).length;let h='';
+ if(lk.off||n)h+='<div class="offbar" role="status"><b>'+(lk.off?'Sem internet.':'Envio pendente.')+'</b> <span>'+(n?n+' placar(es) guardado(s) neste aparelho, aguardando envio. Serão enviados sozinhos quando a conexão voltar.':'Mostrando a última cópia guardada neste aparelho. Você pode informar placares normalmente.')+'</span><span style="flex:1"></span>'+(n?'<button class="pill sm" data-a="lqSync">Tentar enviar agora</button>':'')+'</div>';
+ if(o.conf.length)h+='<div class="offbar" role="alert" style="background:#FDECEC;border-color:#F2A9A4;color:#7A2E2A"><b>Placares não aplicados.</b> <span>'+o.conf.length+' placar(es) guardado(s) sem internet não puderam ser aplicados.</span><span style="flex:1"></span><button class="pill sm" data-a="lqConf">Ver detalhes</button></div>';return h}
 function vVisitor(tk){const c=tk&&db.champs.find(x=>x.shareToken===tk);
- const top=`<header class="top">${I.trophy}<span>${c?esc(c.name):'Gerenciamento de Campeonatos'}</span>${c?'<button class="pill sm" data-a="tvOpen" style="margin-left:auto">Telão</button>':''}</header>`;
+ const hp=location.hash.replace(/^#\/?/,'').split('/'),back=hp[0]==='p'?`<a class="vback" href="#/p/${esc(hp[1])}" aria-label="Todos os campeonatos" title="Todos os campeonatos">${I.back||'‹'}</a>`:'';
+ const top=`<header class="top">${back}${I.trophy}<span>${c?esc(c.name):'Gerenciamento de Campeonatos'}</span>${c?'<button class="pill sm" data-a="tvOpen" style="margin-left:auto">Telão</button>':''}</header>`;
  if(!c)return top+`<div class="vis"><div class="box center">${I.alert}<b>Link inválido ou expirado.</b><span class="muted">Peça um novo link ao organizador do campeonato.</span></div></div>`;
  cur.c=c;const ph=getPhase(c);cur.ph=ph;const v=ui.v;
  const tab=(k,l)=>`<button class="${v.tab===k?'on':''}" data-a="vTab" data-v="${k}">${l}</button>`;
- return top+`<div class="vis"><div><span class="tag">${champStatus(c)}</span> <span class="muted">Organizador: ${esc(c.organizer||db.user.name)}</span></div>
+ return top+`<div class="vis">${hp[0]==='s'?lqBar(hp[1]):''}<div><span class="tag">${champStatus(c)}</span> <span class="muted">Organizador: ${esc(c.organizer||db.user.name)}</span></div>
  <div class="seg" style="align-self:flex-start">${tab('jogos','Jogos')}${tab('class','Classificação')}${tab('rank','Ranking')}</div>
  ${v.tab==='jogos'?jogosHTML(c,ph,true):v.tab==='class'?`<div>${classBlock(c,ph,false)}</div>`
  :`<div><div class="filters"><span class="seg"><button class="${v.mode==='d'?'on':''}" data-a="vMode" data-v="d">Duplas</button><button class="${v.mode==='i'?'on':''}" data-a="vMode" data-v="i">Individual</button></span></div>${rankHTML({season:String(c.season),champ:c.id,mode:v.mode,q:'',inactive:true})}</div>`}</div>`}
 
 /* ===================== Ações ===================== */
 const A={},F={};
-const VIS=new Set(['pwEye','tvOpen','tvExit','tvNext','tvPause','tGames','clsView','retry','closeM','vTab','vMode','mOpen','rkCell','rkTot','selPhase','selRound']);
+const VIS=new Set(['byPick','lqSync','lqConf','lqDismiss','pvTab','rkSet','rkMode','rkQ','rkIna','pwEye','tvOpen','tvExit','tvNext','tvPause','tGames','clsView','retry','closeM','vTab','vMode','mOpen','rkCell','rkTot','selPhase','selRound']);
 A.closeM=()=>closeModal();
+A.lqSync=async()=>{const t=lkTok();if(!t)return;const r=await lqFlush(t,true);if(r&&(r.sent||r.bad)){try{await loadShared(t)}catch(e){}}if(!stack.length)render()};
+A.lqConf=()=>{const o=lqGet(lkTok());modal(mHead('Placares não aplicados','Guardados neste aparelho sem internet')+'<ul class="slist">'+o.conf.map(z=>'<li style="display:block"><b>'+esc(z.names||'Confronto')+'</b><div class="cfv"><span><small>Informado aqui por '+esc(z.by||'—')+' em '+dt(z.at)+'</small><b>'+esc(setsTxt(z.mine)||'—')+'</b></span><span><small>'+(z.theirs?'Já estava lançado':'Motivo')+'</small><b>'+esc(z.theirs?(setsTxt(z.theirs)||'—')+(z.pend?' (aguardando aprovação)':''):(z.reason||'—'))+'</b></span></div></li>').join('')+'</ul><p class="note">Nada foi sobrescrito: outra pessoa lançou este confronto antes ou o lançamento pelo link foi fechado. Se o placar informado aqui é o correto, avise o organizador — só ele pode corrigir um resultado já lançado.</p><div class="acts"><button class="pill ghost" data-a="closeM">Fechar</button><button class="pill" data-a="lqDismiss">Entendi, remover da lista</button></div>',{cls:'wide'})};
+A.lqDismiss=()=>{const t=lkTok(),o=lqGet(t);o.conf=[];lqPut(t,o);while(stack.length)closeModal(true);render()};
+window.addEventListener('online',()=>{if(visitor&&/^s:/.test(loaded||'')&&lqN(lkTok()))A.lqSync()});
+
 A.nav=()=>document.body.classList.toggle('nav');
 A.retry=()=>render();
 A.sair=async()=>{if(!await confirmBox({title:'Sair',msg:CLOUD?(ws.dirty||ws.busy||cx.busy||cx.err?'<b class="neg">Há alterações que ainda não foram gravadas no banco.</b> Se sair agora, elas serão perdidas. ':'')+'Deseja encerrar a sessão?':'Esta é a versão local, sem login. Voltar para a lista de campeonatos?',ok:'Sair'}))return;
@@ -1385,12 +1448,33 @@ A.cfgRank=()=>{const c=cur.c;Object.assign(ui.rk,{season:String(c.season),champ:
 A.cDel=async()=>{const c=cur.c;if(!await confirmBox({title:'Excluir campeonato',msg:`Excluir <b>${esc(c.name)}</b> com todas as fases, partidas e pontos gerados? Esta ação não poderá ser desfeita.`,ok:'Excluir campeonato',danger:true}))return;
  db.champs=db.champs.filter(x=>x!==c);save();location.hash='#/campeonatos'};
 const shareUrl=c=>location.href.split('#')[0]+'#/s/'+c.shareToken;
-function shareModal(){const c=cur.c;modal(`${mHead('Compartilhar',esc(c.name))}<label class="field"><span>Link exclusivo</span><input class="inp" id="shUrl" readonly value="${esc(shareUrl(c))}" style="font-size:13px"></label>
+let shC=null;
+function shareModal(c=cur.c){if(!c)return;shC=c;modal(`${mHead('Compartilhar',esc(c.name))}<label class="field"><span>Link exclusivo</span><input class="inp" id="shUrl" readonly value="${esc(shareUrl(c))}" style="font-size:13px"></label>
  <p class="note">Quem tiver este link pode ver os jogos e lançar placares, sem login. Trate-o como uma senha.<br>${CLOUD?'':'<b>No modo local os dados ficam só neste navegador, então o link não funciona em outros aparelhos.</b>'}</p>
  <div class="acts"><button class="pill ghost" data-a="shNew">Gerar novo link</button><button class="pill" data-a="shCopy" autofocus>Copiar link</button></div>`)}
-A.share=shareModal;
+A.share=d=>shareModal(d&&d.id?C(d.id):cur.c);
+// Link geral: uma página pública com a lista de TODOS os campeonatos; cada cartão abre o link próprio do campeonato.
+const portalUrl=()=>location.href.split('#')[0]+'#/p/'+db.portalToken;
+function portalModal(){if(!db.portalToken||String(db.portalToken).length<32){db.portalToken=mkToken();save()}
+ modal(`${mHead('Compartilhar','Todos os campeonatos')}<label class="field"><span>Link geral</span><input class="inp" id="shUrl" readonly value="${esc(portalUrl())}" style="font-size:13px"></label>
+ <p class="note">Quem abrir este link vê a lista de todos os campeonatos, <b>inclusive os que você criar depois</b>, e acompanha jogos, classificação e ranking de cada um, além do <b>Ranking geral</b> e das <b>Colocações dos Torneios</b> (por temporada ou histórico geral). <b>Somente visualização:</b> por este link ninguém lança nem altera placar. Para quem vai informar resultados, use o Compartilhar do próprio campeonato.<br>${CLOUD?'':'<b>No modo local os dados ficam só neste navegador, então o link não funciona em outros aparelhos.</b>'}</p>
+ <div class="acts"><button class="pill ghost" data-a="pNew">Gerar novo link</button><button class="pill" data-a="shCopy" autofocus>Copiar link</button></div>`)}
+A.pShare=portalModal;
+A.pNew=async()=>{if(!await confirmBox({title:'Gerar novo link geral',msg:'O link geral atual deixará de funcionar imediatamente. Os links de cada campeonato continuam valendo. Continuar?',ok:'Gerar novo link',danger:true}))return;db.portalToken=mkToken();save();closeModal(true);portalModal();toast('Novo link gerado.')};
+let ptSig='';
+function portalDb(j){setCloudDb({players:j.players,teams:j.teams,champs:j.champs,settings:j.settings||{},user:{name:'Organizador'}});mergeResults(j.results||[]);elimSyncAll()}
+async function loadPortal(tok){let j;try{j=await rpc('gc_get_portal',{p_token:tok},true)}catch(e){if(e.status&&/link_invalido/.test(e.message)){setDb({});ptSig='invalido';return}throw e}ptSig=JSON.stringify(j);portalDb(j)}
+// Página do link geral — SOMENTE VISUALIZAÇÃO: seletor Campeonatos | Ranking geral | Colocações.
+function vPortal(tk,okp){const top=`<header class="top">${I.trophy}<span>Campeonatos</span></header>`;
+ if(!okp)return top+`<div class="vis"><div class="box center">${I.alert}<b>Link inválido ou expirado.</b><span class="muted">Peça um novo link ao organizador.</span></div></div>`;
+ const v=ui.pv||'list',tab=(k,l)=>`<button class="${v===k?'on':''}" data-a="pvTab" data-v="${k}">${l}</button>`;let body;
+ if(v==='rank')body=vRank().replace('<h1>Ranking Geral</h1>','').replace(podiumHTML(ui.rk),'');
+ else if(v==='pod'){const s=ui.rk;body=`<div class="filters"><label>Temporada<select data-c="rkSet" data-k="season">${seasons().map(y=>`<option value="${y}" ${s.season===y?'selected':''}>Temporada ${y}</option>`).join('')}<option value="all" ${s.season==='all'?'selected':''}>Histórico geral</option></select></label><label>Ranking<span class="seg"><button class="${s.mode==='d'?'on':''}" data-a="rkMode" data-v="d">Duplas</button><button class="${s.mode==='i'?'on':''}" data-a="rkMode" data-v="i">Individual</button></span></label></div>`+podiumHTML({...s,champ:'all'})}
+ else{const list=[...db.champs].sort((a,b)=>b.createdAt-a.createdAt);body=list.length?`<div class="cards">${list.map(c=>`<div class="card"><a class="go" href="#/p/${esc(tk)}/${esc(c.id)}"><span class="trophy">${I.trophy}</span><span><b>${esc(c.name)}</b><small>${champStatus(c)} · Temporada ${esc(c.season||'')} · ${champTeams(c).length} dupla(s)${c.isFinal?' · Torneio final':''}</small></span></a><a class="ibtn" href="#/p/${esc(tk)}/${esc(c.id)}" aria-label="Abrir ${esc(c.name)}">${I.chev}</a></div>`).join('')}</div>`:'<p class="empty">Nenhum campeonato publicado ainda. Assim que o organizador criar um, ele aparece aqui automaticamente.</p>'}
+ return top+`<div class="vis"><div class="vtabs">${tab('list','Campeonatos')}${tab('rank','Ranking geral')}${tab('pod','Colocações')}</div>${body}</div>`}
+A.pvTab=d=>{ui.pv=d.v;render()};
 A.shCopy=async()=>{const i=document.getElementById('shUrl');try{await navigator.clipboard.writeText(i.value)}catch(e){i.select();document.execCommand('copy')}toast('Link copiado.')};
-A.shNew=async()=>{if(!await confirmBox({title:'Gerar novo link',msg:'O link atual deixará de funcionar imediatamente. Continuar?',ok:'Gerar novo link',danger:true}))return;cur.c.shareToken=mkToken();save();closeModal(true);shareModal();toast('Novo link gerado.')};
+A.shNew=async()=>{if(!await confirmBox({title:'Gerar novo link',msg:'O link atual deixará de funcionar imediatamente. Continuar?',ok:'Gerar novo link',danger:true}))return;const c=shC&&C(shC.id);if(!c)return;c.shareToken=mkToken();save();closeModal(true);shareModal(c);toast('Novo link gerado.')};
 A.selPhase=(d,el)=>{ui.phase[cur.c.id]=el.value;render()};
 A.selRound=(d,el)=>{ui.round[cur.ph.id]=el.value;render()};
 A.vTab=d=>{ui.v.tab=d.v;render()};A.vMode=d=>{ui.v.mode=d.v;render()};
@@ -1772,7 +1856,15 @@ F.tieSave=async f=>{const c=cur.c,ph=cur.ph,type=f.elements.type.value,key=f.ele
 /* ----- partida / placar ----- */
 A.mMenu=d=>{const x=findMatch(d.id);if(!x)return toast('Este confronto não existe mais.','err');
  modal('<div style="display:flex;flex-direction:column;gap:6px"><button data-a="mOpen" data-id="'+d.id+'" data-close="1">'+I.edit+'Editar resultado</button><button data-a="mDel" data-id="'+d.id+'" data-close="1">'+I.trash+'Excluir confronto</button></div>',{cls:'menu'})};
-function resExtras(m){const pending=!visitor&&m.pending?'<div class="box" style="margin:10px 0"><b>Resultado enviado pelo link:</b> '+esc(setsTxt(m.pending.sets))+' <small class="muted">('+dt(m.pending.at)+')</small><div class="acts" style="margin-top:8px"><button type="button" class="pill ghost sm" data-a="mReject" data-id="'+m.id+'">Rejeitar</button><button type="button" class="pill sm" data-a="mApprove" data-id="'+m.id+'">Aprovar</button></div></div>':'';const hist=!visitor&&m.history?.length?'<details class="note"><summary>Histórico de alterações ('+m.history.length+')</summary>'+m.history.map(h=>'<div>'+dt(h.at)+' · '+esc(h.by||'organizador')+' · '+esc(setsTxt(h.sets)||'placar limpo')+'</div>').join('')+'</details>':'';return pending+hist}
+// Confirmação pelas duas duplas: uma informou → aguarda a outra; as duas informaram valores diferentes → divergência.
+function claimTag(m){const c=m.claims,ks=c?Object.keys(c).filter(k=>k==='A'||k==='B'):[];if(!ks.length||mStatus(m)==='done')return'';
+ if(ks.length<2)return'<span class="tag pend" title="'+esc(dl(T(ks[0]==='A'?m.a:m.b)))+' já informou">Aguardando a outra dupla</span>';
+ return'<span class="tag div">Placares divergentes</span>'+(c.A.sets&&c.B.sets?'<small class="cdiv">'+esc(dl(T(m.a)))+' informou <b>'+esc(setsTxt(c.A.sets))+'</b> · '+esc(dl(T(m.b)))+' informou <b>'+esc(setsTxt(c.B.sets))+'</b></small>':'')}
+function byField(m){const x=findMatch(m.id),both=!!(x&&x.c.confirmBoth),cl=m.claims||{},wait=!!cl.A!==!!cl.B,opt=(k,id)=>'<option value="'+k+'"'+(wait&&cl[k]?' disabled':'')+'>'+esc(dl(T(id)))+(cl[k]?(wait?' (já informou — aguardando a outra dupla)':' (já informou — corrigir)'):'')+'</option>';
+ if(both)return'<label class="field byf"><span>Qual dupla está informando? <b class="neg">*</b></span><select class="inp" name="by" data-c="byPick"><option value="">Selecione…</option>'+opt('A',m.a)+opt('B',m.b)+'</select></label><p class="note" style="margin:0 0 10px">Este campeonato exige que <b>as duas duplas</b> informem o placar. Ele só vale quando os dois forem iguais; se forem diferentes, os dois aparecem para vocês conferirem e corrigirem.</p>';let last='';try{last=localStorage.getItem('gc_byn')||''}catch(e){}
+ return'<label class="field byf"><span>Quem está informando o placar? <b class="neg">*</b></span><select class="inp" name="by" data-c="byPick"><option value="">Selecione…</option><option value="A">'+esc(dl(T(m.a)))+'</option><option value="B">'+esc(dl(T(m.b)))+'</option><option value="o">Outra pessoa</option></select></label><label class="field byo" hidden><span>Nome de quem está informando <b class="neg">*</b></span><input class="inp" name="byn" maxlength="40" autocomplete="name" value="'+esc(last)+'"></label>'}
+A.byPick=(d,el)=>{const w=el.form&&el.form.querySelector('.byo');if(!w)return;w.hidden=el.value!=='o';if(!w.hidden)w.querySelector('input').focus()};
+function resExtras(m){const cl=!visitor&&m.claims&&(m.claims.A||m.claims.B)?'<div class="box" style="margin:10px 0"><b>Informado pelas duplas (link):</b>'+['A','B'].map(k=>m.claims[k]?'<div>'+esc(dl(T(k==='A'?m.a:m.b)))+': <b>'+esc(setsTxt(m.claims[k].sets)||'—')+'</b></div>':'<div class="muted">'+esc(dl(T(k==='A'?m.a:m.b)))+': ainda não informou</div>').join('')+'<small class="muted">Se você salvar um placar aqui, ele vale e os informes das duplas são descartados.</small></div>':'';const pending=!visitor&&m.pending?'<div class="box" style="margin:10px 0"><b>Resultado enviado pelo link:</b> '+esc(setsTxt(m.pending.sets))+(m.pending.by?' — informado por <b>'+esc(m.pending.by)+'</b>':'')+' <small class="muted">('+dt(m.pending.at)+')</small><div class="acts" style="margin-top:8px"><button type="button" class="pill ghost sm" data-a="mReject" data-id="'+m.id+'">Rejeitar</button><button type="button" class="pill sm" data-a="mApprove" data-id="'+m.id+'">Aprovar</button></div></div>':'';const hist=!visitor&&m.history?.length?'<details class="note"><summary>Histórico de alterações ('+m.history.length+')</summary>'+m.history.map(h=>'<div>'+dt(h.at)+' · '+esc(h.by||'organizador')+' · '+esc(setsTxt(h.sets)||'placar limpo')+'</div>').join('')+'</details>':'';return cl+pending+hist}
 // Grava um resultado já validado (usado pela partida única e por cada partida do Melhor de 3): confere o chaveamento, salva, sincroniza.
 async function commitScore(f,x,sets,state,btn){const{m,ph,r,c}=x;
  const a=m.a,b=m.b;if(!a||!b)return setErr(f,'Defina as duas duplas do confronto antes de informar o placar.');
@@ -1812,11 +1904,11 @@ A.mGame=async(d,el)=>{const f=el.closest('form'),x=f&&findMatch(f.id.value);if(!
  const state=wa===2||wb===2?'done':'live';if(el.disabled)return;await commitScore(f,x,out,state,el);
  if(!stack.length&&state==='live')toast('Partida '+N+' salva. Disputa em '+wa+' × '+wb+(out.length===2?': a Partida 3 decide.':'.'))};
 F.mGameForm=f=>{const b=[...f.querySelectorAll('[data-a=mGame]')].find(z=>!z.hidden);if(b)A.mGame(b.dataset,b)};
-A.mOpen=d=>{const fnd=findMatch(d.id);if(!fnd)return;const{m,ph,r}=fnd,has=hasSets(m),locked=mStatus(m)==='done';
+A.mOpen=d=>{const fnd=findMatch(d.id);if(!fnd)return;const{m,ph,r}=fnd,has=hasSets(m),locked=mStatus(m)==='done'&&!(visitor&&m.lq);
  if((!m.a||!m.b)&&m.src)return visitor?undefined:alertBox('Confronto a definir','As duplas deste confronto serão preenchidas automaticamente quando os confrontos anteriores forem encerrados.');
  if(!m.a||!m.b){if(visitor||!canEdit())return;cur.ph=ph;cur.r=r;return pairModal(m)}
  if(!visitor){const lk=phaseLock(fnd.c,ph);if(lk)return alertBox(lk[0],lk[1])}
- if(visitor&&(!r.allowLink||statusKey(fnd.c)==='done'||locked||!m.a||!m.b||m.pending))return;
+ if(visitor&&(!linkOK(r)||statusKey(fnd.c)==='done'||(locked&&!m.lq)||!m.a||!m.b||(m.pending&&!m.lq)))return;
  if(!visitor&&m.bo!==1)return gamesModal(fnd);
  const score=i=>m.sets?.[i]||['',''],state=locked?'done':'live';
  const statusInput=visitor?'<input type="hidden" name="state" value="done">':
@@ -1826,7 +1918,7 @@ A.mOpen=d=>{const fnd=findMatch(d.id);if(!fnd)return;const{m,ph,r}=fnd,has=hasSe
  const scoreFields=Array.from({length:m.bo===1?1:3},(_,i)=>'<div class="score-game"><span class="score-game-title">Partida '+(i+1)+'</span><div class="score-pair">'+participant('a',i)+'<input type="number" min="0" step="1" name="s'+i+'a" data-i="mAuto" inputmode="numeric" value="'+score(i)[0]+'" aria-label="Placar da Dupla 1, partida '+(i+1)+'" '+(locked?'disabled':'')+'><span class="score-times">×</span><input type="number" min="0" step="1" name="s'+i+'b" data-i="mAuto" inputmode="numeric" value="'+score(i)[1]+'" aria-label="Placar da Dupla 2, partida '+(i+1)+'" '+(locked?'disabled':'')+'>'+participant('b',i)+'</div></div>').join('');
  const participantNote='';
  modal('<form data-f="mSave">'+mHead(visitor?'Informar placar':'Editar resultado',esc(ph.name)+' · '+esc(r.title))+
-  '<input type="hidden" name="id" value="'+m.id+'"><input type="hidden" name="rev" value="'+(m.rev||0)+'">'+statusInput+
+  '<input type="hidden" name="id" value="'+m.id+'"><input type="hidden" name="rev" value="'+(m.rev||0)+'">'+statusInput+(visitor?byField(m):'')+
   '<div class="score-list">'+scoreFields+'</div>'+participantNote+'<p class="note">'+(m.bo===1?'Partida única: o placar define o vencedor.':'Melhor de 3 partidas: a disputa termina quando uma dupla alcançar duas vitórias. A 3ª partida fica vazia se não for necessária.')+'</p>'+
   (locked?'<p class="note">Para corrigir um resultado encerrado, altere a situação para “Em andamento” e confirme a reabertura.</p>':'')+resExtras(m)+
   '<p class="err" role="alert"></p><div class="acts"><button type="button" class="pill ghost" data-a="closeM">Cancelar</button><button class="pill">Salvar</button></div></form>',{cls:'res',guard:true})};
@@ -1842,16 +1934,24 @@ F.mSave=async f=>{const x=findMatch(f.id.value);if(!x)return setErr(f,'Este conf
  const v=validateSets(readScore(f),m.bo);if(v.err)return setErr(f,v.err);
  let state=visitor?'done':f.elements.state.value;if(!visitor&&state==='live'&&v.winner&&(!canEdit()||(f.dataset.reopened!=='1'&&mStatus(m)!=='done'&&!hasSets(m))))state='done';const btn=f.querySelector('.acts button[type="submit"],.acts button:not([type])');if(btn?.disabled)return;
  if(state==='done'&&!v.winner)return setErr(f,'Informe o placar das duas duplas antes de encerrar a partida.');
- if(visitor){if(!r.allowLink||statusKey(c)==='done'||mStatus(m)==='done'||m.pending)return setErr(f,'Este placar não pode mais ser alterado pelo link. Procure o organizador.');
+ if(visitor){if(!linkOK(r)||statusKey(c)==='done'||(mStatus(m)==='done'&&!m.lq)||(m.pending&&!m.lq))return setErr(f,'Este placar não pode mais ser alterado pelo link. Procure o organizador.');
   if(!v.winner)return setErr(f,'Informe o placar das duas duplas antes de encerrar a partida.');
-  if(CLOUD){if(btn)btn.disabled=true;mut++;let res;
-   try{res=await rpc('gc_submit_score_link',{p_token:location.hash.split('/')[2],p_match_id:m.id,p_sets:v.sets,p_expected_rev:m.rev||0},true)}catch(e){if(btn)btn.disabled=false;return setErr(f,errTxt(e))}
+  const bw=f.by?f.by.value:'',both=!!c.confirmBoth,side=both&&(bw==='A'||bw==='B')?bw:null,by=bw==='A'?dl(T(m.a)):bw==='B'?dl(T(m.b)):bw==='o'&&!both?clean(f.byn.value).slice(0,40):'';
+  if(!by)return setErr(f,bw==='o'?'Informe o nome de quem está informando o placar.':'Informe quem está informando o placar.');if(bw==='o')try{localStorage.setItem('gc_byn',by)}catch(e){}
+  if(CLOUD){const tok=lkTok(),base=m.lq?m.lq.base:(m.rev||0),queue=()=>{lqAdd(tok,m,v.sets,by,base,side);closeModal(true);render();toast('Sem internet: placar guardado neste aparelho. Ele será enviado sozinho quando a conexão voltar.')};
+   if(m.lq||lk.off)return queue();
+   if(btn)btn.disabled=true;mut++;let res;
+   try{res=await rpc('gc_submit_score_link',{p_token:tok,p_match_id:m.id,p_sets:v.sets,p_expected_rev:base,p_by:by,p_side:side},true)}catch(e){if(btn)btn.disabled=false;if(!e.status){lk.off=true;return queue()}return setErr(f,errTxt(e))}
+   if(res.ok&&res.confirm){closeModal(true);try{await loadShared(tok)}catch(e){}render();return res.confirm==='divergente'?alertBox('Placares diferentes','A outra dupla informou um placar diferente deste. Os dois aparecem no confronto: confiram juntos e a dupla que errou corrige o seu. O placar vale assim que os dois forem iguais.'):toast('Placar registrado. Agora a outra dupla precisa informar o mesmo placar.')}
    mut++;if(!res.ok){applyRemote(m,res);if(btn)btn.disabled=false;render();return setErr(f,conflictMsg(m))}
    m.rev=res.rev;if(res.pending){m.pending={sets:v.sets,at:Date.now()};m.status='live'}else{m.sets=v.sets;m.status='done'}
    closeModal(true);render();return toast(res.pending?'Placar enviado. Aguardando aprovação do organizador.':'Placar salvo.')}
   m.rev=(m.rev||0)+1;
-  if(c.requireApproval){m.pending={sets:v.sets,at:Date.now()};m.status='live';save();closeModal(true);render();return toast('Placar enviado. Aguardando aprovação do organizador.')}
-  m.sets=v.sets;m.status='done';m.history.push({at:Date.now(),by:'link',sets:v.sets});save();closeModal(true);render();return toast('Placar salvo.')}
+  if(both){if(!side)return setErr(f,'Escolha qual dupla está informando o placar.');const cl={...(m.claims||{}),[side]:{sets:v.sets,at:Date.now(),by}},o=side==='A'?'B':'A';
+   if(!cl[o]||JSON.stringify(cl[o].sets)!==JSON.stringify(v.sets)){m.claims=cl;save();closeModal(true);render();return cl[o]?alertBox('Placares diferentes','A outra dupla informou um placar diferente deste. Confiram juntos e a dupla que errou corrige o seu.'):toast('Placar registrado. Agora a outra dupla precisa informar o mesmo placar.')}
+   m.claims=null}
+  if(c.requireApproval){m.pending={sets:v.sets,at:Date.now(),by};m.status='live';save();closeModal(true);render();return toast('Placar enviado. Aguardando aprovação do organizador.')}
+  m.sets=v.sets;m.status='done';m.history.push({at:Date.now(),by:'link · '+by,sets:v.sets});save();closeModal(true);render();return toast('Placar salvo.')}
  return commitScore(f,x,v.sets,state,btn)};
 async function resolvePending(id,ap){const x=findMatch(id);if(!x||!x.m.pending)return;const m=x.m;mut++;
  try{if(CLOUD){const r=await rpc('gc_resolve_pending',{p_match_id:m.id,p_approve:ap,p_expected_rev:m.rev||0});mut++;
@@ -1964,10 +2064,15 @@ function classPages(c,ph,fmtK){const all=ui.cls==='all'||!ph.groups.length,secs=
 
 /* --- Mata-mata: o chaveamento da tela é medido e redesenhado em branco; funciona com a chave em branco --- */
 // Fase usada no desenho: a real, se já tem rodadas; senão uma cópia provisória (nunca gravada) só com a estrutura.
-function bracketPhase(c,ph){if(ph.rounds.length)return ph;const i=c.phases.indexOf(ph),pv=c.phases[i-1],a=pv&&pv.advance;let n=ph.teamIds.length;
- if(n<2&&a)n=a.mode==='total'||!pv.groups.length?Math.floor(+a.total||0):pv.groups.reduce((s,g)=>s+Math.max(0,Math.floor(+(a.byGroup?.[g.id]??a.total)||0)),0);if(n<2)return null;
- const tmp=newPhase(1,'elim');tmp.name=ph.name;tmp.bo=ph.bo;tmp.em=ph.em;tmp.teamIds=Array.from({length:n},(_,k)=>'?vaga'+k);const pl=elimPlan(tmp,tmp.em==='bye'?'bye':'all');if(pl.alert)return null;
- const r=newRound(pl.title);r.slots=pl.pairs.map(([p,q])=>{if(!q)return{t:p};const m=newMatch(p,q,tmp.bo);r.matches.push(m);return{m:m.id}});r.byes=pl.pairs.filter(z=>!z[1]).map(z=>z[0]);tmp.rounds=[r];elimBuild(tmp);return tmp}
+// Vagas que a fase vai receber da anterior, na MESMA ordem e com a MESMA origem que a finalização usa (phaseQualifiers / qualifierOrigins).
+function phaseSlots(c,ph){const i=c.phases.indexOf(ph),pv=c.phases[i-1],a=pv&&pv.advance;if(!a)return[];const out=[],add=(lab,o)=>{const id='?'+ph.id+':'+out.length;SLOTT[id]={id,name:lab,players:[],active:true,transfers:[],slot:true};out.push({id,o})};
+ if(a.mode!=='total'&&pv.groups.length)pv.groups.forEach((g,gi)=>{const q=Math.max(0,Math.floor(+(a.byGroup?.[g.id]??a.total)||0));for(let k=1;k<=q;k++)add(k+'º '+g.name,{pos:k,g:gi+1,gn:g.name})});
+ else{const q=Math.max(0,Math.floor(+a.total||0));for(let k=1;k<=q;k++)add(k+'º '+(pv.groups.length?'geral':'da '+pv.name),{pos:k,g:0,gn:''})}
+ return out.length>=2?out:[]}
+function bracketPhase(c,ph){if(ph.rounds.length)return ph;let ids=ph.teamIds,org=ph.origin;
+ if(ids.length<2){const sl=phaseSlots(c,ph);if(!sl.length)return null;ids=sl.map(x=>x.id);org=Object.fromEntries(sl.map(x=>[x.id,x.o]))}
+ const tmp=newPhase(1,'elim');tmp.name=ph.name;tmp.bo=ph.bo;tmp.em=ph.em;tmp.teamIds=[...ids];tmp.origin=org||{};const pl=elimPlan(tmp,tmp.em==='bye'?'bye':'all');if(pl.alert)return null;
+ const r=newRound(pl.title);r.id='?r'+ph.id;let mi=0;r.slots=pl.pairs.map(([p,q])=>{if(!q)return{t:p};const m=newMatch(p,q,tmp.bo);m.id='?m'+ph.id+':'+(mi++);r.matches.push(m);return{m:m.id}});r.byes=pl.pairs.filter(z=>!z[1]).map(z=>z[0]);tmp.rounds=[r];elimBuild(tmp);return tmp}
 function bracketCanvas(c,ph){const src=bracketPhase(c,ph);if(!src)return null;const host=document.createElement('div');host.style.cssText='position:absolute;left:-30000px;top:0;width:max-content;background:#fff';
  host.innerHTML=bracketHTML(src,false);document.body.appendChild(host);
  try{const br=host.querySelector('.bracket');if(!br)return null;br.style.cssText='overflow:visible;border:0;padding:0;width:max-content;background:#fff';drawBracket();
@@ -2037,8 +2142,8 @@ function vTelao(c,ro){cur.c=c;const ph=c.phases.find(p=>p.status!=='done'&&p.tea
 // Ajusta o conteúdo ao tamanho da tela (amplia numa TV grande, reduz num celular), sem barra de rolagem.
 function fitTelao(){const b=document.getElementById('tvBody');if(!b)return;const st=b.parentElement,cs=getComputedStyle(st),aw=st.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight),ah=st.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);
  b.style.transform='none';b.style.margin='0';b.style.width='1280px';const lc=[...b.querySelectorAll('.br-col')].pop(),w=lc?lc.offsetLeft+lc.offsetWidth:Math.max(1280,b.scrollWidth),h=b.scrollHeight||1,sc=Math.min(aw/w,ah/h,2.6);b.style.width=w+'px';b.style.transform='scale('+sc+')';b.style.marginLeft=Math.max(0,(aw-w*sc)/2)+'px';b.style.marginTop=Math.max(0,(ah-h*sc)/2)+'px'}
-A.tvOpen=()=>{const h=location.hash.replace(/^#\/?/,'').split('/');ui.tv.i=0;ui.tv.pause=false;location.hash='#/'+h[0]+'/'+h[1]+'/telao';try{const d=document.documentElement;d.requestFullscreen&&d.requestFullscreen().catch(()=>{})}catch(e){}};
-A.tvExit=()=>{const h=location.hash.replace(/^#\/?/,'').split('/');try{document.fullscreenElement&&document.exitFullscreen().catch(()=>{})}catch(e){}location.hash='#/'+h[0]+'/'+h[1]+(h[0]==='c'?'/classificacao':'')};
+A.tvOpen=()=>{const h=location.hash.replace(/^#\/?/,'').split('/');ui.tv.i=0;ui.tv.pause=false;location.hash='#/'+h[0]+'/'+h[1]+(h[0]==='p'?'/'+h[2]:'')+'/telao';try{const d=document.documentElement;d.requestFullscreen&&d.requestFullscreen().catch(()=>{})}catch(e){}};
+A.tvExit=()=>{const h=location.hash.replace(/^#\/?/,'').split('/');try{document.fullscreenElement&&document.exitFullscreen().catch(()=>{})}catch(e){}location.hash='#/'+h[0]+'/'+h[1]+(h[0]==='p'?'/'+h[2]:'')+(h[0]==='c'?'/classificacao':'')};
 A.tvNext=()=>{ui.tv.i++;render()};A.tvPause=()=>{ui.tv.pause=!ui.tv.pause;render()};
 setInterval(()=>{if(/\/telao$/.test(location.hash)&&document.querySelector('.tv')&&!ui.tv.pause&&!stack.length&&!document.hidden){ui.tv.i++;render()}},12000);
 const BRLOCK=new Set(['addRound','addMatch','rDel','mDel']);
@@ -2073,3 +2178,4 @@ render();
 </script>
 </body>
 </html>
+
