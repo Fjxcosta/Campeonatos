@@ -1804,6 +1804,8 @@ function advSimText(c,p,f){const next=c.phases[c.phases.indexOf(p)+1];if(!next||
  else{const g=next.groups.length;t+=g>1?(n%g?'Os '+g+' grupos já criados ficarão desiguais ('+(n%g)+' com '+(Math.floor(n/g)+1)+' e '+(g-n%g)+' com '+Math.floor(n/g)+').':'Ficam '+(n/g)+' dupla(s) em cada um dos '+g+' grupos já criados.'):'Em grupo único, todos contra todos dá '+(n*(n-1)/2)+' confronto(s).'}
  return t}
 A.advSim=(d,el)=>{const f=el.closest('form'),s=f&&f.querySelector('#advSim'),p=f&&cur.c.phases.find(x=>x.id===f.id.value);if(s&&p)s.innerHTML=advSimText(cur.c,p,f)};
+const advCount=ph=>{const a=ph&&ph.advance;if(!a)return 0;return a.mode==='total'||!ph.groups.length?(+a.total||0):ph.groups.reduce((s,g)=>s+(+(a.byGroup||{})[g.id]||0),0)};
+function phIn(c,i){const ph=c.phases[i];if(!ph)return 0;if(ph.teamIds.length||i===0)return ph.teamIds.length;const n=advCount(c.phases[i-1]);return n>0?n:phIn(c,i-1)}
 function phaseEditorHTML(p,c){const idx=p?c.phases.indexOf(p):c.phases.length,next=c.phases[idx+1],lock=!!(p&&phMatches(p).length&&!p.formatMigrationConflict),adv=p?.advance||{mode:'group',total:0,byGroup:{}};
  const grouped=!!(p&&p.groups.length),mode=grouped&&adv.mode!=='total'?'group':'total',migrationMessages=[...(p?.migrationConflicts||[])];if(p?.formatMigrationConflict)migrationMessages.push('As partidas históricas usam formatos diferentes. Escolha o formato central para as novas partidas; os resultados antigos serão mantidos.');const migrationNote=migrationMessages.length?'<p class="note"><b>Revisão necessária:</b> '+migrationMessages.map(esc).join('<br>')+' Confira e salve a configuração centralizada.</p>':'';
  const advance=next&&p?'<section class="box" style="margin-top:14px"><h2>Classificação para '+esc(next.name)+'</h2>'+
@@ -1828,9 +1830,10 @@ F.fSave=async f=>{const c=cur.c,n=clean(f.n.value),p=c.phases.find(x=>x.id===f.i
  let advance=p?JSON.parse(JSON.stringify(p.advance||{mode:p.groups.length?'group':'total',total:0,byGroup:{}})):{mode:'total',total:0,byGroup:{}};
  const next=c.phases[idx+1];
  if(p&&next){const grouped=p.groups.length>0;advance.mode=grouped&&f.advMode?.value==='group'?'group':'total';advance.byGroup=advance.byGroup||{};
-  if(advance.mode==='total'){const raw=(f.advTotal?.value||'').trim();if(!/^\d+$/.test(raw)||+raw<1)return setErr(f,'Informe uma quantidade inteira e positiva de duplas classificadas.');if(p.teamIds.length&&+raw>p.teamIds.length)return setErr(f,'A quantidade classificada não pode superar o total de duplas elegíveis.');advance.total=+raw}
+  if(advance.mode==='total'){const raw=(f.advTotal?.value||'').trim();if(!/^\d+$/.test(raw)||+raw<1)return setErr(f,'Informe uma quantidade inteira e positiva de duplas classificadas.');const inN=phIn(c,idx);if(inN&&+raw>inN)return setErr(f,(p.teamIds.length?'A quantidade classificada não pode superar o total de duplas elegíveis ('+inN+').':'A '+p.name+' vai receber '+inN+' dupla'+(inN>1?'s':'')+'. Não é possível classificar '+raw+' para a '+next.name+'.'));advance.total=+raw}
   else{const assigned=new Set(p.groups.flatMap(g=>g.teamIds)),unassigned=p.teamIds.filter(id=>!assigned.has(id));if(unassigned.length)return setErr(f,'Distribua todas as duplas em grupos antes de configurar a classificação por grupo.');for(const g of p.groups){const el=f.elements['adv_'+g.id],raw=el?(el.value||'').trim():'';if(!/^\d+$/.test(raw)||+raw<1)return setErr(f,'Informe uma quantidade inteira e positiva para o grupo '+g.name+'.');const eligible=g.teamIds.filter(id=>p.teamIds.includes(id)).length;if(+raw>eligible)return setErr(f,'O grupo '+g.name+' não possui essa quantidade de duplas elegíveis.');advance.byGroup[g.id]=+raw}advance.total=Math.max(0,Math.floor(+advance.total||0))}
-  if((advance.mode==='total'?advance.total:p.groups.reduce((a,g)=>a+(advance.byGroup[g.id]||0),0))<2)return setErr(f,'A fase seguinte precisa receber pelo menos 2 duplas. Aumente a quantidade de classificados.');
+  const outN=advance.mode==='total'?advance.total:p.groups.reduce((a,g)=>a+(advance.byGroup[g.id]||0),0);if(outN<2)return setErr(f,'A fase seguinte precisa receber pelo menos 2 duplas. Aumente a quantidade de classificados.');
+  {const nn=advCount(next);if(c.phases[idx+2]&&!next.teamIds.length&&nn>outN)return setErr(f,'A '+next.name+' está configurada para classificar '+nn+' duplas, mas vai receber só '+outN+'. Ajuste primeiro a classificação da '+next.name+'.')}
   const downstream=c.phases.slice(idx+1).filter(q=>q.rounds.length||q.status==='done'||q.status==='live');
   const old=p.advance||{},changed=JSON.stringify(old)!==JSON.stringify(advance);
   if(changed&&p.status==='done')return setErr(f,'Esta fase está finalizada. Reabra a fase antes de alterar os classificados.');
@@ -2411,4 +2414,3 @@ render();
 </script>
 </body>
 </html>
-
