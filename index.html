@@ -504,6 +504,7 @@ table.rk tr.qt .posb{background:#FFE08A;color:#5C4300}
 .hlp-steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}.hlp-steps li{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:#fff}
 .hlp-n{flex:none;width:26px;height:26px;border-radius:50%;background:#DDF5E3;color:#12683A;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center}.hlp-steps b{font-size:14px}.hlp-steps p{margin:2px 0 0;font-size:13px;color:var(--t2);line-height:1.45}
 .hlp-tip{display:flex;gap:8px;align-items:flex-start;margin-top:12px;background:#FFFBF0;border:1px solid #F2D49B;border-radius:12px;padding:10px 12px;font-size:13px;color:#5C4300;line-height:1.45}.hlp-tip svg{flex:none;width:16px;height:16px;margin-top:1px}
+.br-ghost{visibility:hidden;border:0!important;box-shadow:none!important;background:none!important;min-height:86px}
 </style>
 </head>
 <body>
@@ -1156,11 +1157,12 @@ function bracketHTML(ph,ro){if(!ph.rounds.length)return'<div class="center"><spa
  R.forEach((col,ri)=>{col.items.forEach((it,i)=>{it.k=key(it,ri);it.f=[];it.o=i;if(!ri)return;const P=R[ri-1].items,ents=it.m?(it.m.src||[{t:it.m.a},{t:it.m.b}]):[it.s.src?{m:it.s.src.m}:{t:it.s.t}];
    ents.forEach(e=>{if(!e)return;const p=e.m?P.find(q=>(q.m&&q.m.id===e.m)||(q.s.src&&q.s.src.m===e.m)):e.t?(P.find(q=>!q.m&&q.s.t===e.t)||P.find(q=>q.m&&winner(q.m)===e.t)):null;if(p)it.f.push(p)});
    if(it.f.length)it.o=it.f.reduce((a,p)=>a+p.o,0)/it.f.length});if(ri){col.items.sort((a,b)=>a.o-b.o);col.items.forEach((it,i)=>it.o=i)}});
+ const pre=R.length>1&&R[0].items.some(it=>it.m)&&R[0].items.some(it=>!it.m);if(pre)R[0].items.forEach(it=>{if(!it.m)it.ghost=true});
  const name=id=>id&&T(id)?esc(dl(T(id))):'<span class="ph">A definir</span>';
  const mb=(m,col,k,fk,sub)=>{const st=mStatus(m),w=winner(m),[va,vb]=shown(m),can=ro?(linkOK(col.r)&&statusKey(cur.c)!=='done'&&(st!=='done'||m.lq)&&m.a&&m.b&&(!m.pending||m.lq)&&teamOK(cur.c,m)):canScore(),act=ro?'mOpen':canEdit()?'mMenu':'mOpen',row=(id,v)=>'<div class="br-t'+(w?(w===id?' win':' lose'):'')+'"><span class="br-n">'+name(id)+'</span><span class="sbox">'+v+'</span></div>';
    return'<div class="br-m '+st+(sub?' third':'')+'" data-k="'+k+'" data-f="'+fk+'"'+(sub?' data-dash="1"':'')+'>'+(sub?'<div class="br-sub">'+sub+'</div>':'')+'<button class="br-hit" data-a="'+act+'" data-id="'+m.id+'" '+(can&&m.a&&m.b?'':'disabled')+' aria-label="Confronto: '+(m.a&&T(m.a)?esc(dl(T(m.a))):'a definir')+' contra '+(m.b&&T(m.b)?esc(dl(T(m.b))):'a definir')+'">'+row(m.a,va)+row(m.b,vb)+'</button><div class="br-foot"><span class="tag '+st+'">'+ST[st]+'</span>'+(m.lq?'<span class="tag lq">Aguardando envio</span>':m.pending?'<span class="tag pend">Aguardando aprovação</span>':claimTag(m))+(m.bo!==1?'<small>'+(setsTxt(m.sets)?'Partidas: '+esc(setsTxt(m.sets)):'Melhor de 3 partidas')+'</small>':'')+'</div></div>'};
  const tm=thirdOf(ph);
- const item=(it,col)=>{const fk=it.f.map(p=>p.k).join(' ');
+ const item=(it,col)=>{const fk=it.f.filter(p=>!p.ghost).map(p=>p.k).join(' ');if(it.ghost)return'<div class="br-m br-ghost" data-k="'+it.k+'" aria-hidden="true"></div>';
    if(ro&&col.r.hidden)return'<div class="br-m wait" data-k="'+it.k+'" data-f="'+fk+'"><div class="br-t"><span class="br-n"><span class="ph">Rodada oculta</span></span></div></div>';
    if(!it.m)return'<div class="br-m bye'+(it.s.t?' done':'')+'" data-k="'+it.k+'" data-f="'+fk+'"><div class="br-t'+(it.s.t?' win':'')+'"><span class="br-n">'+name(it.s.t)+'</span><small class="muted">avança direto</small></div></div>';
    return mb(it.m,col,it.k,fk,'')};
@@ -1324,7 +1326,7 @@ const HELP={
    ['Defina quem se classifica','<b>Configurações → Fases → Editar</b>: quantas duplas passam, por grupo ou na geral.'],
    ['Gere os jogos','Em <b>Classificação</b>, no painel <b>Jogos</b>: <b>GERAR PARTIDAS</b>.'],
    ['Lance e finalize','Lance os placares. No fim da fase, <b>FINALIZAR FASE</b>: os classificados vão sozinhos para a próxima fase.'],
-   ['Mata-mata e campeão','Gere o chaveamento da fase seguinte. Ao encerrar a final, o campeão e o Ranking Geral são atualizados.']],
+   ['Mata-mata e campeão','Ao finalizar a fase, o chaveamento da fase seguinte é montado sozinho: os melhores colocados folgam, se preciso, e o 1º e o 2º ficam em lados opostos. Ao encerrar a final, o campeão e o Ranking Geral são atualizados.']],
    tip:'Antes de gerar os jogos, a fase mata-mata já mostra uma prévia do chaveamento com as vagas (1º Grupo A, 2º Grupo B…).'},
   {k:'placar',t:'Lançar placares',i:()=>I.edit,d:'Como informar, corrigir e acompanhar os resultados.',s:[
    ['Abra o confronto','Em <b>Classificação → Jogos</b>, toque no placar do confronto e em <b>Editar resultado</b>.'],
@@ -1989,19 +1991,26 @@ const buildAll=()=>{let ch=false;db.champs.forEach(c=>c.phases.forEach(ph=>{if(e
 // Confrontos posteriores que dependem do vencedor de m e já têm placar.
 function elimDeps(ph,m){const out=[],seen=new Set([m.id]),all=phMatches(ph);let grow=true;while(grow){grow=false;for(const x of all){if(seen.has(x.id)||!x.src)continue;if(x.src.some(e=>e&&((e.m&&seen.has(e.m))||(e.l&&seen.has(e.l))))){seen.add(x.id);grow=true;if(hasSets(x)||x.pending)out.push(x)}}}return out}
 const bracketOrder=p=>{let o=[1];while(o.length<p)o=o.flatMap(x=>[x,2*o.length+1-x]);return o};
-const elimName=(ph,n)=>({2:'Final',4:'Semifinal',8:'Quartas de final',16:'Oitavas de final'})[n]||roundTitle(ph);
+const elimName=(ph,n)=>({2:'Final',4:'Semifinal',8:'Quartas de final',16:'Oitavas de final',32:'16-avos de final',64:'32-avos de final'})[n]||roundTitle(ph);
+// E: desenho espelhado — em cada ramo da chave, o bloco de baixo é invertido. Resultado: 1º no alto à esquerda, 2º embaixo à direita,
+// e cada dupla na posição espelhada da sua "par" do outro lado (os confrontos e o caminho até a final não mudam).
+const mirrorPairs=L=>{if(L.length<2)return L;const h=L.length/2;return mirrorPairs(L.slice(0,h)).concat(mirrorPairs(L.slice(h)).reverse())};
 // Monta (sem gravar) a próxima rodada do mata-mata: {pairs:[[a,b|null]], title, first, crossed, same} ou {alert:[título,msg]}.
 // mode 'bye' (padrão): chave de torneio; se a quantidade não fecha a chave, os melhores avançam direto.
 // mode 'all': todos jogam na primeira rodada — 1º × último, 2º × penúltimo, 3º × antepenúltimo…
 function elimPlan(ph,mode){
  if(!phMatches(ph).length){const n=ph.teamIds.length;if(n<2)return{alert:['Faltam duplas','Adicione pelo menos 2 duplas à fase (+ → Duplas) para gerar as partidas.']};
   const O=ph.origin||{},crossed=ph.teamIds.every(id=>O[id]),seedL=crossed?[...ph.teamIds].sort((a,b)=>O[a].pos-O[b].pos||O[a].g-O[b].g):shuffle(ph.teamIds);
-  let p=1;while(p<n)p*=2;const pow=p===n,all=mode==='all'&&!pow,pairs=[];
+  let p=1;while(p<n)p*=2;const pow=p===n,all=false;let pairs=[];
   if(all){const L=[...seedL];if(n%2)pairs.push([L.shift(),null]);for(let i=0;i<L.length/2;i++)pairs.push([L[i],L[L.length-1-i]])}
   else{const sl=bracketOrder(p).map(x=>seedL[x-1]||null);for(let i=0;i<p;i+=2)pairs.push(sl[i]?[sl[i],sl[i+1]]:[sl[i+1],null])}
   const multi=crossed&&new Set(ph.teamIds.map(id=>O[id].g)).size>1;
   if(multi)pairs.forEach((x,i)=>{if(x[1]&&O[x[0]].g===O[x[1]].g){const j=pairs.findIndex((y,k)=>k!==i&&y[1]&&O[x[0]].g!==O[y[1]].g&&O[y[0]].g!==O[x[1]].g);if(j>=0){const t=x[1];x[1]=pairs[j][1];pairs[j][1]=t}}});
-  return{first:true,crossed,pow,n,pairs,title:all?'1ª Rodada':elimName(ph,p),same:multi?pairs.filter(x=>x[1]&&O[x[0]].g===O[x[1]].g).length:0}}
+  if(crossed&&(pairs.length&(pairs.length-1))===0){const sd=id=>id?seedL.indexOf(id)+1:1e9,best=x=>Math.min(sd(x[0]),sd(x[1]));
+   if(pow||pairs.length<2)pairs=mirrorPairs(pairs);   // chave cheia: espelha os confrontos da 1ª rodada
+   else{const cards=[];for(let i=0;i<pairs.length;i+=2)cards.push([pairs[i],pairs[i+1]]);   // com preliminar: espelha os confrontos da rodada seguinte (ex.: oitavas)
+    pairs=mirrorPairs(cards).flatMap(cd=>best(cd[0])<=best(cd[1])?cd:[cd[1],cd[0]])}}   // e, dentro de cada confronto, o melhor classificado em cima
+  return{first:true,crossed,pow,n,pairs,title:pow?elimName(ph,p):'Fase preliminar',same:multi?pairs.filter(x=>x[1]&&O[x[0]].g===O[x[1]].g).length:0}}
  const last=ph.rounds[ph.rounds.length-1];if(!last.matches.length||!last.matches.every(m=>mStatus(m)==='done'))return{alert:['Rodada em andamento','Finalize todas as partidas da rodada atual para gerar a próxima.']};
  let parts=last.slots?last.slots.map(x=>x.t||(last.matches.find(m=>m.id===x.m)?winner(last.matches.find(m=>m.id===x.m)):null)):null;
  if(!parts||parts.some(x=>!x)||parts.length!==(last.byes||[]).length+last.matches.length)parts=[...(last.byes||[]),...last.matches.map(winner)];
@@ -2011,10 +2020,8 @@ function elimPlan(ph,mode){
  return{first:false,pairs,title}}
 let eplan;
 function elimDraw(){const ph=cur.ph,pl=eplan,O=ph.origin||{},lab=id=>pl.crossed?`<small class="muted">${O[id].pos}º${O[id].gn?' '+esc(O[id].gn):''}</small> `:'';
- const cnt=k=>{const x=elimPlan(ph,k).pairs;return[x.filter(y=>y[1]).length,x.filter(y=>!y[1]).length]},cb=pl.first&&!pl.pow?cnt('bye'):null,ca=cb?cnt('all'):null;
- const choice=cb?`<fieldset style="border:0;padding:0;margin:0 0 10px"><legend style="font-weight:600;font-size:14px;padding:0;margin-bottom:2px">Como montar a primeira rodada (${pl.n} duplas)</legend>
-  <label class="radio" style="align-items:flex-start"><input type="radio" name="em" value="all" data-c="elimMode" ${gen.em==='all'?'checked':''} style="margin-top:3px"><span><b>Todos jogam</b>: 1º × último, 2º × penúltimo, 3º × antepenúltimo…<br><small class="muted">${ca[0]} partida(s)${ca[1]?` · com número ímpar, ${pl.crossed?'o 1º colocado':'1 dupla'} avança direto`:''}. Nas rodadas seguintes, se sobrar número ímpar de duplas, avança direto quem ainda não folgou: ninguém folga duas vezes.</small></span></label>
-  <label class="radio" style="align-items:flex-start"><input type="radio" name="em" value="bye" data-c="elimMode" ${gen.em==='all'?'':'checked'} style="margin-top:3px"><span><b>Os melhores avançam direto</b> (chave de torneio)<br><small class="muted">${cb[1]} dupla(s) ${pl.crossed?'mais bem colocada(s) ':''}folgam na primeira rodada · ${cb[0]} partida(s). Depois a chave segue cheia até a final.</small></span></label></fieldset>`:'';
+ const cnt=k=>{const x=elimPlan(ph,k).pairs;return[x.filter(y=>y[1]).length,x.filter(y=>!y[1]).length]},cb=pl.first&&!pl.pow?cnt('bye'):null;
+ const choice=cb?`<p class="note"><b>Fase preliminar:</b> as ${cb[1]} dupla(s) ${pl.crossed?'mais bem classificadas ':''}folgam e entram direto na rodada seguinte; só ${cb[0]} confronto(s) entre as últimas colocadas são jogados para completar a chave.</p>`:'';
  const list=pl.first&&!pl.crossed?`<p class="note">As duplas não vieram da classificação de uma fase anterior, então os confrontos serão definidos por <b>sorteio</b> ao confirmar${pl.pairs.some(x=>!x[1])?`, e ${pl.pairs.filter(x=>!x[1]).length} dupla(s) avançarão direto`:''}. Para usar a colocação (1º contra o último classificado), use “Importar classificados da fase anterior” em + → Duplas.</p>`
   :`<ul class="rows">${pl.pairs.map(([a,b])=>b?`<li><span style="flex:1">${lab(a)}<b>${esc(dl(T(a)))}</b></span><span class="muted">×</span><span style="flex:1;text-align:right">${lab(b)}<b>${esc(dl(T(b)))}</b></span></li>`:`<li><span style="flex:1">${lab(a)}<b>${esc(dl(T(a)))}</b></span><span class="tag ok">avança direto</span></li>`).join('')}</ul>
   ${pl.crossed?`<p class="note">Confrontos pela colocação: o melhor colocado enfrenta o último classificado${Object.values(O).some(x=>x.g>0)?', sempre de outro grupo quando possível':''}.${pl.same?` <b class="neg">${pl.same} confronto(s) entre duplas do mesmo grupo não puderam ser evitados.</b>`:''}</p>`:''}`;
@@ -2023,11 +2030,14 @@ A.elimMode=(d,el)=>{gen.em=el.value==='all'?'all':'bye';const pl=elimPlan(cur.ph
 A.gen=()=>{const ph=cur.ph;
  if(ph.type==='pc'){if(phMatches(ph).length)return alertBox('Partidas já geradas','Esta fase já possui partidas. Para evitar duplicação ou perda de resultados, use “Adicionar Rodada” ou “Adicionar Partida”.');return genDialog()}
  if(phMatches(ph).length)return alertBox('Chaveamento já gerado','As rodadas seguintes já existem e são preenchidas automaticamente conforme os resultados. Para refazer o chaveamento, enquanto não houver resultados, use “REFAZER CHAVEAMENTO”.');
- gen={em:ph.em==='bye'?'bye':'all'};const pl=elimPlan(ph,gen.em);if(pl.alert)return alertBox(pl.alert[0],pl.alert[1]);eplan=pl;
+ gen={em:'bye'};const pl=elimPlan(ph,gen.em);if(pl.alert)return alertBox(pl.alert[0],pl.alert[1]);eplan=pl;
  modal(`<div id="elimB"></div><div class="acts"><button class="pill ghost" data-a="closeM">Cancelar</button><button class="pill" data-a="elimGo" id="genGo">Gerar partidas</button></div>`,{cls:'wide'});elimDraw()};
+function elimCreate(ph,pl){if(pl.first){ph.rounds=[];ph.em='bye'}const r=newRound(pl.title);r.slots=pl.pairs.map(([a,b])=>{if(!b)return{t:a};const m=newMatch(a,b,ph.bo);r.matches.push(m);return{m:m.id}});r.byes=pl.pairs.filter(x=>!x[1]).map(x=>x[0]);
+ ph.rounds.push(r);ph.expectedPairs=phMatches(ph).filter(m=>m.a&&m.b).map(m=>[m.a,m.b]);elimBuild(ph);ph.status='live';ui.round[ph.id]=r.id;return r}
+// D: ao finalizar a fase anterior, o mata-mata já sai montado (igual à prévia)
+function elimAuto(ph){if(!ph||ph.type!=='elim'||phMatches(ph).length||ph.teamIds.length<2)return false;const pl=elimPlan(ph,'bye');if(pl.alert||!pl.first)return false;elimCreate(ph,pl);return true}
 A.elimGo=()=>{const ph=cur.ph,pl=eplan;closeModal(true);if(!pl)return;const chk=elimPlan(ph,gen.em);if(chk.alert||chk.first!==pl.first||chk.pairs.length!==pl.pairs.length)return render();
- if(pl.first){ph.rounds=[];ph.em=gen.em}const r=newRound(pl.title);r.slots=pl.pairs.map(([a,b])=>{if(!b)return{t:a};const m=newMatch(a,b,ph.bo);r.matches.push(m);return{m:m.id}});r.byes=pl.pairs.filter(x=>!x[1]).map(x=>x[0]);
- ph.rounds.push(r);ph.expectedPairs=phMatches(ph).filter(m=>m.a&&m.b).map(m=>[m.a,m.b]);elimBuild(ph);ph.status='live';ui.round[ph.id]=r.id;eplan=null;save();render();
+ const r=elimCreate(ph,pl);eplan=null;save();render();
  toast(pl.first?(pl.crossed?(pl.same?`Chave montada pela colocação. Atenção: ${pl.same} confronto(s) do mesmo grupo não puderam ser evitados.`:'Chave montada pela colocação: melhor contra pior classificado.'):'Chave montada por sorteio.')+(r.byes.length?` ${r.byes.length} dupla(s) avançam direto.`:'')+` Chaveamento completo: ${ph.rounds.length} rodada(s) até a final.`:`${r.title} gerada (${BOT[ph.bo].toLowerCase()}).`)};
 A.brReset=async()=>{const c=cur.c,ph=cur.ph;if(hasRes(ph))return alertBox('Não é possível refazer','O chaveamento já possui resultados.');if(!await confirmBox({title:'Refazer chaveamento',msg:'Todas as rodadas desta fase (ainda sem resultados) serão removidas para você gerar o chaveamento de novo.',ok:'Refazer',danger:true}))return;ph.rounds=[];ph.expectedPairs=[];delete ui.round[ph.id];phaseAudit(c,ph,'reset-bracket',{summary:'Chaveamento refeito antes de qualquer resultado.'});save();render()};
 A.rEdit=()=>{const r=cur.r;if(!r)return toast('Nenhuma rodada selecionada.','err');
@@ -2058,11 +2068,12 @@ async function finalizePhase(c,ph){const v=phaseCompletion(ph,c);if(!v.scheduleV
   const ok=await confirmBox({title:'Alteração nas fases dependentes',msg:'A nova classificação altera os participantes ou a ordem de avanço da '+esc(next.name)+'. Para atualizar corretamente, as rodadas e os confrontos das fases dependentes serão removidos, inclusive resultados existentes, que serão arquivados na auditoria.<ul>'+details+'</ul>Deseja confirmar a reconstrução?',ok:'Sim, excluir e atualizar',cancel:'Não, cancelar',danger:true});
   if(!ok){ph.promptedSig=sig;save();return false}archive=clearDependentPhases(c,i,ids)}
  if(next){next.teamIds=[...ids];next.origin=qualifierOrigins(ph,ids);if(!needsRebuild)next.groups.forEach(g=>g.teamIds=g.teamIds.filter(id=>ids.includes(id)))}
+ const autoBr=next&&next.type==='elim'?elimAuto(next):false;
  ph.status='done';ph.finalizedSnapshot={ids:[...ids],signature:sig,at:Date.now(),by:userName()};ph.promptedSig=sig;
  if(!next){c.result={champion:finalInfo.champion||null,vice:finalInfo.vice||null,third:finalInfo.third||null,fourth:finalInfo.fourth||null,phaseId:ph.id,finalizedAt:Date.now(),by:userName()};c.status='done'}else{if(c.status==='done')c.status='live';delete c.result;const LP=c.phases[c.phases.length-1];if(!needsRebuild&&c.phases.slice(i+1).every(q=>q.status==='done')){const fi=phaseFinalInfo(LP);if(!fi.error&&!(fi.ties||[]).length&&fi.champion){c.result={champion:fi.champion,vice:fi.vice||null,third:fi.third||null,fourth:fi.fourth||null,phaseId:LP.id,finalizedAt:Date.now(),by:userName()};c.status='done'}}};
  phaseAudit(c,ph,next?'finalize-phase':'finalize-championship',{summary:next?'Fase finalizada e classificados transferidos.':'Campeonato finalizado.',qualified:[...ids],champion:finalInfo?.champion||null,vice:finalInfo?.vice||null,archive});
  save();if(CLOUD){await flushWs();if(ws.dirty||ws.state==='err'){toast('Finalização pendente de confirmação do Supabase. Confira o indicador de sincronização antes de continuar.','err');return false}}
- closeModal(true);render();toast(next?'Fase finalizada. Classificados transferidos para '+next.name+'.':'Campeonato finalizado. Campeã identificada.');return true}
+ closeModal(true);render();toast(next?'Fase finalizada. Classificados transferidos para '+next.name+(autoBr?' e chaveamento montado.':'.'):'Campeonato finalizado. Campeã identificada.');return true}
 function finalizeAsk(c,ph){const next=c.phases[c.phases.indexOf(ph)+1],title=next?'Finalizar '+ph.name+'?':'Finalizar campeonato?',msg=next?'Todos os confrontos da '+esc(ph.name)+' foram encerrados. Deseja finalizar esta fase e transferir automaticamente os classificados para '+esc(next.name)+'?':'Todas as partidas da fase final foram encerradas. Deseja confirmar o resultado final e finalizar o campeonato?';return confirmBox({title,msg,ok:next?'Sim, finalizar fase':'Sim, finalizar campeonato',cancel:'Não'})}
 A.phFinish=async d=>{const c=cur.c,ph=c.phases.find(p=>p.id===d.id);if(!ph||!canEdit())return;if(tmOn(c)&&!isMaster())return alertBox('Só o master','Neste campeonato (lançamento pelas duplas), só o master finaliza ou reabre fases.');const v=phaseCompletion(ph,c);if(!v.scheduleValid)return alertBox('Não é possível finalizar',v.issues.map(esc).join('<br>'));if(v.ties.length){tieModal(c,ph,v.ties[0]);return}
  if(!await finalizeAsk(c,ph))return;await finalizePhase(c,ph)};
@@ -2293,7 +2304,7 @@ function phaseSlots(c,ph){const i=c.phases.indexOf(ph),pv=c.phases[i-1],a=pv&&pv
  return out.length>=2?out:[]}
 function bracketPhase(c,ph){if(ph.rounds.length)return ph;let ids=ph.teamIds,org=ph.origin;
  if(ids.length<2){const sl=phaseSlots(c,ph);if(!sl.length)return null;ids=sl.map(x=>x.id);org=Object.fromEntries(sl.map(x=>[x.id,x.o]))}
- const tmp=newPhase(1,'elim');tmp.name=ph.name;tmp.bo=ph.bo;tmp.em=ph.em;tmp.teamIds=[...ids];tmp.origin=org||{};const pl=elimPlan(tmp,tmp.em==='bye'?'bye':'all');if(pl.alert)return null;
+ const tmp=newPhase(1,'elim');tmp.name=ph.name;tmp.bo=ph.bo;tmp.em=ph.em;tmp.teamIds=[...ids];tmp.origin=org||{};const pl=elimPlan(tmp,'bye');if(pl.alert)return null;
  const r=newRound(pl.title);r.id='?r'+ph.id;let mi=0;r.slots=pl.pairs.map(([p,q])=>{if(!q)return{t:p};const m=newMatch(p,q,tmp.bo);m.id='?m'+ph.id+':'+(mi++);r.matches.push(m);return{m:m.id}});r.byes=pl.pairs.filter(z=>!z[1]).map(z=>z[0]);tmp.rounds=[r];elimBuild(tmp);return tmp}
 function bracketCanvas(c,ph){const src=bracketPhase(c,ph);if(!src)return null;const host=document.createElement('div');host.style.cssText='position:absolute;left:-30000px;top:0;width:max-content;background:#fff';
  host.innerHTML=bracketHTML(src,false);document.body.appendChild(host);
