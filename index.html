@@ -2384,6 +2384,7 @@ function classPages(c,ph,fmtK){const all=ui.cls==='all'||!ph.groups.length,secs=
 // Vagas que a fase vai receber da anterior, na MESMA ordem e com a MESMA origem que a finalização usa (phaseQualifiers / qualifierOrigins).
 function phaseSlots(c,ph){const i=c.phases.indexOf(ph),pv=c.phases[i-1],a=pv&&pv.advance;if(!a)return[];const out=[],add=(lab,o)=>{const id='?'+ph.id+':'+out.length;SLOTT[id]={id,name:lab,players:[],active:true,transfers:[],slot:true};out.push({id,o})};
  if(a.mode!=='total'&&pv.groups.length)pv.groups.forEach((g,gi)=>{const q=Math.max(0,Math.floor(+(a.byGroup?.[g.id]??a.total)||0));for(let k=1;k<=q;k++)add(k+'º '+g.name,{pos:k,g:gi+1,gn:g.name})});
+ else if(a.mode!=='total'&&+(pv.plan&&pv.plan.groups)>1){const pg=+pv.plan.groups,q=Math.max(0,Math.floor(+a.total||0));for(let gi=0;gi<pg;gi++){const gn='Grupo '+(gi<26?String.fromCharCode(65+gi):gi+1);for(let k=1;k<=q;k++)add(k+'º '+gn,{pos:k,g:gi+1,gn})}}
  else{const q=Math.max(0,Math.floor(+a.total||0));for(let k=1;k<=q;k++)add(k+'º '+(pv.groups.length?'geral':'da '+pv.name),{pos:k,g:0,gn:''})}
  return out.length>=2?out:[]}
 function bracketPhase(c,ph){if(ph.rounds.length)return ph;let ids=ph.teamIds,org=ph.origin;
