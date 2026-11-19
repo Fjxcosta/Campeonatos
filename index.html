@@ -373,7 +373,11 @@ table.rk tbody tr:nth-child(odd) td,table.rk tbody tr:nth-child(odd) td.tot{back
 table.rk tbody tr:nth-child(even) td,table.rk tbody tr:nth-child(even) td.tot{background:#F3F5F4!important}
 table.rk tbody tr:hover td,table.rk tbody tr:hover td.tot{background:var(--sel)!important}
 table.rk tr.q .posb{background:#DDF5E3;color:#12683A;box-shadow:inset 0 0 0 1.5px #8FD9A8}
-table.rk tr.qt .posb{background:#FFE08A;color:#5C4300}
+table.rk tr.qt .posb{background:#DBEAFE;color:#1E3A8A;box-shadow:inset 0 0 0 1.5px #93B4F0}
+.rk .pe{font-weight:600}.rk .pe.low{color:#B42318;background:#FDECEC;border-radius:6px;padding:2px 6px}
+.rkmin,.rktie{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 10px}.rkmin{flex-wrap:nowrap;align-items:flex-start}.rkmin svg{margin-top:2px}.rkmin svg{width:18px;height:18px;flex:none;color:var(--g1)}.rktie{background:#EEF4FF;border:1px solid #C9DAFB;border-radius:10px;padding:10px 12px}.rktie span{flex:1;min-width:200px}
+.pban{display:flex;gap:12px;align-items:flex-start;border-radius:12px;padding:12px 14px;margin:4px 0 14px;background:#EEF7F1;border:1px solid #CFE8D8}.pban svg{width:20px;height:20px;flex:none;margin-top:2px;color:#12683A}.pban p{margin:4px 0}.pban small{display:block;color:#5B6472;margin-top:2px}
+.pban.low{background:#FFF4F2;border-color:#F6CFC9}.pban.low svg{color:#B42318}
 
 /* cada jogador e cada dupla em um card próprio */
 .cols3{column-gap:14px}
@@ -505,6 +509,9 @@ table.rk tr.qt .posb{background:#FFE08A;color:#5C4300}
 .hlp-n{flex:none;width:26px;height:26px;border-radius:50%;background:#DDF5E3;color:#12683A;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center}.hlp-steps b{font-size:14px}.hlp-steps p{margin:2px 0 0;font-size:13px;color:var(--t2);line-height:1.45}
 .hlp-tip{display:flex;gap:8px;align-items:flex-start;margin-top:12px;background:#FFFBF0;border:1px solid #F2D49B;border-radius:12px;padding:10px 12px;font-size:13px;color:#5C4300;line-height:1.45}.hlp-tip svg{flex:none;width:16px;height:16px;margin-top:1px}
 .br-ghost{visibility:hidden;border:0!important;box-shadow:none!important;background:none!important;min-height:86px}
+.cfgerr{margin:6px 0 4px 18px;padding:0;display:grid;gap:4px}
+.shbox{border:1px solid #E1E5EA;border-radius:14px;padding:12px 14px;margin:0 0 12px}.shh{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px}.shh svg{width:20px;height:20px;flex:none;color:var(--g1);margin-top:2px}.shh small{display:block;color:#5B6472;margin-top:2px}
+.shrow{display:flex;gap:8px;align-items:center}.shrow .inp{flex:1;min-width:0;font-size:13px}.shbox .lnk{background:none;border:0;padding:8px 0 0;color:#5B6472;text-decoration:underline;font-size:13px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -572,7 +579,7 @@ function setDb(d){d=d&&typeof d==='object'?d:{};db=Object.assign({},d);
  db.user=d.user&&typeof d.user==='object'?d.user:{};db.user.name=String(db.user.name||'Organizador');db.user.email=String(db.user.email||'');
  db.audit=arr(d.audit);
  const st=d.settings&&typeof d.settings==='object'?d.settings:{},num=(v,def,lo,hi)=>{v=+v;return isFinite(v)?Math.min(hi,Math.max(lo,v)):def};
- db.settings={ppw:3,pct:num(st.pct,30,0,100),slots:num(st.slots,8,1,64),minT:num(st.minT,0,0,99)};
+ db.settings={ppw:3,pct:num(st.pct,30,0,100),slots:num(st.slots,8,1,64),minT:num(st.minT,0,0,99),minP:num(st.minP,0,0,100),ties:st.ties&&typeof st.ties==='object'&&!Array.isArray(st.ties)?st.ties:{}};
  db.players=arr(d.players).filter(x=>x&&x.id&&typeof x.name==='string');const pid=new Set(db.players.map(x=>x.id));
  db.teams=arr(d.teams).filter(t=>t&&t.id);db.teams.forEach(t=>{t.name=String(t.name||'');t.players=[...new Set(arr(t.players).filter(id=>pid.has(id)))].slice(0,2);t.transfers=arr(t.transfers).filter(x=>x&&isFinite(+x.points));t.active=t.active!==false});
  const tid=new Set(db.teams.map(t=>t.id));
@@ -928,20 +935,44 @@ function computeRanking(st){
  if(st.mode==='d'){list=db.teams.filter(t=>t.players.length===2||rows.has(t.id)).map(t=>{const r=row(t.id);r.name=dl(t);r.active=t.active&&t.players.length===2;
    if(st.champ==='all'){r.tr=(t.transfers||[]).filter(x=>st.season==='all'||String(x.season)===String(st.season)).reduce((a,x)=>a+x.points,0);r.total+=r.tr}return r})}
  else list=db.players.map(p=>{const r=row(p.id);r.name=p.name;r.active=true;return r});
- const srt=(a,b)=>b.total-a.total||b.v-a.v||b.pg-a.pg||a.j-b.j||a.name.localeCompare(b.name);
- const act=list.filter(r=>r.active).sort(srt),ina=list.filter(r=>!r.active).sort(srt);
+ // Participação (só no ranking de uma temporada, com todos os torneios): etapas encerradas que o jogador disputou, com qualquer parceiro.
+ // Na dupla vale o MENOR percentual entre os dois jogadores: a dupla só concorre à vaga se os dois atingem o mínimo.
+ const seasonV=st.champ==='all'&&st.season!=='all',enc=seasonV?tours.filter(c=>statusKey(c)==='done'):[],EN=enc.length,minP=seasonV&&!st.noMin?(+db.settings.minP||0):0,pcache={};
+ const pcount=pid=>pcache[pid]??(pcache[pid]=enc.filter(c=>champTeams(c).some(tid=>{const t=T(tid);return t&&t.players.includes(pid)})).length);
+ list.forEach(r=>{r.places=[0,0,0,0];tours.forEach(c=>{const k=r.per[c.id];if(k&&k.place)r.places[k.place-1]++});if(!seasonV)return;
+  const ps=st.mode==='d'?(T(r.id)?.players||[]):[r.id];r.parts=ps.map(p=>({p,n:pcount(p)}));r.pn=r.parts.length?Math.min(...r.parts.map(x=>x.n)):0;r.en=EN;r.pe=EN?r.pn/EN*100:null;
+  r.el=!minP||!EN||(r.parts.length>0&&r.parts.every(x=>x.n*100>=minP*EN))});
+ // confronto direto entre os empatados (só jogos entre eles, nos torneios considerados)
+ const h2h=ids=>{const S=new Set(ids),w={};ids.forEach(id=>w[id]=0);for(const c of tours)for(const ph of c.phases)for(const m of phMatches(ph)){const ta=T(m.a),tb=T(m.b);if(!ta||!tb)continue;const ea=ents(ta).filter(x=>S.has(x)),eb=ents(tb).filter(x=>S.has(x));if(!ea.length||!eb.length)continue;
+   for(const g of resultGames(ph,m))(g.winner===m.a?ea:eb).forEach(x=>w[x]++)}return w};
+ const base=(a,b)=>((b.el!==false)-(a.el!==false))||b.total-a.total||b.v-a.v;
+ const rest=(a,b)=>b.h2-a.h2||b.dp-a.dp||b.places[0]-a.places[0]||b.places[1]-a.places[1]||b.places[2]-a.places[2]||b.places[3]-a.places[3]||(b.pe||0)-(a.pe||0);
+ const order=L=>{L.sort(base);for(let i=0;i<L.length;){let j=i+1;while(j<L.length&&!base(L[i],L[j]))j++;const run=L.slice(i,j);if(run.length>1){const w=h2h(run.map(r=>r.id));run.forEach(r=>r.h2=w[r.id])}else run[0].h2=0;
+   run.sort((a,b)=>rest(a,b)||a.name.localeCompare(b.name));L.splice(i,run.length,...run);i=j}return L};
+ const act=order(list.filter(r=>r.active)),ina=order(list.filter(r=>!r.active));
  act.forEach((r,i)=>r.pos=i+1);ina.forEach(r=>r.pos=null);
- if(st.mode==='d'&&st.champ==='all'&&st.season!=='all'){const E=act.filter(r=>Object.keys(r.per).length>=db.settings.minT&&(r.j>0||r.tr>0)),n=db.settings.slots,key=r=>[r.total,r.v,r.pg,r.j].join('|');
-  if(E.length<=n)E.forEach(r=>r.q=true);else{const k=key(E[n-1]);if(k===key(E[n]))E.forEach((r,i)=>{if(key(r)===k)r.qt=true;else if(i<n)r.q=true});else E.slice(0,n).forEach(r=>r.q=true)}}
- return{tours,list:st.inactive?[...act,...ina]:act}}
+ if(st.mode==='d'&&seasonV){const E=act.filter(r=>r.el!==false&&(r.j>0||r.tr>0)),n=db.settings.slots,key=r=>[r.total,r.v,r.h2,r.dp,r.places.join(','),r.pn].join('|');
+  if(E.length<=n)E.forEach(r=>r.q=true);else{const k=key(E[n-1]);if(k===key(E[n])){const tied=E.filter(r=>key(r)===k),above=E.filter((r,i)=>i<n&&key(r)!==k),spots=n-above.length,sig=tied.map(r=>r.id).sort().join(',')+'|'+spots,dec=(db.settings.ties||{})[st.season];
+    above.forEach(r=>r.q=true);if(dec&&dec.sig===sig&&Array.isArray(dec.win)&&dec.win.length===spots){tied.forEach(r=>{if(dec.win.includes(r.id)){r.q=true;r.qd=true}else r.qx=true})}else tied.forEach(r=>{r.qt=true;r.tsig=sig;r.tspots=spots})}
+   else E.slice(0,n).forEach(r=>r.q=true)}}
+ return{tours,list:st.inactive?[...act,...ina]:act,enc:EN,minP,seasonV}}
+const PEH='Participação: etapas encerradas da temporada que o jogador disputou, com qualquer parceiro';
 const RKH=[['P','Partidas'],['V','Vitórias'],['D','Derrotas'],['PP','Pontos pró (pontos ganhos)'],['PC','Pontos contra (pontos sofridos)'],['DP','Diferença de pontos (saldo)']];
-function rankHTML(st){const{tours,list}=computeRanking(st),q=norm(st.q),rows=list.filter(r=>!q||norm(r.name).includes(q));
+const pctTxt=r=>r.pe==null?'':Math.floor(r.pe)+'%';
+const partTip=r=>!r.parts?'':r.parts.map(x=>(r.parts.length>1?(P(x.p)?.name||'?')+': ':'')+x.n+' de '+r.en+' etapa'+(r.en===1?'':'s')+' encerrada'+(r.en===1?'':'s')+' ('+(r.en?Math.floor(x.n/r.en*100):0)+'%)').join(' · ');
+const needN=(minP,E)=>{let k=0;while(k<E&&k*100<minP*E)k++;return k};
+function rankHTML(st){const{tours,list,enc,minP,seasonV}=computeRanking(st),q=norm(st.q),rows=list.filter(r=>!q||norm(r.name).includes(q));
  const d=`data-mode="${st.mode}" data-season="${st.season}"`;
  if(!rows.length)return`<p class="empty">${st.mode==='d'?'Nenhuma dupla encontrada. Forme duplas com dois jogadores em Cadastro de equipes.':'Nenhum jogador encontrado.'}</p>`;
- return`<div class="tw"><table class="rk"><thead><tr><th>Pos.</th><th class="l">${st.mode==='d'?'Dupla':'Jogador'}</th>${RKH.map(([a,t])=>`<th title="${t}"><abbr title="${t}">${a}</abbr></th>`).join('')}${tours.map(c=>`<th class="rkt" title="Pontos no torneio ${esc(c.name)}"><span>${esc(c.name)}</span></th>`).join('')}<th title="Total de pontos"><abbr title="Total de pontos">TP</abbr></th></tr></thead><tbody>${
- rows.map(r=>`<tr class="${r.q?'q':r.qt?'qt':''}"><td><span class="posb blue" title="${r.q?'Classificada para o torneio final':r.qt?'Empate na última vaga: depende do desempate':''}">${r.pos?r.pos+'º':'—'}</span></td><td class="l"><button class="name" data-a="rkTot" data-id="${r.id}" data-champ="${st.champ}" ${d} title="Ver o histórico de torneios">${esc(r.name)}</button> ${r.active?'':'<span class="tag off">Inativa</span>'}</td><td>${r.j}</td><td>${r.v}</td><td>${r.d}</td><td>${r.pg}</td><td>${r.pc}</td><td>${r.dp}</td>${
+ const tbl=`<div class="tw"><table class="rk"><thead><tr><th>Pos.</th><th class="l">${st.mode==='d'?'Dupla':'Jogador'}</th>${RKH.map(([a,t])=>`<th title="${t}"><abbr title="${t}">${a}</abbr></th>`).join('')}${seasonV?`<th title="${PEH}"><abbr title="${PEH}">%E</abbr></th>`:''}${tours.map(c=>`<th class="rkt" title="Pontos no torneio ${esc(c.name)}"><span>${esc(c.name)}</span></th>`).join('')}<th title="Total de pontos"><abbr title="Total de pontos">TP</abbr></th></tr></thead><tbody>${
+ rows.map(r=>`<tr class="${r.q?'q':r.qt?'qt':''}"><td><span class="posb" title="${r.qd?'Classificada no jogo de desempate':r.q?'Classificada para o torneio final':r.qt?'Empate na última vaga: as duplas em azul disputam uma partida de desempate':r.el===false?'Abaixo da participação mínima':''}">${r.pos?r.pos+'º':'—'}</span></td><td class="l"><button class="name" data-a="rkTot" data-id="${r.id}" data-champ="${st.champ}" ${d} title="Ver o histórico de torneios">${esc(r.name)}</button> ${r.active?'':'<span class="tag off">Inativa</span>'}</td><td>${r.j}</td><td>${r.v}</td><td>${r.d}</td><td>${r.pg}</td><td>${r.pc}</td><td>${r.dp}</td>${seasonV?`<td><span class="pe${r.el===false?' low':''}" title="${esc(partTip(r))}">${pctTxt(r)||'—'}</span></td>`:''}${
   tours.map(c=>`<td>${r.per[c.id]?`<button class="cellb" data-a="rkCell" data-id="${r.id}" data-cid="${c.id}" ${d}>${r.per[c.id].pts+(r.per[c.id].bonus||0)}</button>`:'—'}</td>`).join('')
- }<td class="tot"><button class="cellb" data-a="rkTot" data-id="${r.id}" data-champ="${st.champ}" ${d}>${fmt(r.total)}</button></td></tr>`).join('')}</tbody></table></div><p class="rkleg">${RKH.map(([a,t])=>`<b>${a}</b> ${t}`).join(' · ')} · <b>TP</b> Total de pontos</p>`}
+ }<td class="tot"><button class="cellb" data-a="rkTot" data-id="${r.id}" data-champ="${st.champ}" ${d}>${fmt(r.total)}</button></td></tr>`).join('')}</tbody></table></div><p class="rkleg">${RKH.map(([a,t])=>`<b>${a}</b> ${t}`).join(' · ')}${seasonV?' · <b>%E</b> Participação nas etapas encerradas'+(st.mode==='d'?' (o menor percentual entre os dois jogadores)':''):''} · <b>TP</b> Total de pontos</p>`;
+ const top=seasonV&&minP?`<p class="note rkmin">${I.info}<span>Para classificar à mesa final, <b>cada jogador</b> precisa ter jogado pelo menos <b>${minP}%</b> das etapas encerradas${enc?` (hoje: <b>${needN(minP,enc)} de ${enc}</b>)`:' (nenhuma etapa encerrada ainda)'}.</span></p>`:'';
+ const tied=list.filter(r=>r.qt),dec=list.filter(r=>r.qd);
+ const tie=st.mode!=='d'||!seasonV?'':tied.length?`<div class="note rktie"><span><b>Empate na última vaga.</b> As duplas em azul (${tied.map(r=>esc(r.name)).join(', ')}) disputam ${tied[0].tspots>1?tied[0].tspots+' vagas':'a vaga'} numa partida de desempate.</span>${!visitor&&isMaster()?`<button class="pill sm" data-a="rkTie" data-season="${esc(st.season)}">Lançar desempate</button>`:''}</div>`
+  :dec.length?`<div class="note rktie"><span><b>Desempate da última vaga:</b> ${dec.map(r=>esc(r.name)).join(', ')} venceu${dec.length>1?'ram':''}${(db.settings.ties[st.season]||{}).score?' ('+esc(db.settings.ties[st.season].score)+')':''}.</span>${!visitor&&isMaster()?`<button class="pill ghost sm" data-a="rkTie" data-season="${esc(st.season)}">Alterar</button>`:''}</div>`:'';
+ return top+tie+tbl}
 
 /* ===================== Interface base ===================== */
 function toast(msg,type){const t=document.createElement('div');t.className='toast '+(type||'');t.textContent=msg;document.getElementById('toasts').appendChild(t);setTimeout(()=>t.remove(),3800)}
@@ -1044,7 +1075,7 @@ function seasons(){return[...new Set([String(new Date().getFullYear()),...db.cha
 // Explica, no rodapé do ranking, por que nenhuma dupla aparece como classificada (quando for o caso).
 function rkWhy(s){if(s.mode!=='d')return'';if(s.season==='all')return' <b>Em “Histórico geral” não há classificados: escolha uma temporada.</b>';if(s.champ!=='all')return' <b>Com um torneio só selecionado não há classificados: escolha “Todos”.</b>';
  const L=computeRanking({...s,q:'',inactive:false}).list;if(L.some(r=>r.q||r.qt))return'';const played=L.filter(r=>r.j>0||r.tr>0);if(!played.length)return'';
- const mx=Math.max(...played.map(r=>Object.keys(r.per).length));return db.settings.minT>mx?' <b>Nenhuma dupla aparece como classificada porque o mínimo exigido é de '+db.settings.minT+' torneio(s) e as duplas disputaram no máximo '+mx+'. Ajuste em Meu usuário → “Mínimo de torneios disputados para classificar”.</b>':''}
+ return played.every(r=>r.el===false)?' <b>Nenhuma dupla aparece como classificada porque nenhuma atinge a participação mínima de '+db.settings.minP+'%. Ajuste em Meu usuário → “Participação mínima para classificar”.</b>':''}
 // Painel "Colocações dos Torneios": um card por campeonato oficialmente finalizado, respeitando os filtros do ranking.
 function podiumHTML(s){const cs=db.champs.filter(c=>statusKey(c)==='done'&&c.result&&(s.season==='all'||String(c.season)===s.season)&&(s.champ==='all'||c.id===s.champ)).sort((a,b)=>when(b)-when(a));
  const at=`data-mode="${s.mode}" data-season="${s.season}" data-champ="all"`,who=tid=>{const t=tid&&T(tid);if(!t)return'<span class="muted">Não definido</span>';return s.mode==='d'?`<button class="name" data-a="rkTot" data-id="${t.id}" ${at}>${esc(dl(t))}</button>`:t.players.map(p=>`<button class="name" data-a="rkTot" data-id="${p}" ${at}>${esc(P(p)?.name||'?')}</button>`).join('<span class="muted">/</span>')};
@@ -1061,7 +1092,7 @@ function vRank(){const s=ui.rk;if(s.champ!=='all'&&!db.champs.some(c=>c.id===s.c
  ${s.mode==='d'?`<label class="chk" style="flex-direction:row;margin-top:18px"><input type="checkbox" data-a="rkIna" ${s.inactive?'checked':''}>Mostrar duplas inativas</label>`:''}</div>
  <div id="rkBody">${rankHTML(s)}</div>
  ${podiumHTML(s)}
- <p class="note">${s.mode==='d'?`No Ranking Geral, cada partida vencida vale 3 pontos e a derrota vale 0, em pontos corridos e no mata-mata. Ao finalizar o campeonato, somam-se os bônus de colocação: 1º 15 · 2º 9 · 3º 6 · 4º 3. As ${db.settings.slots} melhores duplas ativas da temporada${db.settings.minT>0?`, com pelo menos ${db.settings.minT} torneio(s) disputado(s),`:''} aparecem com o quadrado da posição em verde-claro (classificadas para o torneio final); as demais ficam em azul. Quadrado amarelo indica empate na última vaga.${rkWhy(s)} Clique em um valor para ver o detalhamento.`:'No ranking individual cada jogador recebe os 3 pontos por partida vencida e o bônus integral da colocação da sua dupla (sem dividir com o parceiro). Não inclui pontos transferidos. Clique em um nome ou valor para ver o detalhamento.'}</p>`}
+ <p class="note">${s.mode==='d'?`No Ranking Geral, cada partida vencida vale 3 pontos e a derrota vale 0, em pontos corridos e no mata-mata. Ao finalizar o campeonato, somam-se os bônus de colocação: 1º 15 · 2º 9 · 3º 6 · 4º 3. As ${db.settings.slots} melhores duplas ativas da temporada${db.settings.minP>0?`, entre as que atingem a participação mínima (${db.settings.minP}% das etapas encerradas, para cada jogador),`:''} aparecem com o quadrado da posição em verde (classificadas para a mesa final). Quadrado azul: empate na última vaga, decidido numa partida de desempate. As demais ficam em cinza.${db.settings.minP>0?' Quem está abaixo da participação mínima fica depois de quem atinge, mesmo com mais pontos.':''} Empate em pontos: vitórias → confronto direto → saldo de pontos → melhor colocação em etapa → participação.${rkWhy(s)} Clique em um valor para ver o detalhamento.`:'No ranking individual cada jogador recebe os 3 pontos por partida vencida e o bônus integral da colocação da sua dupla (sem dividir com o parceiro). Não inclui pontos transferidos.'+(db.settings.minP>0&&s.season!=='all'&&s.champ==='all'?' Quem está abaixo da participação mínima ('+db.settings.minP+'%) fica depois de quem atinge.':'')+' Clique em um nome ou valor para ver o detalhamento.'}</p>`}
 function usersHTML(){if(!CLOUD)return'<h2 style="margin-top:26px">Usuários e permissões</h2><p class="note">Disponível quando o sistema está ligado ao banco.</p>';
  return`<h2 style="margin-top:26px">Usuários e permissões</h2><p class="note">Cada pessoa entra com o nome de usuário e a senha que você definir aqui, sem precisar de e-mail. Você (master) continua entrando com o seu e-mail.</p>
  <div class="tw"><table><thead><tr><th class="l">Nome</th><th class="l">Usuário</th><th>Perfil</th><th>Caixa</th><th></th></tr></thead><tbody>
@@ -1079,7 +1110,8 @@ function vUser(){const s=db.settings,who=`<p class="muted">${CLOUD?`Conectado co
  <p class="note"><b>Pontos por vitória:</b> no Ranking Geral, toda vitória vale 3 pontos e a derrota vale 0, em qualquer fase. Na tabela de classificação de uma fase de pontos corridos, a vitória também vale 3; o mata-mata não tem tabela, só o chaveamento.</p>
  <label class="field"><span>Percentual transferido na troca de dupla (%)</span><input class="inp" name="pct" type="number" min="0" max="100" value="${s.pct}" required></label>
  <label class="field"><span>Vagas no torneio final (duplas)</span><input class="inp" name="slots" type="number" min="1" max="64" value="${s.slots}" required></label>
- <label class="field"><span>Mínimo de torneios disputados para classificar</span><input class="inp" name="minT" type="number" min="0" max="99" value="${s.minT}" required></label>
+ <label class="field"><span>Participação mínima para classificar à mesa final (%)</span><input class="inp" name="minP" type="number" min="0" max="100" value="${s.minP}" required></label>
+ <p class="note" style="margin-top:-6px">Cada jogador da dupla precisa ter disputado pelo menos esse percentual das etapas já encerradas na temporada, com qualquer parceiro. 0 = sem exigência. Ex.: 70% com 4 etapas encerradas exige 3.</p>
  <p class="err" role="alert"></p><div class="acts" style="justify-content:flex-start"><button class="pill">Salvar alterações</button></div></form>
  ${usersHTML()}
  <h2 style="margin-top:26px">Cópia de segurança</h2><p class="note">${CLOUD?'Os dados ficam no banco (Supabase). Exportar um arquivo de vez em quando continua sendo uma boa garantia.':'Os dados ficam salvos apenas neste navegador. Exporte um arquivo regularmente.'}</p>
@@ -1144,7 +1176,7 @@ function phaseAudit(c,ph,operation,details={}){const e={id:uid(),at:Date.now(),b
 function dependencySummary(ph){const ms=phMatches(ph);return{phaseId:ph.id,phaseName:ph.name,participants:[...ph.teamIds],status:ph.status,rounds:ph.rounds.map(r=>({id:r.id,title:r.title,byes:[...(r.byes||[])],rest:[...(r.rest||[])],matches:r.matches.map(m=>({...m,sets:[...(m.sets||[])],history:arr(m.history).map(h=>({...h}))}))})),groups:ph.groups.map(g=>({...g,teamIds:[...g.teamIds]})),expectedPairs:ph.expectedPairs||[],results:ms.filter(hasConfirmedResult).length}}
 function clearDependentPhases(c,fromIndex,qualified){const archived=[];for(let i=fromIndex+1;i<c.phases.length;i++){const p=c.phases[i];archived.push(dependencySummary(p));p.teamIds=i===fromIndex+1?[...qualified]:[];p.groups.forEach(g=>g.teamIds=[]);p.rounds=[];p.expectedPairs=[];p.status='prep';p.origin={};p.seeds=[];p.drawn=false;delete p.finalizedSnapshot;delete p.promptedSig;delete p.finalDecision;p.qualifierDecisions={}}return archived}
 function tieModal(c,ph,tie){cur.ph=ph;const common='<input type="hidden" name="type" value="'+tie.type+'"><input type="hidden" name="key" value="'+esc(tie.key)+'">';let body='';if(tie.type==='qualifier')body='<p>Empate na última vaga. Selecione exatamente '+tie.slots+' dupla(s). A escolha ficará registrada com responsável e horário.</p><div class="rows">'+tie.candidates.map(id=>'<label class="chk"><input type="checkbox" name="ids" value="'+id+'"><span>'+esc(dl(T(id)))+'</span></label>').join('')+'</div><input type="hidden" name="slots" value="'+tie.slots+'">';else{const sel=(name,label,ids,chosen)=>'<label class="field"><span>'+label+'</span><select name="'+name+'" style="width:100%">'+ids.map(id=>'<option value="'+id+'" '+(chosen===id?'selected':'')+'>'+esc(dl(T(id)))+'</option>').join('')+'</select></label>';body='<p>Os critérios mantêm empate na classificação final. Registre a decisão administrativa para definir a colocação.</p>'+sel('champ','Dupla campeã',tie.champions,tie.champions[0])+sel('vice','Dupla vice-campeã',tie.runnerUps,tie.runnerUps.find(id=>id!==tie.champions[0])||tie.runnerUps[0])}modal('<form data-f="tieSave">'+mHead('Resolver empate',esc(tie.label))+common+body+'<p class="err" role="alert"></p><div class="acts"><button type="button" class="pill ghost" data-a="closeM">Cancelar</button><button class="pill">Registrar decisão</button></div></form>',{cls:'gray',guard:true})}
-const qualTxt=ph=>{const a=ph.advance||{};if(a.mode==='total'||!ph.groups.length)return(a.total||0)+' no total';const v=ph.groups.map(g=>+(a.byGroup?.[g.id]??a.total)||0);return new Set(v).size===1?v[0]+' por grupo':ph.groups.map((g,i)=>g.name+': '+v[i]).join(', ')};
+const qualTxt=ph=>{const a=ph.advance||{};if(a.mode!=='total'&&!ph.groups.length&&+(ph.plan&&ph.plan.groups)>1)return(a.total||0)+' por grupo';if(a.mode==='total'||!ph.groups.length)return(a.total||0)+' no total';const v=ph.groups.map(g=>+(a.byGroup?.[g.id]??a.total)||0);return new Set(v).size===1?v[0]+' por grupo':ph.groups.map((g,i)=>g.name+': '+v[i]).join(', ')};
 
 // Zona de classificação: sempre a mesma função da finalização (phaseQualifiers); vale igual em "Por grupo" e "Geral".
 function qualState(ph){const none={ok:new Set(),pend:new Set(),on:false};if(!hasNextPhase(ph)||!phMatches(ph).some(m=>mStatus(m)==='done'))return none;const q=phaseQualifiers(ph);if(q.errors.length)return none;return{ok:new Set(q.ids),pend:new Set(q.ties.flatMap(t=>t.candidates)),on:true}}
@@ -1323,7 +1355,7 @@ const HELP={
    ['Crie o campeonato','Em <b>Meus campeonatos</b>, toque no <b>+</b> e escolha o formato (grupos, mata-mata ou os dois).'],
    ['Escolha as duplas','No campeonato: <b>Configurações → Duplas → Editar</b> e marque quem vai jogar.'],
    ['Monte os grupos','<b>Configurações → Grupos</b>: quantidade de grupos, cabeças de chave e sorteio.'],
-   ['Defina quem se classifica','<b>Configurações → Fases → Editar</b>: quantas duplas passam, por grupo ou na geral.'],
+   ['Defina quem se classifica','<b>Configurações → Fases → Editar</b>: quantas duplas passam, por grupo ou na geral. Nas fases seguintes de pontos corridos, escolha também quantos grupos: as duplas são divididas sozinhas em ziguezague.'],
    ['Gere os jogos','Em <b>Classificação</b>, no painel <b>Jogos</b>: <b>GERAR PARTIDAS</b>.'],
    ['Lance e finalize','Lance os placares. No fim da fase, <b>FINALIZAR FASE</b>: os classificados vão sozinhos para a próxima fase.'],
    ['Mata-mata e campeão','Ao finalizar a fase, o chaveamento da fase seguinte é montado sozinho: os melhores colocados folgam, se preciso, e o 1º e o 2º ficam em lados opostos. Ao encerrar a final, o campeão e o Ranking Geral são atualizados.']],
@@ -1397,6 +1429,17 @@ function helpModal(){const kind=visitor?'vis':'adm',c=cur.c,team=!!(c&&c.teamMod
 const A={},F={};
 const VIS=new Set(['help','helpTab','bindQ','bindAll','bindPick','bindYes','bindWrong','bindWatch','bindBack','byPick','lqSync','lqConf','lqDismiss','pvTab','rkSet','rkMode','rkQ','rkIna','pwEye','tvOpen','tvExit','tvNext','tvPause','tGames','clsView','retry','closeM','vTab','vMode','mOpen','rkCell','rkTot','selPhase','selRound']);
 A.closeM=()=>closeModal();
+A.rkTie=d=>{const season=d.season,L=computeRanking({season,champ:'all',mode:'d',q:'',inactive:false}).list,tied=L.filter(r=>r.qt),dl0=L.filter(r=>r.qd||r.qx),cur0=(db.settings.ties||{})[season];
+ const C2=tied.length?tied:dl0;if(!C2.length)return alertBox('Sem empate','Não há empate na última vaga desta temporada.');const spots=tied.length?tied[0].tspots:cur0.win.length,sig=tied.length?tied[0].tsig:cur0.sig;
+ modal(`<form data-f="rkTieSave">${mHead('Partida de desempate','Temporada '+esc(season))}<input type="hidden" name="season" value="${esc(season)}"><input type="hidden" name="sig" value="${esc(sig)}"><input type="hidden" name="spots" value="${spots}">
+ <p>Empate em todos os critérios na última vaga. Marque ${spots>1?'as <b>'+spots+'</b> duplas que venceram':'a dupla que <b>venceu</b>'} a partida de desempate.</p>
+ <div class="rows">${C2.map(r=>`<label class="chk"><input type="checkbox" name="ids" value="${r.id}" ${r.qd?'checked':''}><span>${esc(r.name)} <small class="muted">${fmt(r.total)} pts</small></span></label>`).join('')}</div>
+ <label class="field"><span>Placar (opcional)</span><input class="inp" name="score" maxlength="30" value="${esc(cur0&&cur0.sig===sig?cur0.score||'':'')}" placeholder="Ex.: 12 x 9"></label>
+ <p class="note">O desempate não soma pontos no ranking; só define quem fica com a vaga. Se os pontos mudarem depois, o empate é recalculado e esta decisão deixa de valer.</p>
+ <p class="err" role="alert"></p><div class="acts">${cur0?'<button type="button" class="pill ghost" data-a="rkTieDel" data-season="'+esc(season)+'" style="margin-right:auto">Remover desempate</button>':''}<button type="button" class="pill ghost" data-a="closeM">Cancelar</button><button class="pill">Salvar</button></div></form>`)};
+F.rkTieSave=f=>{const ids=[...f.querySelectorAll('input[name=ids]:checked')].map(x=>x.value),n=+f.spots.value;if(ids.length!==n)return setErr(f,'Marque exatamente '+n+' dupla'+(n>1?'s':'')+'.');
+ db.settings.ties=db.settings.ties||{};db.settings.ties[f.season.value]={sig:f.sig.value,win:ids,score:clean(f.score.value),by:userName(),at:Date.now()};save();closeModal(true);render();toast('Desempate registrado.')};
+A.rkTieDel=async d=>{if(!await confirmBox({title:'Remover desempate',msg:'As duplas voltam a aparecer empatadas (em azul). Continuar?',ok:'Remover',danger:true}))return;delete db.settings.ties[d.season];save();while(stack.length)closeModal(true);render();toast('Desempate removido.')};
 A.help=()=>helpModal();A.helpTab=d=>{ui.helpTab=d.v;helpModal()};
 A.lkRefresh=()=>lkFetch(cur.c,true);
 A.cpTab=d=>{ui.cpTab=d.v;const el=document.getElementById('lkPanels');if(el)el.innerHTML=lkPanelsIn(cur.c)};
@@ -1546,7 +1589,10 @@ A.rkTot=d=>{const st={season:d.season,champ:d.champ,mode:d.mode,q:'',inactive:tr
  const teamIn=c=>d.mode==='d'?d.id:champTeams(c).find(tid=>T(tid)&&T(tid).players.includes(d.id)),partner=c=>{const t=T(teamIn(c));return t?(t.players.filter(x=>x!==d.id).map(x=>P(x)?.name||'?').join(' / ')||'—'):'—'};
  const place=c=>{if(statusKey(c)!=='done')return'Em andamento';const k=r.per[c.id];if(k.place)return PLL[k.place-1];const tid=teamIn(c),g=(champTiers(c)||[]).find(z=>z.includes(tid)),p=champPlace(c,tid);return p?p+'º lugar'+(g&&g.length>1?' (empate)':''):'—'},bn=c=>r.per[c.id].bonus||0,sumB=played.reduce((a,c)=>a+bn(c),0);
  const kp=(l,v)=>`<div class="kpi" style="min-width:0;flex:1"><small>${l}</small><b>${v}</b></div>`;
- modal(`${mHead('Detalhamento da pontuação',esc(r.name))}
+ let pban='';if(r.parts&&r.en){const mp=+db.settings.minP||0,low=r.parts.filter(x=>x.n*100<mp*r.en);
+  if(mp&&low.length&&r.active){const pp=computeRanking({...st,inactive:false,noMin:true}).list.find(x=>x.id===r.id);pban=`<div class="pban low">${I.alert}<div><b>Fora da zona de classificação por participação</b><p>${pp&&pp.pos&&pp.pos!==r.pos?`Pelos pontos ${d.mode==='d'?'esta dupla':'este jogador'} estaria em <b>${pp.pos}º</b>. Está em <b>${r.pos}º</b> porque `:'Não concorre à vaga porque '}${low.map(x=>`<b>${esc(P(x.p)?.name||'?')}</b> jogou <b>${x.n} de ${r.en}</b> etapas encerradas (${Math.floor(x.n/r.en*100)}%)`).join(' e ')}. O mínimo para classificar é <b>${mp}%</b>.</p><small>${esc(partTip(r))}</small><small>A participação é recalculada a cada etapa encerrada.</small></div></div>`}
+  else pban=`<div class="pban">${HI.check}<div><b>Participação: ${esc(partTip(r))}</b>${mp?`<small>Mínimo para classificar: ${mp}% das etapas encerradas.</small>`:''}</div></div>`}
+ modal(`${mHead('Detalhamento da pontuação',esc(r.name))}${pban}
  <div class="kpis" style="margin:6px 0 14px">${kp('TRANSFERIDOS',fmt(r.tr))}${kp('TORNEIOS',played.length)}${kp('PONTOS CONQUISTADOS',fmt(r.total-r.tr))}${kp('TOTAL ATUAL',fmt(r.total))}</div>
  <h2>Histórico de participação nos torneios</h2>
  ${played.length?`<div class="tw"><table class="cls" id="rkHist"><thead><tr><th class="l">Torneio</th><th>Temporada</th><th class="l">${d.mode==='i'?'Dupla / Parceiro':'Dupla'}</th><th>Colocação</th><th title="Partidas disputadas">J</th><th title="Vitórias">V</th><th title="Derrotas">D</th><th title="Pontos conquistados nas partidas (3 por vitória)">Pontos</th><th title="Bônus pela colocação final">Bônus</th><th>Total</th></tr></thead><tbody>${
@@ -1558,7 +1604,7 @@ A.rkTot=d=>{const st={season:d.season,champ:d.champ,mode:d.mode,q:'',inactive:tr
 
 /* ----- usuário / backup ----- */
 F.uSave=f=>{const n=clean(f.name.value);if(!n)return setErr(f,'Informe o nome.');
- db.user={name:n,email:clean(f.email.value)};db.settings={ppw:3,pct:Math.min(100,Math.max(0,+f.pct.value||0)),slots:Math.max(1,+f.slots.value||8),minT:Math.max(0,+f.minT.value||0)};
+ db.user={name:n,email:clean(f.email.value)};db.settings={ppw:3,pct:Math.min(100,Math.max(0,+f.pct.value||0)),slots:Math.max(1,+f.slots.value||8),minT:db.settings.minT||0,minP:Math.min(100,Math.max(0,Math.floor(+f.minP.value||0))),ties:db.settings.ties||{}};
  save();render();toast('Dados salvos. Os rankings foram recalculados.')};
 A.bkExp=()=>download(new Blob([JSON.stringify(db,null,1)],{type:'application/json'}),'campeonatos_backup_'+new Date().toISOString().slice(0,10)+'.json');
 A.bkImp=()=>{const i=document.createElement('input');i.type='file';i.accept='.json,application/json';i.onchange=async()=>{let d;try{d=JSON.parse(await i.files[0].text());
@@ -1670,9 +1716,15 @@ A.cDel=async()=>{const c=cur.c;if(!await confirmBox({title:'Excluir campeonato',
  db.champs=db.champs.filter(x=>x!==c);save();location.hash='#/campeonatos'};
 const shareUrl=c=>location.href.split('#')[0]+'#/s/'+c.shareToken;
 let shC=null;
-function shareModal(c=cur.c){if(!c)return;shC=c;modal(`${mHead('Compartilhar',esc(c.name))}<label class="field"><span>Link exclusivo</span><input class="inp" id="shUrl" readonly value="${esc(shareUrl(c))}" style="font-size:13px"></label>
- <p class="note">Quem tiver este link pode ver os jogos e lançar placares, sem login. Trate-o como uma senha.<br>${CLOUD?'':'<b>No modo local os dados ficam só neste navegador, então o link não funciona em outros aparelhos.</b>'}</p>
- <div class="acts"><button class="pill ghost" data-a="shNew">Gerar novo link</button><button class="pill" data-a="shCopy" autofocus>Copiar link</button></div>`)}
+function shareModal(c=cur.c){if(!c)return;shC=c;if(!db.portalToken||String(db.portalToken).length<32){db.portalToken=mkToken();save()}
+ modal(`${mHead('Compartilhar',esc(c.name))}
+ <div class="shbox"><div class="shh">${HI.eye}<div><b>Para assistir</b><small>Família, amigos e telão. Só visualização: ninguém lança placar nem vincula celular.</small></div></div>
+  <div class="shrow"><input class="inp" id="shWatch" readonly value="${esc(portalUrl()+'/'+c.id)}" aria-label="Link para assistir"><button class="pill" data-a="shCopy" data-t="shWatch">Copiar</button></div></div>
+ <div class="shbox"><div class="shh">${I.edit}<div><b>Para lançar placar</b><small>Só para os jogadores. Por este link se informa placar${c.teamMode?' e se vincula o celular à dupla':''}, sem login. Trate-o como uma senha.</small></div></div>
+  <div class="shrow"><input class="inp" id="shUrl" readonly value="${esc(shareUrl(c))}" aria-label="Link para lançar placar"><button class="pill" data-a="shCopy" data-t="shUrl">Copiar</button></div>
+  <button class="lnk" data-a="shNew">Gerar novo link de lançamento</button></div>
+ <p class="note">O link para assistir abre direto neste campeonato e também mostra os outros campeonatos e o Ranking geral.${CLOUD?'':' <b>No modo local os dados ficam só neste navegador, então os links não funcionam em outros aparelhos.</b>'}</p>
+ <div class="acts"><button class="pill ghost" data-a="closeM">Fechar</button></div>`)}
 A.share=d=>shareModal(d&&d.id?C(d.id):cur.c);
 // Link geral: uma página pública com a lista de TODOS os campeonatos; cada cartão abre o link próprio do campeonato.
 const portalUrl=()=>location.href.split('#')[0]+'#/p/'+db.portalToken;
@@ -1694,7 +1746,7 @@ function vPortal(tk,okp){const top=`<header class="top">${I.trophy}<span>Campeon
  else{const list=[...db.champs].sort((a,b)=>b.createdAt-a.createdAt);body=list.length?`<div class="cards">${list.map(c=>`<div class="card"><a class="go" href="#/p/${esc(tk)}/${esc(c.id)}"><span class="trophy">${I.trophy}</span><span><b>${esc(c.name)}</b><small>${champStatus(c)} · Temporada ${esc(c.season||'')} · ${champTeams(c).length} dupla(s)${c.isFinal?' · Torneio final':''}</small></span></a><a class="ibtn" href="#/p/${esc(tk)}/${esc(c.id)}" aria-label="Abrir ${esc(c.name)}">${I.chev}</a></div>`).join('')}</div>`:'<p class="empty">Nenhum campeonato publicado ainda. Assim que o organizador criar um, ele aparece aqui automaticamente.</p>'}
  return top+`<div class="vis"><div class="vtabs">${tab('list','Campeonatos')}${tab('rank','Ranking geral')}${tab('pod','Colocações')}</div>${body}</div>`}
 A.pvTab=d=>{ui.pv=d.v;render()};
-A.shCopy=async()=>{const i=document.getElementById('shUrl');try{await navigator.clipboard.writeText(i.value)}catch(e){i.select();document.execCommand('copy')}toast('Link copiado.')};
+A.shCopy=async d=>{const i=document.getElementById((d&&d.t)||'shUrl');try{await navigator.clipboard.writeText(i.value)}catch(e){i.select();document.execCommand('copy')}toast('Link copiado.')};
 A.shNew=async()=>{if(!await confirmBox({title:'Gerar novo link',msg:'O link atual deixará de funcionar imediatamente. Continuar?',ok:'Gerar novo link',danger:true}))return;const c=shC&&C(shC.id);if(!c)return;c.shareToken=mkToken();save();closeModal(true);shareModal(c);toast('Novo link gerado.')};
 A.selPhase=(d,el)=>{ui.phase[cur.c.id]=el.value;render()};
 A.selRound=(d,el)=>{ui.round[cur.ph.id]=el.value;render()};
@@ -1778,7 +1830,7 @@ A.gSave=()=>{const ph=cur.ph,el=stack[stack.length-1].ov;let groups=[];
   if(ph.teamIds.length&&groups.some(g=>!g.teamIds.length))return setErr(el,'Há grupos vazios. Reduza a quantidade ou redistribua as duplas.')}
  const sig=g=>JSON.stringify(g.map(x=>[...x.teamIds].sort()));
  if(phMatches(ph).length&&sig(groups)!==sig(ph.groups))return setErr(el,'Esta fase já possui partidas. Exclua as partidas antes de alterar a distribuição dos grupos (os nomes podem ser alterados).');
- ph.groups=groups;const oldAdvance=ph.advance||{mode:'group',total:0,byGroup:{}},byGroup={};groups.forEach(g=>byGroup[g.id]=oldAdvance.byGroup?.[g.id]??oldAdvance.total??0);ph.advance={...oldAdvance,mode:oldAdvance.mode==='total'?'total':'group',byGroup};ph.seeds=groups.length?[...gw.seeds].filter(id=>ph.teamIds.includes(id)):[];ph.drawn=groups.length>0&&ph.teamIds.length>0&&(gw.sorted||!!ph.drawn);save();closeModal(true);render();if(hasNextPhase(ph)&&ph.advance.mode==='group'&&groups.some(g=>{const n=+ph.advance.byGroup[g.id]||0;return g.teamIds.length>0&&n>g.teamIds.length}))alertBox('Revise os classificados','A quantidade de classificados por grupo não combina com a nova distribuição. Ajuste em + → Fases → Editar fase.');toast(groups.length&&!ph.teamIds.length?'Grupos salvos. Adicione as duplas e depois distribua-as nos grupos.':'Grupos salvos.')};
+ ph.groups=groups;ph.zig=false;const oldAdvance=ph.advance||{mode:'group',total:0,byGroup:{}},byGroup={};groups.forEach(g=>byGroup[g.id]=oldAdvance.byGroup?.[g.id]??oldAdvance.total??0);ph.advance={...oldAdvance,mode:oldAdvance.mode==='total'?'total':'group',byGroup};ph.seeds=groups.length?[...gw.seeds].filter(id=>ph.teamIds.includes(id)):[];ph.drawn=groups.length>0&&ph.teamIds.length>0&&(gw.sorted||!!ph.drawn);save();closeModal(true);render();if(hasNextPhase(ph)&&ph.advance.mode==='group'&&groups.some(g=>{const n=+ph.advance.byGroup[g.id]||0;return g.teamIds.length>0&&n>g.teamIds.length}))alertBox('Revise os classificados','A quantidade de classificados por grupo não combina com a nova distribuição. Ajuste em + → Fases → Editar fase.');toast(groups.length&&!ph.teamIds.length?'Grupos salvos. Adicione as duplas e depois distribua-as nos grupos.':'Grupos salvos.')};
 
 function fasesModal(){const c=cur.c;modal(`${mHead('Fases')}<ul class="slist">${c.phases.map((p,i)=>`<li><span><b>${i+1}ª Fase${p.name!==(i+1)+'ª Fase'?' — '+esc(p.name):''}</b><br><small class="muted">${TYPE[p.type]}</small></span><button class="ibtn" data-a="fEdit" data-id="${p.id}" aria-label="Editar fase">${I.edit}</button></li>`).join('')}</ul>
  <div class="acts"><button class="pill" data-a="fEdit" data-id="">Nova fase</button></div>`,{cls:'gray'})}
@@ -1792,31 +1844,36 @@ A.cfgPh=d=>{if(!CFGN[d.v])return;const c=cur.c,L=cfgList(d.v),ph=L.find(p=>p.id=
  if(lk&&L.length>1)return modal(mHead(CFGN[d.v],phPick(d.v,ph))+'<p style="margin:14px 0"><b>'+lk[0]+'.</b> '+lk[1]+'</p><div class="acts"><button class="pill ghost" data-a="closeM">Fechar</button></div>',{cls:'gray'});run(d.v,{})};
 const phPick=(v,ph)=>{const c=cur.c,L=cfgList(v);return L.length<2?(c.phases.length>1?'Fase: <b>'+esc(ph.name)+'</b>':''):'<label class="phpick">Fase em configuração <select class="inp" data-c="cfgPhGo" data-v="'+v+'" data-nodirty aria-label="Fase em configuração">'+L.map(p=>'<option value="'+p.id+'"'+(p.id===ph.id?' selected':'')+'>'+esc((c.phases.indexOf(p)+1)+'ª — '+p.name)+' · '+TYPE[p.type]+(p.status==='done'?' · finalizada':'')+'</option>').join('')+'</select></label>'};
 A.cfgPhGo=(d,el)=>{const id=el&&el.value||d.id;if(!CFGN[d.v])return;while(stack.length)closeModal(true);run('cfgPh',{v:d.v,id})};
-function advSimText(c,p,f){const next=c.phases[c.phases.indexOf(p)+1];if(!next||!f)return'';const grouped=p.groups.length>0,mode=grouped&&f.advMode&&f.advMode.value==='group'?'group':'total',parts=[];let n=0;
- if(mode==='total')n=Math.max(0,Math.floor(+(f.advTotal&&f.advTotal.value)||0));else p.groups.forEach(g=>{const e=f.elements['adv_'+g.id],v=Math.max(0,Math.floor(+(e&&e.value)||0));n+=v;parts.push(v)});
+function advSimText(c,p,f){const next=c.phases[c.phases.indexOf(p)+1];if(!next||!f)return'';const grouped=p.groups.length>0&&!f.advPer,mode=(grouped||f.advPer)&&f.advMode&&f.advMode.value==='group'?'group':'total',parts=[];let n=0;
+ if(mode==='group'&&f.advPer){const pg=Math.max(1,Math.floor(+(f.planG&&f.planG.value)||1)),v=Math.max(0,Math.floor(+f.advPer.value||0));n=v*pg;for(let i=0;i<pg;i++)parts.push(v)}
+ else if(mode==='total')n=Math.max(0,Math.floor(+(f.advTotal&&f.advTotal.value)||0));else p.groups.forEach(g=>{const e=f.elements['adv_'+g.id],v=Math.max(0,Math.floor(+(e&&e.value)||0));n+=v;parts.push(v)});
  if(n<1)return'Informe as quantidades para simular a fase seguinte.';
  let t='<b>Simulação:</b> '+n+' dupla(s) seguem para '+esc(next.name)+' ('+TYPE[next.type]+'). ';
  if(next.type==='elim'){if(n<2)return t+'<b class="neg">Um mata-mata precisa de pelo menos 2 duplas.</b>';let pw=1,rd=0;while(pw<n){pw*=2;rd++}
   if(pw===n)t+='A chave fecha exata: '+rd+' rodada(s) até a final, sem folgas (1º contra o último classificado, 2º contra o penúltimo…).';
   else{const seq=[];let k=n;while(k>1){seq.push(Math.floor(k/2)+' partida(s)'+(k%2?' + 1 avanço direto':''));k=Math.ceil(k/2)}
-   t+='<b>Não fecha uma chave exata.</b> Na geração você escolhe: <b>Todos jogam</b> — '+seq.join(' → ')+'; ou <b>Os melhores avançam direto</b> — '+(pw-n)+' dupla(s) folgam na 1ª rodada e depois a chave segue cheia ('+rd+' rodadas).'}
+   t+='<b>Não fecha uma chave exata:</b> os '+(pw-n)+' melhores classificados folgam e '+(2*n-pw)+' duplas jogam a fase preliminar. Depois a chave segue cheia até a final.'}
   if(mode==='group'&&new Set(parts).size>1)t+=' Com quantidades diferentes por grupo, um confronto entre duplas do mesmo grupo pode ser inevitável na 1ª rodada (o sistema avisa na geração).'}
+ else if(!next.groups.length&&+(next.plan&&next.plan.groups)>1){const g=next.plan.groups,b=Math.floor(n/g),x=n%g;t+=n<g*3?'<b class="neg">'+g+' grupos precisam de pelo menos '+(g*3)+' duplas.</b>':'Serão divididas em '+g+' grupos em ziguezague pela classificação ('+(x?x+' com '+(b+1)+' e '+(g-x)+' com '+b:b+' em cada')+').'}
  else{const g=next.groups.length;t+=g>1?(n%g?'Os '+g+' grupos já criados ficarão desiguais ('+(n%g)+' com '+(Math.floor(n/g)+1)+' e '+(g-n%g)+' com '+Math.floor(n/g)+').':'Ficam '+(n/g)+' dupla(s) em cada um dos '+g+' grupos já criados.'):'Em grupo único, todos contra todos dá '+(n*(n-1)/2)+' confronto(s).'}
  return t}
 A.advSim=(d,el)=>{const f=el.closest('form'),s=f&&f.querySelector('#advSim'),p=f&&cur.c.phases.find(x=>x.id===f.id.value);if(s&&p)s.innerHTML=advSimText(cur.c,p,f)};
-const advCount=ph=>{const a=ph&&ph.advance;if(!a)return 0;return a.mode==='total'||!ph.groups.length?(+a.total||0):ph.groups.reduce((s,g)=>s+(+(a.byGroup||{})[g.id]||0),0)};
+const advCount=ph=>{const a=ph&&ph.advance;if(!a)return 0;if(a.mode==='total')return +a.total||0;if(ph.groups.length)return ph.groups.reduce((s,g)=>s+(+((a.byGroup||{})[g.id]??a.total)||0),0);const pg=+(ph.plan&&ph.plan.groups)||0;return pg>1?(+a.total||0)*pg:(+a.total||0)};
 function phIn(c,i){const ph=c.phases[i];if(!ph)return 0;if(ph.teamIds.length||i===0)return ph.teamIds.length;const n=advCount(c.phases[i-1]);return n>0?n:phIn(c,i-1)}
+const phCanPlan=(c,idx,p,type)=>idx>0&&type==='pc'&&!(p&&phMatches(p).length)&&!(p&&p.groups.length&&!p.zig);
 function phaseEditorHTML(p,c){const idx=p?c.phases.indexOf(p):c.phases.length,next=c.phases[idx+1],lock=!!(p&&phMatches(p).length&&!p.formatMigrationConflict),adv=p?.advance||{mode:'group',total:0,byGroup:{}};
- const grouped=!!(p&&p.groups.length),mode=grouped&&adv.mode!=='total'?'group':'total',migrationMessages=[...(p?.migrationConflicts||[])];if(p?.formatMigrationConflict)migrationMessages.push('As partidas históricas usam formatos diferentes. Escolha o formato central para as novas partidas; os resultados antigos serão mantidos.');const migrationNote=migrationMessages.length?'<p class="note"><b>Revisão necessária:</b> '+migrationMessages.map(esc).join('<br>')+' Confira e salve a configuração centralizada.</p>':'';
+ const canPlan=phCanPlan(c,idx,p,p?p.type:'pc'),planG=+(p&&p.plan&&p.plan.groups)||1,plannable=canPlan&&!!p,grouped=!!(p&&p.groups.length)&&!plannable,mode=grouped?(adv.mode!=='total'?'group':'total'):plannable&&planG>1&&adv.mode==='group'?'group':'total',inN=phIn(c,idx),migrationMessages=[...(p?.migrationConflicts||[])];if(p?.formatMigrationConflict)migrationMessages.push('As partidas históricas usam formatos diferentes. Escolha o formato central para as novas partidas; os resultados antigos serão mantidos.');const migrationNote=migrationMessages.length?'<p class="note"><b>Revisão necessária:</b> '+migrationMessages.map(esc).join('<br>')+' Confira e salve a configuração centralizada.</p>':'';
  const advance=next&&p?'<section class="box" style="margin-top:14px"><h2>Classificação para '+esc(next.name)+'</h2>'+
-  (grouped?'<label class="field"><span>Forma de classificação</span><select name="advMode" data-c="advMode" style="width:100%"><option value="group" '+(mode==='group'?'selected':'')+'>Por grupo</option><option value="total" '+(mode==='total'?'selected':'')+'>Classificação geral</option></select></label>':'')+
-  '<div id="advGroupFields" '+(mode==='total'?'hidden':'')+'>'+(grouped?p.groups.map(g=>'<label class="field"><span>Duplas classificadas do grupo '+esc(g.name)+' ('+g.teamIds.filter(id=>p.teamIds.includes(id)).length+' elegíveis)</span><input class="inp" type="number" min="1" max="64" step="1" name="adv_'+g.id+'" data-i="advSim" value="'+esc(adv.byGroup?.[g.id]??adv.total??'')+'" inputmode="numeric"></label>').join(''):'')+'</div>'+
-  '<div id="advTotalField" '+(mode==='group'&&grouped?'hidden':'')+'><label class="field"><span>Quantidade de duplas classificadas</span><input class="inp" type="number" min="1" max="64" step="1" name="advTotal" data-i="advSim" value="'+esc(adv.total||'')+'" inputmode="numeric"></label></div>'+
+  (grouped||plannable?'<label class="field"><span>Forma de classificação</span><select name="advMode" data-c="advMode" style="width:100%"><option value="group" '+(mode==='group'?'selected':'')+'>Por grupo'+(plannable?' (quantos de cada grupo)':'')+'</option><option value="total" '+(mode==='total'?'selected':'')+'>Classificação geral</option></select></label>':'')+
+  '<div id="advGroupFields" '+(mode==='total'?'hidden':'')+'>'+(grouped?p.groups.map(g=>'<label class="field"><span>Duplas classificadas do grupo '+esc(g.name)+' ('+g.teamIds.filter(id=>p.teamIds.includes(id)).length+' elegíveis)</span><input class="inp" type="number" min="1" max="64" step="1" name="adv_'+g.id+'" data-i="advSim" value="'+esc(adv.byGroup?.[g.id]??adv.total??'')+'" inputmode="numeric"></label>').join(''):plannable?'<label class="field"><span>Duplas classificadas de cada grupo</span><input class="inp" type="number" min="1" max="64" step="1" name="advPer" data-i="advSim" value="'+esc(mode==='group'?adv.total||'':'')+'" inputmode="numeric"></label>':'')+'</div>'+
+  '<div id="advTotalField" '+(mode==='group'?'hidden':'')+'><label class="field"><span>Quantidade de duplas classificadas</span><input class="inp" type="number" min="1" max="64" step="1" name="advTotal" data-i="advSim" value="'+esc(mode==='total'||grouped?adv.total||'':'')+'" inputmode="numeric"></label></div>'+
   '<p class="note" id="advSim"></p><p class="note">A transferência acontecerá ao finalizar esta fase. Critérios de desempate: '+(p.criteria||[]).map(k=>CRIT[k]).filter(Boolean).join(' → ')+'.</p></section>':'';
  return '<form data-f="fSave">'+mHead(p?'Editar fase':'Nova fase')+'<input type="hidden" name="id" value="'+(p?p.id:'')+'">'+
   '<label class="field"><span>Nome da fase</span><input class="inp" name="n" maxlength="40" value="'+esc(p?p.name:(c.phases.length+1)+'ª Fase')+'" autofocus></label>'+
   '<label class="field"><span>Tipo de disputa</span><select name="t" '+(lock?'disabled':'')+' style="width:100%"><option value="pc" '+(p?.type==='pc'?'selected':'')+'>Pontos corridos</option><option value="elim" '+(p?.type==='elim'?'selected':'')+'>Mata-mata</option></select></label>'+
   '<label class="field"><span>Formato das partidas</span><select name="bo" '+(lock?'disabled':'')+' style="width:100%"><option value="1" '+(!p||p.bo===1?'selected':'')+'>Partida única</option><option value="3" '+(p&&p.bo!==1?'selected':'')+'>Melhor de 3 partidas</option></select></label>'+
+  (canPlan?'<label class="field"><span>Grupos nesta fase</span><input class="inp" type="number" name="planG" min="1" max="16" step="1" value="'+planG+'" data-i="advSim" inputmode="numeric"></label><p class="note" style="margin-top:-6px">1 = grupo único (todos contra todos). Com 2 ou mais, ao finalizar a fase anterior as duplas são divididas sozinhas em <b>ziguezague</b> pela classificação (ex.: A: 1º, 4º, 5º, 8º · B: 2º, 3º, 6º, 7º). Mínimo de 3 duplas por grupo'+(inN?' (esta fase recebe '+inN+': até '+Math.max(1,Math.floor(inN/3))+' grupo'+(Math.floor(inN/3)>1?'s':'')+')':'')+'. Vale para pontos corridos.</p>':
+   (p&&idx>0&&p.type==='pc'&&p.groups.length&&!phMatches(p).length?'<p class="note">Os grupos desta fase foram montados à mão em <b>Configurações → Grupos</b>.</p>':''))+
   (lock?'<p class="note">Tipo e formato ficam bloqueados depois que os confrontos são gerados.</p>':'')+migrationNote+advance+
   '<p class="err" role="alert"></p><div class="acts">'+(p?'<button type="button" class="pill red" data-a="fDel" data-id="'+p.id+'" style="margin-right:auto">Excluir fase</button>':'')+
   '<button type="button" class="pill ghost" data-a="fBack">Cancelar</button><button class="pill">Salvar</button></div></form>'}
@@ -1828,11 +1885,17 @@ F.fSave=async f=>{const c=cur.c,n=clean(f.n.value),p=c.phases.find(x=>x.id===f.i
  if(c.phases.some(x=>x!==p&&norm(x.name)===norm(n)))return setErr(f,'Já existe uma fase com este nome.');
  if(p&&phMatches(p).length&&(p.type!==type||(p.bo!==bo&&!p.formatMigrationConflict)))return setErr(f,'O tipo e o formato não podem ser alterados depois que os confrontos forem gerados.');
  let advance=p?JSON.parse(JSON.stringify(p.advance||{mode:p.groups.length?'group':'total',total:0,byGroup:{}})):{mode:'total',total:0,byGroup:{}};
- const next=c.phases[idx+1];
- if(p&&next){const grouped=p.groups.length>0;advance.mode=grouped&&f.advMode?.value==='group'?'group':'total';advance.byGroup=advance.byGroup||{};
-  if(advance.mode==='total'){const raw=(f.advTotal?.value||'').trim();if(!/^\d+$/.test(raw)||+raw<1)return setErr(f,'Informe uma quantidade inteira e positiva de duplas classificadas.');const inN=phIn(c,idx);if(inN&&+raw>inN)return setErr(f,(p.teamIds.length?'A quantidade classificada não pode superar o total de duplas elegíveis ('+inN+').':'A '+p.name+' vai receber '+inN+' dupla'+(inN>1?'s':'')+'. Não é possível classificar '+raw+' para a '+next.name+'.'));advance.total=+raw}
+ const next=c.phases[idx+1],canPlan=phCanPlan(c,idx,p,type),plannable=canPlan&&!!p;let planG=1;
+ if(canPlan&&f.planG){const raw=(f.planG.value||'').trim();if(!/^\d+$/.test(raw)||+raw<1||+raw>16)return setErr(f,'Informe a quantidade de grupos desta fase (1 = grupo único).');planG=+raw;const inN=phIn(c,idx);
+  if(planG>1&&inN&&inN<planG*3)return setErr(f,'Esta fase recebe '+inN+' duplas: o máximo é '+Math.max(1,Math.floor(inN/3))+' grupo(s), porque cada grupo precisa de pelo menos 3 duplas.')}
+ if(p&&next){const grouped=p.groups.length>0&&!plannable;advance.mode=(grouped||plannable)&&f.advMode?.value==='group'?'group':'total';advance.byGroup=advance.byGroup||{};
+  if(advance.mode==='group'&&plannable){if(planG<2)return setErr(f,'Para classificar por grupo, defina 2 ou mais grupos nesta fase (ou escolha “Classificação geral”).');const raw=(f.advPer?.value||'').trim();if(!/^\d+$/.test(raw)||+raw<1)return setErr(f,'Informe quantas duplas se classificam de cada grupo.');
+   const per=+raw,inN=phIn(c,idx),mn=inN?Math.floor(inN/planG):0;if(mn&&per>mn)return setErr(f,'Com '+inN+' duplas em '+planG+' grupos, o menor grupo terá '+mn+' duplas. Não é possível classificar '+per+' de cada grupo.');
+   const o=p.advance||{};if(mn&&per===mn&&!(o.mode==='group'&&+o.total===per&&+(p.plan&&p.plan.groups)===planG)&&!await confirmBox({title:'Todas as duplas de um grupo se classificam',msg:inN%planG?'Os grupos terão '+mn+' e '+(mn+1)+' duplas. Nos grupos com '+mn+', <b>todas</b> se classificam. Continuar?':'Cada grupo terá '+mn+' duplas e todas se classificam: ninguém é eliminado nesta fase. Continuar?',ok:'Continuar'}))return;
+   advance={mode:'group',total:per,byGroup:{}}}
+  else if(advance.mode==='total'){const raw=(f.advTotal?.value||'').trim();if(!/^\d+$/.test(raw)||+raw<1)return setErr(f,'Informe uma quantidade inteira e positiva de duplas classificadas.');const inN=phIn(c,idx);if(inN&&+raw>inN)return setErr(f,(p.teamIds.length?'A quantidade classificada não pode superar o total de duplas elegíveis ('+inN+').':'A '+p.name+' vai receber '+inN+' dupla'+(inN>1?'s':'')+'. Não é possível classificar '+raw+' para a '+next.name+'.'));advance.total=+raw}
   else{const assigned=new Set(p.groups.flatMap(g=>g.teamIds)),unassigned=p.teamIds.filter(id=>!assigned.has(id));if(unassigned.length)return setErr(f,'Distribua todas as duplas em grupos antes de configurar a classificação por grupo.');for(const g of p.groups){const el=f.elements['adv_'+g.id],raw=el?(el.value||'').trim():'';if(!/^\d+$/.test(raw)||+raw<1)return setErr(f,'Informe uma quantidade inteira e positiva para o grupo '+g.name+'.');const eligible=g.teamIds.filter(id=>p.teamIds.includes(id)).length;if(+raw>eligible)return setErr(f,'O grupo '+g.name+' não possui essa quantidade de duplas elegíveis.');advance.byGroup[g.id]=+raw}advance.total=Math.max(0,Math.floor(+advance.total||0))}
-  const outN=advance.mode==='total'?advance.total:p.groups.reduce((a,g)=>a+(advance.byGroup[g.id]||0),0);if(outN<2)return setErr(f,'A fase seguinte precisa receber pelo menos 2 duplas. Aumente a quantidade de classificados.');
+  const outN=advance.mode==='total'?advance.total:plannable?advance.total*planG:p.groups.reduce((a,g)=>a+(advance.byGroup[g.id]||0),0);if(outN<2)return setErr(f,'A fase seguinte precisa receber pelo menos 2 duplas. Aumente a quantidade de classificados.');
   {const nn=advCount(next);if(c.phases[idx+2]&&!next.teamIds.length&&nn>outN)return setErr(f,'A '+next.name+' está configurada para classificar '+nn+' duplas, mas vai receber só '+outN+'. Ajuste primeiro a classificação da '+next.name+'.')}
   const downstream=c.phases.slice(idx+1).filter(q=>q.rounds.length||q.status==='done'||q.status==='live');
   const old=p.advance||{},changed=JSON.stringify(old)!==JSON.stringify(advance);
@@ -1840,8 +1903,10 @@ F.fSave=async f=>{const c=cur.c,n=clean(f.n.value),p=c.phases.find(x=>x.id===f.i
   if(changed&&downstream.length)return setErr(f,'A fase seguinte já possui atividade. Reabra e reconstrua as fases dependentes antes de alterar a quantidade de classificados.');
   if(changed&&hasRes(p)&&!await confirmBox({title:'Alterar classificados',msg:'Esta fase já possui resultados. A nova configuração será aplicada na próxima finalização. Continuar?',ok:'Salvar configuração'}))return;
  }
- if(p){p.name=n;p.bo=bo;if(p.type!==type&&type==='elim'){p.groups=[];p.seeds=[];p.drawn=false}p.type=type;p.advance=advance;p.formatMigrationConflict=false;p.qualifierDecisions={};delete p.finalDecision;delete p.qual; if(p.groups)p.groups.forEach(g=>delete g.qual);p.migrationConflicts=[]}
- else{const np=newPhase(c.phases.length+1,type);np.name=n;np.bo=bo;c.phases.push(np)}
+ if(p&&canPlan&&(+(p.plan&&p.plan.groups)||1)!==planG&&(phMatches(p).length||p.status==='done'))return setErr(f,'Os grupos não podem ser alterados depois que os jogos da fase forem gerados.');
+ if(p){p.name=n;p.bo=bo;if(p.type!==type&&type==='elim'){p.groups=[];p.seeds=[];p.drawn=false}p.type=type;p.advance=advance;
+  if(type!=='pc')delete p.plan;else if(canPlan){const was=+(p.plan&&p.plan.groups)||1;if(planG>1)p.plan={groups:planG};else delete p.plan;if(p.zig&&planG<2){p.groups=[];p.zig=false;p.drawn=false}if(planG>1&&(was!==planG||!p.groups.length||p.zig))planGroups(p)}p.formatMigrationConflict=false;p.qualifierDecisions={};delete p.finalDecision;delete p.qual; if(p.groups)p.groups.forEach(g=>delete g.qual);p.migrationConflicts=[]}
+ else{const np=newPhase(c.phases.length+1,type);np.name=n;np.bo=bo;if(canPlan&&planG>1)np.plan={groups:planG};c.phases.push(np)}
  save();closeModal(true);render();fasesModal()};
 A.fDel=async d=>{const c=cur.c,p=c.phases.find(x=>x.id===d.id);
  if(c.phases.length<2)return alertBox('Não é possível excluir.','O campeonato precisa ter pelo menos uma fase.');
@@ -2001,6 +2066,14 @@ const mirrorPairs=L=>{if(L.length<2)return L;const h=L.length/2;return mirrorPai
 // Monta (sem gravar) a próxima rodada do mata-mata: {pairs:[[a,b|null]], title, first, crossed, same} ou {alert:[título,msg]}.
 // mode 'bye' (padrão): chave de torneio; se a quantidade não fecha a chave, os melhores avançam direto.
 // mode 'all': todos jogam na primeira rodada — 1º × último, 2º × penúltimo, 3º × antepenúltimo…
+// Ordem geral dos classificados: posição na fase anterior → aproveitamento (pontos ÷ pontos possíveis) → saldo → grupo.
+const seedOrder=ph=>{const O=ph.origin||{};return[...ph.teamIds].sort((a,b)=>O[a].pos-O[b].pos||(O[b].ap||0)-(O[a].ap||0)||(O[b].dp||0)-(O[a].dp||0)||O[a].g-O[b].g)};
+// Divide as duplas da fase em N grupos em ziguezague (A: 1º, 4º, 5º, 8º · B: 2º, 3º, 6º, 7º).
+function planGroups(ph){const n=+(ph.plan&&ph.plan.groups)||0;if(ph.type!=='pc'||n<2||phMatches(ph).length||ph.teamIds.length<n)return false;
+ const O=ph.origin||{},L=ph.teamIds.every(id=>O[id])?seedOrder(ph):[...ph.teamIds],G=Array.from({length:n},()=>[]);
+ L.forEach((id,i)=>{const r=Math.floor(i/n),k=i%n;G[r%2?n-1-k:k].push(id)});
+ ph.groups=G.map((ids,i)=>({id:ph.groups[i]?.id||uid(),name:ph.groups[i]?.name||'Grupo '+(i<26?String.fromCharCode(65+i):i+1),teamIds:ids}));
+ ph.seeds=[];ph.drawn=true;ph.zig=true;const a=ph.advance;if(a&&a.mode==='group'){const by={};ph.groups.forEach(g=>by[g.id]=+a.total||0);a.byGroup=by}return true}
 function elimPlan(ph,mode){
  if(!phMatches(ph).length){const n=ph.teamIds.length;if(n<2)return{alert:['Faltam duplas','Adicione pelo menos 2 duplas à fase (+ → Duplas) para gerar as partidas.']};
   const O=ph.origin||{},crossed=ph.teamIds.every(id=>O[id]),seedL=crossed?[...ph.teamIds].sort((a,b)=>O[a].pos-O[b].pos||O[a].g-O[b].g):shuffle(ph.teamIds);
@@ -2030,7 +2103,15 @@ function elimDraw(){const ph=cur.ph,pl=eplan,O=ph.origin||{},lab=id=>pl.crossed?
   ${pl.crossed?`<p class="note">Confrontos pela colocação: o melhor colocado enfrenta o último classificado${Object.values(O).some(x=>x.g>0)?', sempre de outro grupo quando possível':''}.${pl.same?` <b class="neg">${pl.same} confronto(s) entre duplas do mesmo grupo não puderam ser evitados.</b>`:''}</p>`:''}`;
  document.getElementById('elimB').innerHTML=`${mHead('Gerar '+esc(pl.title),esc(ph.name)+' · '+pl.pairs.filter(x=>x[1]).length+' disputa(s) · '+BOT[ph.bo].toLowerCase())}${choice}${list}`}
 A.elimMode=(d,el)=>{gen.em=el.value==='all'?'all':'bye';const pl=elimPlan(cur.ph,gen.em);if(pl.alert)return;eplan=pl;elimDraw()};
+function phCfgErrs(c,from){const out=[],i0=Math.max(0,c.phases.indexOf(from));
+ for(let i=i0;i<c.phases.length-1;i++){const ph=c.phases[i],nx=c.phases[i+1];if(ph.type!=='pc')continue;const n=advCount(ph),inN=phIn(c,i);
+  if(n<2)out.push('<b>'+esc(ph.name)+'</b>: falta definir quantas duplas se classificam para a '+esc(nx.name)+'.');
+  else if(inN&&n>inN)out.push('<b>'+esc(ph.name)+'</b>: classifica '+n+' duplas, mas a fase recebe só '+inN+'.')}
+ for(let i=i0;i<c.phases.length;i++){const ph=c.phases[i],pg=+(ph.plan&&ph.plan.groups)||0;if(ph.type!=='pc'||pg<2||ph.groups.length)continue;const inN=phIn(c,i);if(inN&&inN<pg*3)out.push('<b>'+esc(ph.name)+'</b>: '+pg+' grupos precisam de pelo menos '+(pg*3)+' duplas (3 por grupo), mas a fase recebe '+inN+'.');
+  else if(inN&&ph.advance&&ph.advance.mode==='group'&&+ph.advance.total>Math.floor(inN/pg))out.push('<b>'+esc(ph.name)+'</b>: classifica '+ph.advance.total+' de cada grupo, mas o menor grupo terá '+Math.floor(inN/pg)+' duplas.')}
+ return out}
 A.gen=()=>{const ph=cur.ph;
+ if(!phMatches(ph).length){const er=phCfgErrs(cur.c,ph);if(er.length)return confirmBox({title:'Configure as fases antes',msg:'Os jogos só podem ser gerados depois que as fases estiverem configuradas:</p><ul class="cfgerr">'+er.map(x=>'<li>'+x+'</li>').join('')+'</ul><p class="note">Ajuste em <b>Configurações → Fases → Editar</b>.',ok:'Configurar fases',cancel:'Fechar'}).then(v=>{if(v)run('cFases')})}
  if(ph.type==='pc'){if(phMatches(ph).length)return alertBox('Partidas já geradas','Esta fase já possui partidas. Para evitar duplicação ou perda de resultados, use “Adicionar Rodada” ou “Adicionar Partida”.');return genDialog()}
  if(phMatches(ph).length)return alertBox('Chaveamento já gerado','As rodadas seguintes já existem e são preenchidas automaticamente conforme os resultados. Para refazer o chaveamento, enquanto não houver resultados, use “REFAZER CHAVEAMENTO”.');
  gen={em:'bye'};const pl=elimPlan(ph,gen.em);if(pl.alert)return alertBox(pl.alert[0],pl.alert[1]);eplan=pl;
@@ -2061,7 +2142,7 @@ A.rReord=()=>{const ph=cur.ph;if(!ph.rounds.length)return toast('Não há rodada
 A.rrSave=()=>{const ph=cur.ph;ph.rounds=[...document.querySelectorAll('#rrL li')].map(li=>ph.rounds.find(r=>r.id===li.dataset.id));save();closeModal(true);render()};
 
 function sameIds(a,b){return JSON.stringify(a||[])===JSON.stringify(b||[])}
-function qualifierOrigins(ph,ids){const out={},st=phaseStats(ph);if((ph.advance||{}).mode==='group'){ph.groups.forEach((g,gi)=>{let pos=1;rankGroups(ph,st,g.teamIds.filter(id=>ph.teamIds.includes(id))).forEach(t=>{t.forEach(id=>{if(ids.includes(id))out[id]={pos,g:gi+1,gn:g.name};});pos+=t.length})})}else{let pos=1;rankGroups(ph,st,ph.teamIds).forEach(t=>{t.forEach(id=>{if(ids.includes(id))out[id]={pos,g:0,gn:''}});pos+=t.length})}return out}
+function qualifierOrigins(ph,ids){const out={},st=phaseStats(ph),apv=x=>x&&x.j?x.pts/(x.j*winPts(ph)):0;if((ph.advance||{}).mode==='group'){ph.groups.forEach((g,gi)=>{let pos=1;rankGroups(ph,st,g.teamIds.filter(id=>ph.teamIds.includes(id))).forEach(t=>{t.forEach(id=>{if(ids.includes(id))out[id]={pos,g:gi+1,gn:g.name,ap:apv(st[id]),dp:(st[id]||{}).dp||0};});pos+=t.length})})}else{let pos=1;rankGroups(ph,st,ph.teamIds).forEach(t=>{t.forEach(id=>{if(ids.includes(id))out[id]={pos,g:0,gn:'',ap:apv(st[id]),dp:(st[id]||{}).dp||0}});pos+=t.length})}return out}
 async function finalizePhase(c,ph){const v=phaseCompletion(ph,c);if(!v.scheduleValid){alertBox('Não é possível finalizar',v.issues.map(esc).join('<br>'));return false}if(v.ties.length){tieModal(c,ph,v.ties[0]);return false}
  const i=c.phases.indexOf(ph),next=c.phases[i+1],ids=next?v.qualifiers:[],sig=phaseResultSignature(ph),old=ph.finalizedSnapshot,finalInfo=next?null:phaseFinalInfo(ph);
  if(!next&&(finalInfo?.error||finalInfo?.ties?.length)){alertBox('Resultado final pendente',finalInfo.error||'Resolva o empate antes de finalizar.');return false}
@@ -2071,12 +2152,12 @@ async function finalizePhase(c,ph){const v=phaseCompletion(ph,c);if(!v.scheduleV
   const ok=await confirmBox({title:'Alteração nas fases dependentes',msg:'A nova classificação altera os participantes ou a ordem de avanço da '+esc(next.name)+'. Para atualizar corretamente, as rodadas e os confrontos das fases dependentes serão removidos, inclusive resultados existentes, que serão arquivados na auditoria.<ul>'+details+'</ul>Deseja confirmar a reconstrução?',ok:'Sim, excluir e atualizar',cancel:'Não, cancelar',danger:true});
   if(!ok){ph.promptedSig=sig;save();return false}archive=clearDependentPhases(c,i,ids)}
  if(next){next.teamIds=[...ids];next.origin=qualifierOrigins(ph,ids);if(!needsRebuild)next.groups.forEach(g=>g.teamIds=g.teamIds.filter(id=>ids.includes(id)))}
- const autoBr=next&&next.type==='elim'?elimAuto(next):false;
+ const autoBr=next&&next.type==='elim'?elimAuto(next):false,autoG=!!next&&(next.zig||!next.groups.some(g=>g.teamIds.length))&&planGroups(next);
  ph.status='done';ph.finalizedSnapshot={ids:[...ids],signature:sig,at:Date.now(),by:userName()};ph.promptedSig=sig;
  if(!next){c.result={champion:finalInfo.champion||null,vice:finalInfo.vice||null,third:finalInfo.third||null,fourth:finalInfo.fourth||null,phaseId:ph.id,finalizedAt:Date.now(),by:userName()};c.status='done'}else{if(c.status==='done')c.status='live';delete c.result;const LP=c.phases[c.phases.length-1];if(!needsRebuild&&c.phases.slice(i+1).every(q=>q.status==='done')){const fi=phaseFinalInfo(LP);if(!fi.error&&!(fi.ties||[]).length&&fi.champion){c.result={champion:fi.champion,vice:fi.vice||null,third:fi.third||null,fourth:fi.fourth||null,phaseId:LP.id,finalizedAt:Date.now(),by:userName()};c.status='done'}}};
  phaseAudit(c,ph,next?'finalize-phase':'finalize-championship',{summary:next?'Fase finalizada e classificados transferidos.':'Campeonato finalizado.',qualified:[...ids],champion:finalInfo?.champion||null,vice:finalInfo?.vice||null,archive});
  save();if(CLOUD){await flushWs();if(ws.dirty||ws.state==='err'){toast('Finalização pendente de confirmação do Supabase. Confira o indicador de sincronização antes de continuar.','err');return false}}
- closeModal(true);render();toast(next?'Fase finalizada. Classificados transferidos para '+next.name+(autoBr?' e chaveamento montado.':'.'):'Campeonato finalizado. Campeã identificada.');return true}
+ closeModal(true);render();toast(next?'Fase finalizada. Classificados transferidos para '+next.name+(autoBr?' e chaveamento montado.':autoG?' e divididos em '+next.groups.length+' grupos (ziguezague).':'.'):'Campeonato finalizado. Campeã identificada.');return true}
 function finalizeAsk(c,ph){const next=c.phases[c.phases.indexOf(ph)+1],title=next?'Finalizar '+ph.name+'?':'Finalizar campeonato?',msg=next?'Todos os confrontos da '+esc(ph.name)+' foram encerrados. Deseja finalizar esta fase e transferir automaticamente os classificados para '+esc(next.name)+'?':'Todas as partidas da fase final foram encerradas. Deseja confirmar o resultado final e finalizar o campeonato?';return confirmBox({title,msg,ok:next?'Sim, finalizar fase':'Sim, finalizar campeonato',cancel:'Não'})}
 A.phFinish=async d=>{const c=cur.c,ph=c.phases.find(p=>p.id===d.id);if(!ph||!canEdit())return;if(tmOn(c)&&!isMaster())return alertBox('Só o master','Neste campeonato (lançamento pelas duplas), só o master finaliza ou reabre fases.');const v=phaseCompletion(ph,c);if(!v.scheduleValid)return alertBox('Não é possível finalizar',v.issues.map(esc).join('<br>'));if(v.ties.length){tieModal(c,ph,v.ties[0]);return}
  if(!await finalizeAsk(c,ph))return;await finalizePhase(c,ph)};
@@ -2345,7 +2426,7 @@ A.jExpGo=d=>{const c=cur.c,ph=cur.ph,r=cur.r,all=!!document.querySelector('.ov:l
 
 /* ===================== Eventos ===================== */
 const READ=new Set([...VIS,'nav','sair','sair2','openC','rkSet','rkMode','rkIna','rkQ','pSort','crInfo','cxScope','offSync','confOpen','confKeep','cExp','jExp','cExpGo','jExpGo','jExpPick']);
-const SCORE=new Set(['mState','mAuto','mGame','confMine']),MASTER=new Set(['lkUnbind','lkMove','lkAllow','cpUse','cpTab','lkRefresh','mbEdit','mbDel','cOpt','cDel','cfgPlayers','cpAll','cpSel','cpDel','cfgRank','wipe','bkImp','bkExp']),CASH=new Set(['cxAdd','cxEdit','cxDel']),MASTERF=new Set(['lkMoveF','uSave','cSave','tieSave','mbSave']);
+const SCORE=new Set(['mState','mAuto','mGame','confMine']),MASTER=new Set(['rkTie','rkTieDel','lkUnbind','lkMove','lkAllow','cpUse','cpTab','lkRefresh','mbEdit','mbDel','cOpt','cDel','cfgPlayers','cpAll','cpSel','cpDel','cfgRank','wipe','bkImp','bkExp']),CASH=new Set(['cxAdd','cxEdit','cxDel']),MASTERF=new Set(['rkTieSave','lkMoveF','uSave','cSave','tieSave','mbSave']);
 const DENY='Seu perfil não permite esta ação.';
 A.offSync=()=>trySync(true);
 // Conflitos de placar (lançado offline × o que já estava online): as duas versões ficam guardadas até alguém autorizado decidir.
