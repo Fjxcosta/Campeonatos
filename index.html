@@ -1868,6 +1868,13 @@ A.gSort=async()=>{const ph=cur.ph,n=gw.n;if(!ph.teamIds.length)return toast('Adi
  const rest=ph.teamIds.filter(id=>!gw.seeds.has(id)),bk={};rest.forEach(id=>{const k=O[id]?'g'+O[id].g:'-';(bk[k]=bk[k]||[]).push(id)});
  shuffle(Object.keys(bk)).flatMap(k=>shuffle(bk[k])).forEach(id=>{const mn=Math.min(...cnt);let op=cnt.map((c,i)=>c===mn?i:-1).filter(i=>i>=0);const ms=Math.min(...op.map(g=>sameO(id,g)));op=op.filter(g=>sameO(id,g)===ms);const g=op[Math.floor(Math.random()*op.length)];gw.asg[id]=g;cnt[g]++});
  gw.sorted=true;gw.open='sort';stack[stack.length-1].dirty=true;gDraw()};
+A.gSeedFix=()=>{closeModal(true);const ph=cur.ph,sd=[...gw.seeds].filter(id=>ph.teamIds.includes(id)&&gw.asg[id]!=null),seen=new Set(),msg=[];
+ sd.forEach(id=>{const g=gw.asg[id];if(!seen.has(g)){seen.add(g);return}
+  const free=[...Array(gw.n).keys()].filter(i=>!sd.some(x=>gw.asg[x]===i));if(!free.length)return;const tg=free[Math.floor(Math.random()*free.length)];
+  const cand=ph.teamIds.filter(x=>gw.asg[x]===tg&&!gw.seeds.has(x)),sw=cand[Math.floor(Math.random()*cand.length)];gw.asg[id]=tg;if(sw)gw.asg[sw]=g;seen.add(tg);
+  msg.push(dl(T(id))+' foi para o '+gw.names[tg]+(sw?' (trocou com '+dl(T(sw))+')':''))});
+ if(stack.length)stack[stack.length-1].dirty=true;gDraw();A.gSave();if(msg.length)toast('Cabeças separados: '+msg.join('; ')+'.')};
+A.gSeedRedo=async()=>{closeModal(true);gw.redo=true;await A.gSort();A.gSave();toast('Sorteio refeito com os cabeças de chave em grupos diferentes.')};
 A.gSet=(d,el)=>{if(el.value==='')delete gw.asg[d.id];else gw.asg[d.id]=+el.value;const c=el.closest('li'),b=c&&c.querySelector('.gcur');if(b)b.textContent=el.value===''?'sem grupo':gw.names[+el.value]};
 A.gName=(d,el)=>{gw.names[+d.k]=el.value};
 A.gSave=()=>{const ph=cur.ph,el=stack[stack.length-1].ov;let groups=[];
@@ -1877,6 +1884,11 @@ A.gSave=()=>{const ph=cur.ph,el=stack[stack.length-1].ov;let groups=[];
   if(ph.teamIds.length&&ph.teamIds.length<gw.n)return setErr(el,`Há ${ph.teamIds.length} dupla(s) na fase e ${gw.n} grupos. Reduza a quantidade de grupos ou adicione mais duplas.`);
   if(ph.teamIds.length&&ph.teamIds.some(id=>gw.asg[id]==null))return setErr(el,'Há duplas ainda não distribuídas. Use “Sortear” ou “Definir grupo das duplas”.');
   if(ph.teamIds.length&&groups.some(g=>!g.teamIds.length))return setErr(el,'Há grupos vazios. Reduza a quantidade ou redistribua as duplas.')}
+ // cabeças de chave nunca no mesmo grupo (ex.: marcados depois do sorteio, ou grupo mudado à mão)
+ if(gw.n>=2){const sd=[...gw.seeds].filter(id=>ph.teamIds.includes(id)&&gw.asg[id]!=null),by={};sd.forEach(id=>(by[gw.asg[id]]=by[gw.asg[id]]||[]).push(id));const cf=Object.entries(by).filter(([,l])=>l.length>1);
+  if(cf.length){const txt=cf.map(([g,l])=>l.map(id=>'<b>'+esc(dl(T(id)))+'</b>').join(' e ')+' são cabeças de chave e estão no <b>'+esc(gw.names[+g]||'')+'</b>').join('<br>');
+   if(phMatches(ph).length)return setErr(el,'Há cabeças de chave no mesmo grupo e os jogos já foram gerados: os grupos não podem mudar. Desmarque um dos cabeças de chave.');
+   modal(mHead('Cabeças de chave no mesmo grupo')+'<p>'+txt+'.</p><p class="muted" style="margin:0 0 14px"><b>Separar automaticamente</b> troca só o cabeça de chave sobrando com uma dupla comum, sorteada, de um grupo sem cabeça; o resto fica como está. <b>Sortear novamente</b> refaz o sorteio inteiro, com os cabeças em grupos diferentes.</p><div class="bindacts"><button class="pill" data-a="gSeedFix">Separar automaticamente</button><button class="pill ghost" data-a="gSeedRedo">Sortear novamente</button><button class="pill ghost" data-a="closeM">Voltar e ajustar</button></div>');return}}
  const sig=g=>JSON.stringify(g.map(x=>[...x.teamIds].sort()));
  if(phMatches(ph).length&&sig(groups)!==sig(ph.groups))return setErr(el,'Esta fase já possui partidas. Exclua as partidas antes de alterar a distribuição dos grupos (os nomes podem ser alterados).');
  const pix=cur.c?cur.c.phases.indexOf(ph):-1;if(pix>0){if(groups.length>1)ph.plan={groups:groups.length};else if(!ph.zig)delete ph.plan}else delete ph.plan;ph.groups=groups;ph.zig=false;const oldAdvance=ph.advance||{mode:'group',total:0,byGroup:{}},byGroup={};groups.forEach((g,i)=>byGroup[g.id]=oldAdvance.byGroup?.[g.id]??perOf(oldAdvance,i));ph.advance={...oldAdvance,mode:oldAdvance.mode==='total'?'total':'group',byGroup};ph.seeds=groups.length?[...gw.seeds].filter(id=>ph.teamIds.includes(id)):[];ph.drawn=groups.length>0&&ph.teamIds.length>0&&(gw.sorted||!!ph.drawn);save();closeModal(true);render();if(hasNextPhase(ph)&&ph.advance.mode==='group'&&groups.some(g=>{const n=+ph.advance.byGroup[g.id]||0;return g.teamIds.length>0&&n>g.teamIds.length}))alertBox('Revise os classificados','A quantidade de classificados por grupo não combina com a nova distribuição. Ajuste em + → Fases → Editar fase.');toast(groups.length&&!ph.teamIds.length?'Grupos salvos. Adicione as duplas e depois distribua-as nos grupos.':'Grupos salvos.')};
