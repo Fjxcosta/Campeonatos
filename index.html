@@ -513,6 +513,9 @@ table.rk tr.qt .posb{background:#DBEAFE;color:#1E3A8A;box-shadow:inset 0 0 0 1.5
 .shbox{border:1px solid #E1E5EA;border-radius:14px;padding:12px 14px;margin:0 0 12px}.shh{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px}.shh svg{width:20px;height:20px;flex:none;color:var(--g1);margin-top:2px}.shh small{display:block;color:#5B6472;margin-top:2px}
 .shrow{display:flex;gap:8px;align-items:center}.shrow .inp{flex:1;min-width:0;font-size:13px}.shbox .lnk{background:none;border:0;padding:8px 0 0;color:#5B6472;text-decoration:underline;font-size:13px;cursor:pointer}
 .pvq{font-size:13px;font-weight:600;color:#12683A;margin-left:6px}
+.bindp.tk{opacity:.85}.bindp.tk small{color:#12683A}
+.pinin{font-size:28px;letter-spacing:12px;text-align:center;max-width:220px;margin:0 auto;display:block}
+.lkpin{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#EEF7F1;border:1px solid #CFE8D8;border-radius:12px;padding:10px 12px;margin:8px 0}.lkpin span{flex:1;min-width:180px}
 </style>
 </head>
 <body>
@@ -676,17 +679,17 @@ const fold=x=>String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLo
 const LKSYN={jr:'junior',junior:'junior','fº':'filho',fo:'filho',filho:'filho',neto:'neto',sr:'senior',senior:'senior'};
 const ntoks=x=>fold(x).replace(/[()\/.,\-]/g,' ').split(/\s+/).filter(Boolean).map(w=>LKSYN[w]||w);
 function lkPlayers(c){const ids=new Set(champTeams(c)),out=[],seen=new Set();db.teams.filter(t=>ids.has(t.id)).forEach(t=>t.players.forEach(pid=>{const p=P(pid);if(p&&!seen.has(pid)){seen.add(pid);out.push({id:pid,team:t.id,name:p.name})}}));return out.sort((a,b)=>cmpN(a.name,b.name))}
-function bindList(c,q){const L=lkLink||{},taken=new Set(arr(L.taken)),allow=new Set(arr(L.allow)),started=new Set(arr(L.started)),qt=ntoks(q).filter(w=>w.length>=2);
+function bindList(c,q){const L=lkLink||{},taken=new Set(arr(L.taken)),pins=new Set(arr(L.pins)),allow=new Set(arr(L.allow)),started=new Set(arr(L.started)),qt=ntoks(q).filter(w=>w.length>=2);
  let rows=lkPlayers(c);if(!ui.bindAll){if(!qt.length)return'<li class="muted">Digite pelo menos 2 letras do seu nome.</li>';
   rows=rows.map(x=>{const nt=ntoks(x.name);return{...x,sc:qt.filter(w=>nt.some(n=>n.startsWith(w))).length}}).filter(x=>x.sc>0).sort((a,b)=>b.sc-a.sc||cmpN(a.name,b.name))}
  if(!rows.length)return'<li class="muted">Nenhum jogador encontrado. Toque em “Não achei meu nome”.</li>';
- return rows.map(x=>{const tk=taken.has(x.id),cl=!tk&&started.has(x.team)&&!allow.has(x.id);return'<li><button class="bindp" data-a="bindPick" data-id="'+x.id+'"'+(tk||cl?' disabled':'')+'>'+esc(x.name)+(tk?' <small>(já vinculado)</small>':cl?' <small>(a dupla já começou — peça ao organizador)</small>':'')+'</button></li>'}).join('')}
+ return rows.map(x=>{const tk=taken.has(x.id),cl=!tk&&started.has(x.team)&&!allow.has(x.id);return'<li><button class="bindp'+(tk?' tk':'')+'" data-a="bindPick" data-id="'+x.id+'"'+(cl?' disabled':'')+'>'+esc(x.name)+(tk?' <small>'+(pins.has(x.id)?'(já vinculado · entrar com PIN)':'(já vinculado)')+'</small>':cl?' <small>(a dupla já começou — peça ao organizador)</small>':'')+'</button></li>'}).join('')}
 function bindHTML(c){return'<div class="vis"><div class="box bindbox"><h2 style="margin:0">Quem é você?</h2><p class="muted" style="margin:6px 0 12px">Digite seu nome para vincular este celular. Só o celular vinculado informa os placares da sua dupla.</p>'+(lk.off?'<p class="err">Sem internet: para vincular é preciso estar conectado.</p>':'')+
  '<input class="inp" data-i="bindQ" placeholder="Seu nome" autocomplete="off" aria-label="Seu nome" value="'+esc(ui.bindQ||'')+'"><ul class="rows bindl" id="bindL">'+bindList(c,ui.bindQ||'')+'</ul><button class="pill ghost sm" data-a="bindAll">'+(ui.bindAll?'Voltar para a busca':'Não achei meu nome — ver todos')+'</button>'+
  '<div class="acts" style="justify-content:center;margin-top:16px"><button class="pill ghost" data-a="bindWatch">Só quero acompanhar</button></div></div></div>'}
 function lkBar(c,t){if(!tmOn(c))return'';const me=lkMe();
  if(me){const p=P(me.player),open=c.phases.some(ph=>phMatches(ph).some(m=>(m.a===me.team||m.b===me.team)&&m.a&&m.b&&mStatus(m)!=='done'));
-  return'<div class="lkme">'+I.user+'<span>Você: <b>'+esc(p?p.name:'—')+'</b> · '+esc(dl(T(me.team)))+'</span></div>'+(open||statusKey(c)==='done'?'':'<p class="note" style="margin:0">Sua dupla não está em nenhum jogo em aberto. Você pode acompanhar o campeonato normalmente.</p>')}
+  return'<div class="lkme">'+I.user+'<span>Você: <b>'+esc(p?p.name:'—')+'</b> · '+esc(dl(T(me.team)))+'</span></div>'+(me.pin===false&&statusKey(c)!=='done'?'<div class="lkpin"><span>Crie seu PIN para usar o link em qualquer navegador.</span><button class="pill sm" data-a="pinNew">Criar meu PIN</button></div>':'')+(open||statusKey(c)==='done'?'':'<p class="note" style="margin:0">Sua dupla não está em nenhum jogo em aberto. Você pode acompanhar o campeonato normalmente.</p>')}
  if(lkWatch(t))return'<div class="lkme"><span>Você está só acompanhando.</span><button class="pill ghost sm" data-a="bindBack">Sou jogador — vincular este celular</button></div>';return''}
 const LQK=t=>'gc_lq:'+t,LSK=t=>'gc_ls:'+t;let lk={off:false,busy:false};
 const lkTok=()=>{const h=location.hash.replace(/^#\/?/,'').split('/');return h[0]==='s'?h[1]:''};
@@ -1268,9 +1271,9 @@ const lkName=pid=>{const p=P(pid);return p?p.name:'(jogador removido)'},lkTeam=t
 const teamStarted=(c,tid)=>c.phases.some(ph=>phMatches(ph).some(m=>(m.a===tid||m.b===tid)&&(hasSets(m)||m.pending)));
 function lkPanels(c){const A0=ui.lkAdm[c.id];if(!A0||Date.now()-A0.at>5000)setTimeout(()=>lkFetch(c),0);return'<div id="lkPanels">'+lkPanelsIn(c)+'</div>'}
 function lkPanelsIn(c){const A0=ui.lkAdm[c.id];if(!A0||!A0.devices)return'<h2 style="margin-top:16px">Lançamento pelas duplas</h2><p class="muted">'+(A0&&A0.err?esc(A0.err):'Carregando…')+'</p>';
- const dev=new Map(arr(A0.devices).map(d=>[d.player,d])),allow=new Set(arr(A0.allow)),teams=champTeams(c).map(T).filter(Boolean).sort((a,b)=>cmpN(dl(a),dl(b)));
+ const devs=new Map();arr(A0.devices).forEach(d=>{if(!devs.has(d.player))devs.set(d.player,[]);devs.get(d.player).push(d)});const dev=new Map([...devs].map(([k,v])=>[k,v[v.length-1]])),pins=new Set(arr(A0.pins)),allow=new Set(arr(A0.allow)),teams=champTeams(c).map(T).filter(Boolean).sort((a,b)=>cmpN(dl(a),dl(b)));
  const sd=t=>{if(!t)return'—';const d=new Date(Date.parse(t)||+t);return d.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})};
- const nDev=arr(A0.devices).length,nPl=teams.reduce((s,t)=>s+t.players.length,0),withDev=teams.filter(t=>t.players.some(p=>dev.has(p))).length;
+ const nDev=devs.size,nPl=teams.reduce((s,t)=>s+t.players.length,0),withDev=teams.filter(t=>t.players.some(p=>dev.has(p))).length;
  const L=confList(c,false),wait=L.filter(x=>!x.div),div=L.filter(x=>x.div),log=arr(A0.log),tab=ui.cpTab||'dev';
  const nmA=id=>{const x=findMatch(id);return x?esc(dl(T(x.m.a))):'dupla 1'},nmB=id=>{const x=findMatch(id);return x?esc(dl(T(x.m.b))):'dupla 2'};
  const mlab=id=>{const x=findMatch(id);return x?esc(dl(T(x.m.a)))+' × '+esc(dl(T(x.m.b))):'<i>confronto excluído</i>'},where=id=>{const x=findMatch(id);return x?esc(x.ph.name)+' · '+esc(x.r.title):''};
@@ -1282,12 +1285,17 @@ function lkPanelsIn(c){const A0=ui.lkAdm[c.id];if(!A0||!A0.devices)return'<h2 st
   vinculo:['inf','Vínculo',g=>esc(g.info&&g.info.name||lkName(g.info&&g.info.player))+' · '+esc(lkTeam(g.info&&g.info.team))+(g.info&&g.info.device?' · '+esc(g.info.device):'')],
   desvinculo:['inf','Desvinculado',g=>esc(lkName(g.info&&g.info.player))+(g.info&&g.info.motivo==='substituido'?' (substituído)':'')],
   alteracao:['inf','Alterado',g=>'celular de '+esc(lkName(g.info&&g.info.from))+' passou para '+esc(lkName(g.info&&g.info.to))],
-  liberado:['inf','Liberado',g=>'novo vínculo para '+esc(lkName(g.info&&g.info.player))]};
+  liberado:['inf','Liberado',g=>'novo vínculo para '+esc(lkName(g.info&&g.info.player))],
+  vinculo_pin:['inf','Outro navegador (PIN)',g=>esc(g.info&&g.info.name||lkName(g.info&&g.info.player))+(g.info&&g.info.device?' · '+esc(g.info.device):'')],
+  pin_criado:['inf','PIN criado',g=>esc(lkName(g.info&&g.info.player))],
+  pin_zerado:['inf','PIN zerado',g=>esc(lkName(g.info&&g.info.player))],
+  pin_errado:['div','PIN errado',g=>esc(g.info&&g.info.name||lkName(g.info&&g.info.player))+(g.info&&g.info.device?' · '+esc(g.info.device):'')]};
  const hist=log.filter(g=>H[g.kind]),dm=new Set(log.filter(g=>g.kind==='divergencia').map(g=>g.match)),rm=new Set(log.filter(g=>(g.kind==='resolvido_duplas'||g.kind==='resolvido_lancado')&&dm.has(g.match)).map(g=>g.match));
  // --- celulares: um cartão por dupla ---
  const pl=(t,pid)=>{const d=dev.get(pid),st=teamStarted(c,t.id),badge=d?'<span class="lkb on">vinculado</span>':allow.has(pid)?'<span class="lkb lib">liberado</span>':st?'<span class="lkb off">bloqueado</span>':'<span class="lkb">livre</span>';
-  const act=d?'<button class="pill ghost sm" data-a="lkMove" data-id="'+pid+'">Alterar</button><button class="pill ghost sm red" data-a="lkUnbind" data-id="'+pid+'">Desvincular</button>':(!allow.has(pid)&&st?'<button class="pill ghost sm" data-a="lkAllow" data-id="'+pid+'">Liberar vínculo</button>':'');
-  return'<div class="lkp" data-p="'+esc(lkName(pid))+'"><div class="lkph"><b>'+esc(lkName(pid))+'</b>'+badge+'</div>'+(d?'<div class="lkpd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg><span>'+esc(d.device||'aparelho')+'</span></div><div class="lkpm">Vinculado '+sd(d.at)+' · ativo '+sd(d.seen)+' · '+d.scores+' placar(es)</div>':allow.has(pid)?'<div class="lkpm">Pode vincular pelo link.</div>':st?'<div class="lkpm">A dupla já jogou: só vincula se você liberar.</div>':'<div class="lkpm">Ainda não vinculou.</div>')+(act?'<div class="lkpa">'+act+'</div>':'')+'</div>'};
+  const act=(d?'<button class="pill ghost sm" data-a="lkMove" data-id="'+pid+'">Alterar</button><button class="pill ghost sm red" data-a="lkUnbind" data-id="'+pid+'">Desvincular</button>':(!allow.has(pid)&&st?'<button class="pill ghost sm" data-a="lkAllow" data-id="'+pid+'">Liberar vínculo</button>':''))+(pins.has(pid)?'<button class="pill ghost sm" data-a="lkPinReset" data-id="'+pid+'">Zerar PIN</button>':'');
+  const ds=devs.get(pid)||[],pinB=pins.has(pid)?'<span class="lkb on" title="Pode entrar em outro navegador com o PIN">PIN</span>':d?'<span class="lkb" title="Ainda não criou o PIN">sem PIN</span>':'';
+  return'<div class="lkp" data-p="'+esc(lkName(pid))+'"><div class="lkph"><b>'+esc(lkName(pid))+'</b>'+badge+pinB+'</div>'+(d?ds.map(x=>'<div class="lkpd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg><span>'+esc(x.device||'aparelho')+'</span><small class="muted"> · desde '+sd(x.at)+'</small></div>').join('')+'<div class="lkpm">'+(ds.length>1?ds.length+' navegadores · ':'')+'ativo '+sd(d.seen)+' · '+ds.reduce((a,x)=>a+(+x.scores||0),0)+' placar(es)</div>':allow.has(pid)?'<div class="lkpm">Pode vincular pelo link.</div>':st?'<div class="lkpm">A dupla já jogou: só vincula se você liberar.</div>':'<div class="lkpm">Ainda não vinculou.</div>')+(act?'<div class="lkpa">'+act+'</div>':'')+'</div>'};
  const devTab='<p class="note" style="margin:0 0 10px"><b>'+withDev+' de '+teams.length+'</b> duplas com celular · <b>'+nDev+' de '+nPl+'</b> jogadores vinculados. '+(statusKey(c)==='done'?'Campeonato finalizado: os vínculos estão encerrados.':'')+'</p><div class="lkgrid">'+
   (teams.map(t=>{const n=t.players.filter(p=>dev.has(p)).length;return'<div class="lkcard"><div class="lkct"><b>'+esc(dl(t))+'</b><span class="lkb '+(n===t.players.length?'on':n?'half':'')+'">'+n+'/'+t.players.length+'</span></div>'+t.players.map(p=>pl(t,p)).join('')+'</div>'}).join('')||'<p class="muted">Nenhuma dupla no campeonato.</p>')+'</div>';
  // --- aguardando / divergências ---
@@ -1410,8 +1418,9 @@ const HELP={
    ['Abra o link com internet','Use sempre o mesmo navegador (ex.: o que abre pelo WhatsApp).'],
    ['Digite seu nome','Pode ser só uma parte: “fab” acha Fabio. Toque no seu nome.'],
    ['Confira sua dupla','Aparece <b>“Sua dupla é …?”</b>. Se estiver certo, <b>Sim, é minha dupla</b>.'],
-   ['Dupla errada?','Toque em <b>Minha dupla está errada</b> e procure o organizador.']],
-   tip:'Cada jogador vincula 1 celular. Trocou de celular ou de navegador? Peça ao organizador para liberar.'},
+   ['Dupla errada?','Toque em <b>Minha dupla está errada</b> e procure o organizador.'],
+   ['Crie seu PIN','Logo depois de vincular, crie um PIN de 4 números. Abriu o link em outro navegador ou celular? Toque no seu nome e digite o PIN.']],
+   tip:'Esqueceu o PIN? Peça ao organizador para zerar e crie outro. Até 3 navegadores por jogador.'},
   {k:'inf',t:'Informar o placar',i:()=>I.edit,d:'Lance o resultado do seu jogo.',s:[
    ['Ache seu jogo','Na aba <b>Jogos</b>, escolha a rodada. ⚠ e ⏳ no seletor indicam rodadas com pendência.'],
    ['Toque em “Informar placar”','Digite o placar das duas duplas e salve. Se aparecer <b>“Quem está informando?”</b>, escolha a sua dupla.'],
@@ -1440,7 +1449,7 @@ function helpModal(){const kind=visitor?'vis':'adm',c=cur.c,team=!!(c&&c.teamMod
 
 /* ===================== Ações ===================== */
 const A={},F={};
-const VIS=new Set(['help','helpTab','bindQ','bindAll','bindPick','bindYes','bindWrong','bindWatch','bindBack','byPick','lqSync','lqConf','lqDismiss','pvTab','rkSet','rkMode','rkQ','rkIna','pwEye','tvOpen','tvExit','tvNext','tvPause','tGames','clsView','retry','closeM','vTab','vMode','mOpen','rkCell','rkTot','selPhase','selRound']);
+const VIS=new Set(['pinNew','help','helpTab','bindQ','bindAll','bindPick','bindYes','bindWrong','bindWatch','bindBack','byPick','lqSync','lqConf','lqDismiss','pvTab','rkSet','rkMode','rkQ','rkIna','pwEye','tvOpen','tvExit','tvNext','tvPause','tGames','clsView','retry','closeM','vTab','vMode','mOpen','rkCell','rkTot','selPhase','selRound']);
 A.closeM=()=>closeModal();
 A.rkTie=d=>{const season=d.season,L=computeRanking({season,champ:'all',mode:'d',q:'',inactive:false}).list,tied=L.filter(r=>r.qt),dl0=L.filter(r=>r.qd||r.qx),cur0=(db.settings.ties||{})[season];
  const C2=tied.length?tied:dl0;if(!C2.length)return alertBox('Sem empate','Não há empate na última vaga desta temporada.');const spots=tied.length?tied[0].tspots:cur0.win.length,sig=tied.length?tied[0].tsig:cur0.sig;
@@ -1459,8 +1468,10 @@ A.cpTab=d=>{ui.cpTab=d.v;const el=document.getElementById('lkPanels');if(el)el.i
 A.cpUse=async(d,el)=>{const x=findMatch(d.id);if(!x||!x.m.claims||!x.m.claims[d.k]||!x.m.claims[d.k].sets)return toast('Este informe não está mais disponível.','err');if(el.disabled)return;el.disabled=true;
  try{const ok=await scoreAdmin(x.m,x.m.claims[d.k].sets.map(g=>[g[0],g[1]]),userName(),'done');if(!ok){el.disabled=false;toast('O confronto mudou neste meio-tempo. Confira e tente de novo.','err')}else{save();toast('Placar lançado.')}}catch(e){el.disabled=false;return toast(errTxt(e),'err')}
  render();lkFetch(x.c,true)};
-A.lkUnbind=async d=>{const c=cur.c;if(!await confirmBox({title:'Desvincular celular',msg:'O celular de <b>'+esc(lkName(d.id))+'</b> deixa de lançar placares na hora. O que ele já lançou continua valendo. A pessoa poderá vincular de novo pelo link.',ok:'Desvincular',danger:true}))return;
+A.lkUnbind=async d=>{const c=cur.c;if(!await confirmBox({title:'Desvincular celular',msg:'Os navegadores de <b>'+esc(lkName(d.id))+'</b> deixam de lançar placares na hora. O que ele já lançou continua valendo. A pessoa poderá vincular de novo pelo link.',ok:'Desvincular',danger:true}))return;
  try{await rpc('gc_link_unbind',{p_champ:c.id,p_player:d.id});toast('Celular desvinculado.')}catch(e){toast(errTxt(e),'err')}lkFetch(c,true)};
+A.lkPinReset=async d=>{const c=cur.c;if(!await confirmBox({title:'Zerar PIN',msg:'O PIN de <b>'+esc(lkName(d.id))+'</b> é apagado. Os navegadores já vinculados continuam funcionando; ele cria um PIN novo no próximo acesso.',ok:'Zerar PIN',danger:true}))return;
+ try{await rpc('gc_link_pin_reset',{p_champ:c.id,p_player:d.id});toast('PIN zerado: '+lkName(d.id)+' cria outro no próximo acesso.')}catch(e){toast(errTxt(e),'err')}lkFetch(c,true)};
 A.lkAllow=async d=>{const c=cur.c;try{await rpc('gc_link_allow',{p_champ:c.id,p_player:d.id});toast('Liberado: '+lkName(d.id)+' já pode vincular o celular.')}catch(e){toast(errTxt(e),'err')}lkFetch(c,true)};
 A.lkMove=d=>{const c=cur.c,ps=lkPlayers(c).filter(x=>x.id!==d.id);
  modal('<form data-f="lkMoveF">'+mHead('Alterar vínculo','Celular hoje vinculado a '+esc(lkName(d.id)))+'<input type="hidden" name="from" value="'+d.id+'"><label class="field"><span>Passar este celular para</span><select class="inp" name="to">'+ps.map(x=>'<option value="'+x.id+'">'+esc(x.name)+' — '+esc(lkTeam(x.team))+'</option>').join('')+'</select></label><p class="err" role="alert"></p><div class="acts"><button type="button" class="pill ghost" data-a="closeM">Cancelar</button><button class="pill">Alterar</button></div></form>')};
@@ -1469,13 +1480,38 @@ F.lkMoveF=async f=>{const c=cur.c,from=f.from.value,to=f.to.value;let r;try{r=aw
  if(!r.ok)return setErr(f,'Não foi possível alterar ('+(r.reason||'erro')+').');while(stack.length)closeModal(true);toast('Vínculo alterado.');lkFetch(c,true)};
 A.bindQ=(d,el)=>{ui.bindQ=el.value;const L=document.getElementById('bindL');if(L)L.innerHTML=bindList(cur.c,ui.bindQ)};
 A.bindAll=()=>{ui.bindAll=!ui.bindAll;render()};
-A.bindPick=d=>{const c=cur.c,p=P(d.id),t=db.teams.find(t=>t.players.includes(d.id)&&champTeams(c).includes(t.id));if(!p||!t)return;
+A.bindPick=d=>{const c=cur.c,p=P(d.id),t=db.teams.find(t=>t.players.includes(d.id)&&champTeams(c).includes(t.id));if(!p||!t)return;const L=lkLink||{};
+ if(arr(L.taken).includes(d.id)){if(arr(L.pins).includes(d.id))return pinAsk(d.id);return bindTry(d.id,null)}
  modal(mHead('Confirme sua dupla')+'<p style="font-size:17px;margin:4px 0 16px;line-height:1.5">Você é <b>'+esc(p.name)+'</b>.<br>Sua dupla é <b>'+esc(dl(t))+'</b>?</p><div class="bindacts"><button class="pill" data-a="bindYes" data-id="'+d.id+'">Sim, é minha dupla</button><button class="pill ghost" data-a="closeM">Escolhi o nome errado</button><button class="pill ghost" data-a="bindWrong" data-id="'+d.id+'">Minha dupla está errada</button></div>')};
-A.bindYes=async(d,el)=>{if(el.disabled)return;el.disabled=true;const tok=lkTok(),nm=(P(d.id)||{}).name||'';let r;
- try{r=await rpc('gc_link_bind',{p_token:tok,p_device:devTok(),p_player:d.id,p_info:devInfo()},true)}catch(e){el.disabled=false;return toast(e.status?errTxt(e):'Sem internet: para vincular é preciso estar conectado.','err')}
+A.bindYes=async(d,el)=>{if(el.disabled)return;el.disabled=true;await bindTry(d.id,null,el)};
+// Vincula este navegador ao jogador. Com PIN quando o jogador já está vinculado em outro navegador (ou já criou PIN).
+async function bindTry(pid,pin,el){const tok=lkTok(),nm=(P(pid)||{}).name||'';let r;
+ const prm={p_token:tok,p_device:devTok(),p_player:pid,p_info:devInfo()};if(pin!=null)prm.p_pin=pin;try{r=await rpc('gc_link_bind',prm,true)}catch(e){if(el)el.disabled=false;return toast(e.status?errTxt(e):'Sem internet: para vincular é preciso estar conectado.','err')}
+ if(!r.ok&&(r.reason==='pin_errado'||r.reason==='pede_pin')&&pin!=null){const f=document.querySelector('form[data-f=bindPinF]');if(f){f.pin.value='';f.pin.focus();return setErr(f,r.reason==='pin_errado'?'PIN errado. '+(r.left>0?'Restam '+r.left+' tentativa'+(r.left>1?'s':'')+' antes de bloquear por 15 minutos.':''):'Digite o PIN.')}}
  while(stack.length)closeModal(true);
- if(!r.ok)return alertBox('Não foi possível vincular',r.reason==='jogador_ja_vinculado'?'<b>'+esc(nm)+'</b> já está vinculado a outro celular'+(r.device?' ('+esc(r.device)+(r.at?', desde '+dt(Date.parse(r.at)):'')+')':'')+'. Peça ao organizador para liberar.':r.reason==='vinculo_fechado'?'A sua dupla já começou a jogar neste campeonato. Para vincular agora, peça ao organizador para liberar.':r.reason==='celular_ja_vinculado'?'Este celular já está vinculado a outro jogador. Peça ao organizador para alterar.':'Tente novamente.');
- ui.bindQ='';ui.bindAll=false;ui.watchMem=null;try{localStorage.removeItem('gc_watch:'+tok)}catch(e){}try{await loadShared(tok)}catch(e){}render();toast('Celular vinculado: você é '+nm+'.')};
+ if(!r.ok){if(r.reason==='pede_pin')return pinAsk(pid);
+  return alertBox('Não foi possível vincular',r.reason==='jogador_ja_vinculado'?'<b>'+esc(nm)+'</b> já está vinculado em outro navegador'+(r.device?' ('+esc(r.device)+(r.at?', desde '+dt(Date.parse(r.at)):'')+')':'')+' e ainda não criou o PIN.<br><br>Abra o link no mesmo navegador em que vinculou, ou peça ao organizador para liberar.'
+   :r.reason==='pin_bloqueado'?'PIN bloqueado por muitas tentativas erradas. Tente de novo em '+r.min+' minuto'+(r.min>1?'s':'')+', ou peça ao organizador para zerar o seu PIN.'
+   :r.reason==='limite_aparelhos'?'<b>'+esc(nm)+'</b> já está vinculado em 3 navegadores (o máximo). Peça ao organizador para desvincular os antigos.'
+   :r.reason==='vinculo_fechado'?'A sua dupla já começou a jogar neste campeonato. Para vincular agora, peça ao organizador para liberar.'
+   :r.reason==='celular_ja_vinculado'?'Este navegador já está vinculado a outro jogador. Peça ao organizador para alterar.':'Tente novamente.')}
+ ui.bindQ='';ui.bindAll=false;ui.watchMem=null;try{localStorage.removeItem('gc_watch:'+tok)}catch(e){}try{await loadShared(tok)}catch(e){}render();
+ toast((pin!=null?'Entrou com PIN: ':'Celular vinculado: ')+'você é '+nm+'.');if(!r.pin)pinNew(true)}
+// Pede o PIN do jogador (outro navegador / outro campeonato).
+function pinAsk(pid){const p=P(pid);modal('<form data-f="bindPinF">'+mHead('Digite seu PIN',esc(p?p.name:''))+'<input type="hidden" name="id" value="'+esc(pid)+'"><p class="muted" style="margin:0 0 12px">'+esc(p?p.name:'Este jogador')+' já usa o link em outro navegador. Digite o PIN de 4 números que você criou para usar também este.</p>'+
+ '<input class="inp pinin" name="pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" aria-label="PIN" placeholder="••••" autofocus>'+
+ '<p class="err" role="alert"></p><p class="note">Esqueceu o PIN? Peça ao organizador para zerar: você cria outro.</p><div class="acts"><button type="button" class="pill ghost" data-a="closeM">Cancelar</button><button class="pill">Entrar</button></div></form>')}
+F.bindPinF=async f=>{const pin=(f.pin.value||'').trim();if(!/^\d{4}$/.test(pin))return setErr(f,'O PIN tem 4 números.');const b=f.querySelector('.acts .pill:not(.ghost)');b.disabled=true;await bindTry(f.id.value,pin);if(b.isConnected)b.disabled=false};
+// Cria o PIN (logo depois de vincular, ou pela faixa "Criar meu PIN").
+function pinNew(first){modal('<form data-f="pinNewF">'+mHead('Crie seu PIN','4 números')+'<p class="muted" style="margin:0 0 12px">'+(first?'Pronto, este navegador está vinculado. ':'')+'Com o PIN você abre o link em <b>qualquer navegador</b> (Chrome, Samsung, outro celular) e continua sendo você. Ninguém mais vê o seu PIN.</p>'+
+ '<label class="field"><span>PIN</span><input class="inp pinin" name="pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="••••" autofocus></label>'+
+ '<label class="field"><span>Repita o PIN</span><input class="inp pinin" name="pin2" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="••••"></label>'+
+ '<p class="err" role="alert"></p><div class="acts"><button type="button" class="pill ghost" data-a="closeM">Criar depois</button><button class="pill">Criar PIN</button></div></form>')}
+A.pinNew=()=>pinNew(false);
+F.pinNewF=async f=>{const a=(f.pin.value||'').trim(),b=(f.pin2.value||'').trim();if(!/^\d{4}$/.test(a))return setErr(f,'O PIN tem 4 números.');if(a!==b)return setErr(f,'Os dois PINs não são iguais.');if(/^(\d)\1{3}$/.test(a)||a==='1234'||a==='4321')return setErr(f,'Escolha um PIN menos óbvio (evite 0000, 1111, 1234…).');
+ const tok=lkTok();let r;try{r=await rpc('gc_link_pin_set',{p_token:tok,p_device:devTok(),p_pin:a},true)}catch(e){return setErr(f,e.status?errTxt(e):'Sem internet: para criar o PIN é preciso estar conectado.')}
+ if(!r.ok)return setErr(f,r.reason==='pin_existe'?'Você já tem um PIN. Se esqueceu, peça ao organizador para zerar.':r.reason==='sem_vinculo'?'Este navegador não está vinculado.':'Não foi possível criar o PIN.');
+ while(stack.length)closeModal(true);try{await loadShared(tok)}catch(e){}render();toast('PIN criado. Guarde: você vai usar se abrir o link em outro navegador.')};
 A.bindWrong=async d=>{const tok=lkTok();try{await rpc('gc_link_report',{p_token:tok,p_device:devTok(),p_player:d.id},true)}catch(e){}while(stack.length)closeModal(true);alertBox('Procure o organizador','Avise o organizador para corrigir o cadastro da sua dupla. Este celular <b>não</b> foi vinculado.')};
 A.bindWatch=()=>{const t=lkTok();ui.watchMem=t;try{localStorage.setItem('gc_watch:'+t,'1')}catch(e){}render()};
 A.bindBack=()=>{const t=lkTok();ui.watchMem=null;try{localStorage.removeItem('gc_watch:'+t)}catch(e){}render()};
@@ -2447,7 +2483,7 @@ A.jExpGo=d=>{const c=cur.c,ph=cur.ph,r=cur.r,all=!!document.querySelector('.ov:l
 
 /* ===================== Eventos ===================== */
 const READ=new Set([...VIS,'nav','sair','sair2','openC','rkSet','rkMode','rkIna','rkQ','pSort','crInfo','cxScope','offSync','confOpen','confKeep','cExp','jExp','cExpGo','jExpGo','jExpPick']);
-const SCORE=new Set(['mState','mAuto','mGame','confMine']),MASTER=new Set(['rkTie','rkTieDel','lkUnbind','lkMove','lkAllow','cpUse','cpTab','lkRefresh','mbEdit','mbDel','cOpt','cDel','cfgPlayers','cpAll','cpSel','cpDel','cfgRank','wipe','bkImp','bkExp']),CASH=new Set(['cxAdd','cxEdit','cxDel']),MASTERF=new Set(['rkTieSave','lkMoveF','uSave','cSave','tieSave','mbSave']);
+const SCORE=new Set(['mState','mAuto','mGame','confMine']),MASTER=new Set(['lkPinReset','rkTie','rkTieDel','lkUnbind','lkMove','lkAllow','cpUse','cpTab','lkRefresh','mbEdit','mbDel','cOpt','cDel','cfgPlayers','cpAll','cpSel','cpDel','cfgRank','wipe','bkImp','bkExp']),CASH=new Set(['cxAdd','cxEdit','cxDel']),MASTERF=new Set(['rkTieSave','lkMoveF','uSave','cSave','tieSave','mbSave']);
 const DENY='Seu perfil não permite esta ação.';
 A.offSync=()=>trySync(true);
 // Conflitos de placar (lançado offline × o que já estava online): as duas versões ficam guardadas até alguém autorizado decidir.
@@ -2496,7 +2532,7 @@ document.addEventListener('click',e=>{const link=e.target.closest('.side a');if(
  if(el.tagName==='BUTTON')e.preventDefault();if(el.dataset.close)closeModal(true);run(el.dataset.a,el.dataset,el,e)});
 document.addEventListener('change',e=>{const el=e.target.closest('[data-c]');el&&run(el.dataset.c,el.dataset,el,e)});
 document.addEventListener('input',e=>{const el=e.target.closest('[data-i]');el&&run(el.dataset.i,el.dataset,el,e)});
-document.addEventListener('submit',e=>{e.preventDefault();const k=e.target.dataset.f;if(visitor){if(k!=='mSave')return}
+document.addEventListener('submit',e=>{e.preventDefault();const k=e.target.dataset.f;if(visitor){if(!['mSave','bindPinF','pinNewF'].includes(k))return}
  else if(k!=='login'&&k!=='confNoop'&&!(k==='firstPw'?!!sess:k==='pwSave'?!!me.role:MASTERF.has(k)?(k==='cSave'||k==='tieSave'?canEdit():isMaster()):(k==='mSave'||k==='mGameForm')?canScore():k==='cxSave'||k==='cxCota'?canCashEdit():canEdit()))return toast(DENY,'err');
  F[k]&&F[k](e.target)});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(stack.length)closeModal();else if(document.querySelector('.tv'))A.tvExit();else document.body.classList.remove('nav')}
