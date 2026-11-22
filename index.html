@@ -512,6 +512,7 @@ table.rk tr.qt .posb{background:#DBEAFE;color:#1E3A8A;box-shadow:inset 0 0 0 1.5
 .cfgerr{margin:6px 0 4px 18px;padding:0;display:grid;gap:4px}
 .shbox{border:1px solid #E1E5EA;border-radius:14px;padding:12px 14px;margin:0 0 12px}.shh{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px}.shh svg{width:20px;height:20px;flex:none;color:var(--g1);margin-top:2px}.shh small{display:block;color:#5B6472;margin-top:2px}
 .shrow{display:flex;gap:8px;align-items:center}.shrow .inp{flex:1;min-width:0;font-size:13px}.shbox .lnk{background:none;border:0;padding:8px 0 0;color:#5B6472;text-decoration:underline;font-size:13px;cursor:pointer}
+.pvq{font-size:13px;font-weight:600;color:#12683A;margin-left:6px}
 </style>
 </head>
 <body>
@@ -1215,7 +1216,19 @@ const noAct=h=>h.replace(/ data-a="[^"]*"/g,'').replace(/<button class="br-hit"/
 function phasePreview(c,ph){const i=c.phases.indexOf(ph),pv=c.phases[i-1];if(i<1||ph.teamIds.length)return'';
  const note=n=>'<p class="note prevnote">'+I.info+'<span><b>Prévia.</b> As vagas são preenchidas automaticamente quando a <b>'+esc(pv.name)+'</b> for finalizada ('+esc(qualTxt(pv))+')'+(n?'. '+n:'')+'.</span></p>';
  if(ph.type==='elim'){const tmp=bracketPhase(c,ph);return tmp?note('O cruzamento mostrado é o que será usado')+'<div class="preview">'+noAct(bracketHTML(tmp,true)).replace(/class="br-m live/g,'class="br-m wait').replace(/<span class="tag live">[^<]*<\/span>/g,'<span class="tag wait">'+ST.wait+'</span>')+'</div>':''}
- const sl=phaseSlots(c,ph);if(!sl.length)return'';const tmp=newPhase(i+1,'pc');tmp.id='?p'+ph.id;tmp.cols=ph.cols;tmp.criteria=ph.criteria;tmp.teamIds=sl.map(x=>x.id);
+ const sl=phaseSlots(c,ph);if(!sl.length)return'';
+ // Fase com grupos planejados: mostra os grupos como ficarão (ziguezague pela classificação geral) e quantos classificam em cada um.
+ const pg=+(ph.plan&&ph.plan.groups)||0;
+ if(ph.type==='pc'&&pg>1&&!ph.groups.length){const L=[...sl].sort((a,b)=>a.o.pos-b.o.pos||a.o.g-b.o.g),tier={};L.forEach(x=>(tier[x.o.pos]=tier[x.o.pos]||[]).push(x));
+  const lab=x=>{const t=tier[x.o.pos];if(t.length<2)return SLOTT[x.id].name;const k=t.indexOf(x)+1;return(k===1?'Melhor ':k+'º melhor ')+x.o.pos+'º'};
+  const G=Array.from({length:pg},()=>[]);L.forEach((x,k)=>{const r=Math.floor(k/pg),j=k%pg;G[r%2?pg-1-j:j].push(x)});
+  const cols=ph.cols.filter(x=>x.on),a=ph.advance||{},nx=c.phases[i+1];
+  const cards=G.map((g,gi)=>{const q=nx&&a.mode==='group'?perOf(a,gi):0;return'<div class="gcard"><h3 class="gt">'+gLetter(gi)+' <small class="pvq">'+g.length+' duplas'+(q?' · '+(q===1?'classifica o 1º':'classificam os '+q+' primeiros'):'')+'</small></h3><div class="tw"><table class="cls"><thead><tr><th>Pos.</th><th class="l">Dupla</th>'+cols.map(x=>'<th title="'+COL[x.k][0]+'">'+COL[x.k][1]+'</th>').join('')+'</tr></thead><tbody>'+
+   g.map(x=>'<tr><td><span class="posb">–</span></td><td class="l" style="white-space:normal"><button class="name">'+esc(lab(x))+'</button></td>'+cols.map(k=>'<td class="'+(k.k==='pts'?'tot':'')+'">0</td>').join('')+'</tr>').join('')+'</tbody></table></div></div>'}).join('');
+  const tot=nx&&a.mode!=='group'&&+a.total?'<p class="note">Classificam '+(+a.total)+' duplas pela classificação geral desta fase.</p>':'';
+  const multi=Object.values(tier).some(t=>t.length>1);
+  return note('Divisão em '+pg+' grupos em ziguezague pela classificação geral da '+esc(pv.name)+(multi?': primeiro todos os 1º colocados, depois os 2º… Entre duplas de mesma colocação, vem antes a de melhor aproveitamento (“Melhor 1º” = o 1º colocado com melhor aproveitamento; “2º melhor 1º” = o seguinte…)':''))+'<div class="preview pvgroups">'+cards+tot+'</div>'}
+ const tmp=newPhase(i+1,'pc');tmp.id='?p'+ph.id;tmp.cols=ph.cols;tmp.criteria=ph.criteria;tmp.teamIds=sl.map(x=>x.id);
  const prevCls=ui.cls;ui.cls='all';let h=standHTML(tmp);ui.cls=prevCls;
  return note(ph.groups.length?'A divisão em grupos desta fase é feita depois, em Configurações → Grupos':'')+'<div class="preview">'+noAct(h).replace(/<span class="posb">[^<]*(<small>=<\/small>)?<\/span>/g,'<span class="posb">–</span>').replace(/ title="Empatadas em todos os critérios"/g,'')+'</div>'}
 const emptyPhase=(c,ph,manage)=>phasePreview(c,ph)||('<div class="center"><span class="muted">'+(c.phases.indexOf(ph)>0?'As duplas desta fase chegam da fase anterior. Defina quantas se classificam em + → Fases → Editar fase.':'Ainda não há duplas.')+'</span>'+(manage&&c.phases.indexOf(ph)===0?'<button class="pill dark big" data-a="cDuplas">ADICIONAR DUPLAS</button>':'')+'</div>');
