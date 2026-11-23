@@ -3,7 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Gerenciamento de Campeonatos</title>
+<title>Nossa Liga</title>
+<meta name="theme-color" content="#164734">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -516,6 +520,8 @@ table.rk tr.qt .posb{background:#DBEAFE;color:#1E3A8A;box-shadow:inset 0 0 0 1.5
 .bindp.tk{opacity:.85}.bindp.tk small{color:#12683A}
 .pinin{font-size:28px;letter-spacing:12px;text-align:center;max-width:220px;margin:0 auto;display:block}
 .lkpin{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#EEF7F1;border:1px solid #CFE8D8;border-radius:12px;padding:10px 12px;margin:8px 0}.lkpin span{flex:1;min-width:180px}
+.instbar{display:flex;gap:10px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:14px;padding:8px 10px;margin:0 0 12px}.instbar img{border-radius:10px;flex:none}.instbar span{flex:1;min-width:0;font-size:14px;line-height:1.3}.instbar .ibtn{font-size:20px;line-height:1}
+.insthd{display:flex;gap:12px;align-items:center;margin:4px 0 10px}.insthd img{border-radius:12px;flex:none}.insthd p{margin:0}.inststeps{margin:0 0 10px 18px;padding:0;display:grid;gap:6px}
 </style>
 </head>
 <body>
@@ -1018,7 +1024,17 @@ const vLogin=()=>`<header class="top">${I.trophy}<span>Gerenciamento de Campeona
 
 /* ===================== Roteamento ===================== */
 let cur={};
+// App instalado (Nossa Liga): botão "Instalar", e o ícone abre direto no último campeonato aberto pelo link.
+let instEv=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();instEv=e;try{render()}catch(x){}});
+window.addEventListener('appinstalled',()=>{instEv=null;try{toast('App Nossa Liga instalado.');render()}catch(x){}});
+const isApp=()=>{try{return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true}catch(e){return false}};
+const isIOS=()=>/iPhone|iPad|iPod/.test(navigator.userAgent)||(/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1);
+// O app é só do master: o "cartão de identidade" (manifest) só é colocado na página para ele. Nos links não existe.
+function appMeta(on){const hd=document.head,ex=hd.querySelector('link[rel=manifest]');if(on&&!ex){const l=document.createElement('link');l.rel='manifest';l.href='manifest.webmanifest';hd.appendChild(l);
+  [['mobile-web-app-capable','yes'],['apple-mobile-web-app-capable','yes'],['apple-mobile-web-app-title','Nossa Liga'],['apple-mobile-web-app-status-bar-style','black-translucent']].forEach(([n,v])=>{const m=document.createElement('meta');m.name=n;m.content=v;m.dataset.app='1';hd.appendChild(m)})}
+ else if(!on&&ex){ex.remove();hd.querySelectorAll('meta[data-app]').forEach(m=>m.remove());instEv=null}}
 function render(){const root=document.getElementById('root'),h=location.hash.replace(/^#\/?/,'').split('/');
+ try{appMeta(h[0]!=='s'&&h[0]!=='p'&&authed()&&isMaster())}catch(e){}
  const sc=document.querySelector('.main')?.scrollTop||0,af=document.activeElement,fk=af&&af.dataset&&af.dataset.i&&af.closest('#root')?{k:af.dataset.i,p:af.selectionStart}:null;visitor=false;viewOnly=false;cur={};
  if(h[0]==='p'){visitor=true;viewOnly=true;
   if(CLOUD&&loaded!=='p:'+h[1])return ensure('p:'+h[1],()=>loadPortal(h[1]));const okp=CLOUD?ptSig!=='invalido':db.portalToken===h[1];
@@ -1033,14 +1049,14 @@ function render(){const root=document.getElementById('root'),h=location.hash.rep
   if(h[2]==='telao'){root.innerHTML=vTelao(c,false);return}
   const tab=['inicio','classificacao','config'].includes(h[2])&&(h[2]!=='config'||isMaster())?h[2]:'inicio';cur.c=c;
   const it=(k,l,i)=>`<a href="#/c/${c.id}/${k}" class="${tab===k?'on':''}">${i}${l}</a>`;
-  side=`<a href="#/campeonatos">${I.back}Meus campeonatos</a><div class="ctitle" style="padding-top:14px">${I.trophy}<span>${esc(c.name)}</span></div>${it('inicio','Início',I.home)}${it('classificacao','Classificação',I.list)}${isMaster()?it('config','Configurações',I.gear):''}<a class="navhelp" role="button" tabindex="0" data-a="help">${HI.help}Ajuda</a>
+  side=`<a href="#/campeonatos">${I.back}Meus campeonatos</a><div class="ctitle" style="padding-top:14px">${I.trophy}<span>${esc(c.name)}</span></div>${it('inicio','Início',I.home)}${it('classificacao','Classificação',I.list)}${isMaster()?it('config','Configurações',I.gear):''}<a class="navhelp" role="button" tabindex="0" data-a="help">${HI.help}Ajuda</a>${isApp()||!isMaster()?'':'<a class="navhelp" role="button" tabindex="0" data-a="instApp">'+HI.phone+'Instalar app</a>'}
    <div class="foot"><span>${I.user}${esc(userName())}</span><button data-a="sair">${I.logout}Sair</button></div>`;
   const names={inicio:'Início',classificacao:'Classificação',config:'Configurações'};
   main=`<div class="crumb"><a href="#/campeonatos">Meus Campeonatos</a>/<span>${esc(c.name)}</span>/<b>${names[tab]}</b><span class="sp"></span><button class="pill ghost" data-a="tvOpen" style="display:inline-flex;gap:6px;align-items:center;margin-right:8px" title="Exibir em uma TV ou projetor">${I.table}Telão</button><button class="pill ghost" data-a="share" ${canEdit()?'':'hidden'} style="display:inline-flex;gap:6px;align-items:center">${I.share}Compartilhar</button></div>`+
    ({inicio:vHome,classificacao:vClass,config:vConfig})[tab](c)}
  else{const p=['campeonatos','jogadores','equipes','ranking','caixa','usuario'].includes(h[0])&&(h[0]!=='caixa'||canCash())&&(!['jogadores','equipes'].includes(h[0])||canEdit())?h[0]:'campeonatos';
   const it=(k,l,i)=>`<a href="#/${k}" class="${p===k?'on':''}">${i}${l}</a>`;
-  side=`<h4>${canEdit()?'Organizar campeonatos':'Campeonatos'}</h4>${it('campeonatos','Meus campeonatos',I.trophy)}${canEdit()?it('jogadores','Cadastro de jogadores',I.user)+it('equipes','Cadastro de equipes',I.users):''}${it('ranking','Ranking Geral',I.chart)}${canCash()?it('caixa','Caixa',I.cash):''}<h4>Usuário</h4>${it('usuario','Meu usuário',I.shield)}<a class="navhelp" role="button" tabindex="0" data-a="help">${HI.help}Ajuda</a><div class="foot"><span>${I.user}${esc(userName())}</span><button data-a="sair">${I.logout}Sair</button></div>`;
+  side=`<h4>${canEdit()?'Organizar campeonatos':'Campeonatos'}</h4>${it('campeonatos','Meus campeonatos',I.trophy)}${canEdit()?it('jogadores','Cadastro de jogadores',I.user)+it('equipes','Cadastro de equipes',I.users):''}${it('ranking','Ranking Geral',I.chart)}${canCash()?it('caixa','Caixa',I.cash):''}<h4>Usuário</h4>${it('usuario','Meu usuário',I.shield)}<a class="navhelp" role="button" tabindex="0" data-a="help">${HI.help}Ajuda</a>${isApp()||!isMaster()?'':'<a class="navhelp" role="button" tabindex="0" data-a="instApp">'+HI.phone+'Instalar app</a>'}<div class="foot"><span>${I.user}${esc(userName())}</span><button data-a="sair">${I.logout}Sair</button></div>`;
   main=({campeonatos:vChamps,jogadores:vPlayers,equipes:vTeams,ranking:vRank,caixa:vCaixa,usuario:vUser})[p]()}
  root.innerHTML=`<header class="top app"><button class="burger" data-a="nav" aria-label="Abrir menu">${I.menu}</button><span id="sync" class="syncv" aria-live="polite" style="margin-left:auto;font-size:12px;font-weight:400;opacity:.85">${syncTxt()}</span></header>
  <div class="wrap"><div class="panel"><nav class="side" aria-label="Menu">${side}<div class="syncv sidesync" aria-live="polite">${syncTxt()}</div></nav><div class="scrim" data-a="nav"></div><main class="main">${ws.offline&&off?offBar():''}${!ws.offline&&offConf.length?confBar():''}${main}</main></div></div>`;
@@ -1451,6 +1467,11 @@ function helpModal(){const kind=visitor?'vis':'adm',c=cur.c,team=!!(c&&c.teamMod
 const A={},F={};
 const VIS=new Set(['pinNew','help','helpTab','bindQ','bindAll','bindPick','bindYes','bindWrong','bindWatch','bindBack','byPick','lqSync','lqConf','lqDismiss','pvTab','rkSet','rkMode','rkQ','rkIna','pwEye','tvOpen','tvExit','tvNext','tvPause','tGames','clsView','retry','closeM','vTab','vMode','mOpen','rkCell','rkTot','selPhase','selRound']);
 A.closeM=()=>closeModal();
+A.instApp=async()=>{if(!isMaster())return;if(instEv){const ev=instEv;instEv=null;try{ev.prompt();const r=await ev.userChoice;if(r&&r.outcome==='accepted')toast('Instalando o app Nossa Liga…')}catch(e){}render();return}
+ const steps=isIOS()?'<ol class="inststeps"><li>Toque em <b>Compartilhar</b> (o quadrado com a seta para cima), na barra do Safari.</li><li>Role e toque em <b>Adicionar à Tela de Início</b>.</li><li>Toque em <b>Adicionar</b>. O ícone <b>Nossa Liga</b> aparece na tela.</li></ol><p class="note">No iPhone a instalação só funciona pelo <b>Safari</b>.</p>'
+  :'<ol class="inststeps"><li>Toque no menu do navegador (<b>⋮</b> ou <b>≡</b>).</li><li>Toque em <b>Instalar app</b> ou <b>Adicionar à tela inicial</b>.</li><li>Confirme. O ícone <b>Nossa Liga</b> aparece junto dos outros apps.</li></ol>';
+ modal(mHead('Instalar o app','Nossa Liga')+'<div class="insthd"><img src="icon-192.png" alt="" width="56" height="56"><p>Abre em tela cheia, direto no sistema, e funciona sem internet. Só para você (master): os jogadores continuam usando o link. Não baixa arquivo nenhum: é o próprio site, com ícone.</p></div>'+steps+'<div class="acts"><button class="pill" data-a="closeM">Entendi</button></div>')};
+
 A.rkTie=d=>{const season=d.season,L=computeRanking({season,champ:'all',mode:'d',q:'',inactive:false}).list,tied=L.filter(r=>r.qt),dl0=L.filter(r=>r.qd||r.qx),cur0=(db.settings.ties||{})[season];
  const C2=tied.length?tied:dl0;if(!C2.length)return alertBox('Sem empate','Não há empate na última vaga desta temporada.');const spots=tied.length?tied[0].tspots:cur0.win.length,sig=tied.length?tied[0].tsig:cur0.sig;
  modal(`<form data-f="rkTieSave">${mHead('Partida de desempate','Temporada '+esc(season))}<input type="hidden" name="season" value="${esc(season)}"><input type="hidden" name="sig" value="${esc(sig)}"><input type="hidden" name="spots" value="${spots}">
@@ -2495,7 +2516,7 @@ A.jExpGo=d=>{const c=cur.c,ph=cur.ph,r=cur.r,all=!!document.querySelector('.ov:l
 
 /* ===================== Eventos ===================== */
 const READ=new Set([...VIS,'nav','sair','sair2','openC','rkSet','rkMode','rkIna','rkQ','pSort','crInfo','cxScope','offSync','confOpen','confKeep','cExp','jExp','cExpGo','jExpGo','jExpPick']);
-const SCORE=new Set(['mState','mAuto','mGame','confMine']),MASTER=new Set(['lkPinReset','rkTie','rkTieDel','lkUnbind','lkMove','lkAllow','cpUse','cpTab','lkRefresh','mbEdit','mbDel','cOpt','cDel','cfgPlayers','cpAll','cpSel','cpDel','cfgRank','wipe','bkImp','bkExp']),CASH=new Set(['cxAdd','cxEdit','cxDel']),MASTERF=new Set(['rkTieSave','lkMoveF','uSave','cSave','tieSave','mbSave']);
+const SCORE=new Set(['mState','mAuto','mGame','confMine']),MASTER=new Set(['instApp','lkPinReset','rkTie','rkTieDel','lkUnbind','lkMove','lkAllow','cpUse','cpTab','lkRefresh','mbEdit','mbDel','cOpt','cDel','cfgPlayers','cpAll','cpSel','cpDel','cfgRank','wipe','bkImp','bkExp']),CASH=new Set(['cxAdd','cxEdit','cxDel']),MASTERF=new Set(['rkTieSave','lkMoveF','uSave','cSave','tieSave','mbSave']);
 const DENY='Seu perfil não permite esta ação.';
 A.offSync=()=>trySync(true);
 // Conflitos de placar (lançado offline × o que já estava online): as duas versões ficam guardadas até alguém autorizado decidir.
