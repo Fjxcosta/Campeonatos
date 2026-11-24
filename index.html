@@ -345,6 +345,7 @@ tr.qt .posb{background:#FFE08A;color:#5C4300}
 .tv-grid>.gcard,.tv-grid>.match{height:100%;box-sizing:border-box}
 .tv .tv-grid>.match{align-content:center}
 .tv-cls>.note{display:none}
+.tv-cls>.gcard{display:flex;flex-direction:column}.tv-cls>.gcard>.tw{flex:1;display:flex;flex-direction:column}.tv-cls>.gcard table.cls{flex:1;height:100%}.tv-cls>.gcard table.cls thead tr{height:1px}
 .tv .lvc{font-size:15px;padding:3px 6px}.tv .lva{font-size:14px}
 .tv-cls.odd>div.gcard:last-of-type{grid-column:1/-1;justify-self:center;width:calc(50% - 7px)}
 .tv .match{min-width:0;background:#fff;padding:12px 14px}
@@ -1371,7 +1372,7 @@ function gameState(m,i){const n=(m.sets||[]).filter(Boolean).length,[a,b]=setsWo
 function matchCard(m,r,ro){const L=liveOf(m),mv=L?{...m,sets:lvSets(L)}:m,st=shownSt(m,L);
  const nm=id=>id&&T(id)?esc(dl(T(id))):'<span class="ph">A definir</span>';
  const can=ro?(linkOK(r)&&statusKey(cur.c)!=='done'&&(st!=='done'||m.lq)&&m.a&&m.b&&(!m.pending||m.lq)&&teamOK(cur.c,m)):canScore();
- const mkS=ro&&can&&mkLinkSeen(m),mkB=mkS&&!!cur.c.marker,action=ro?(mkS?'mLinkMenu':'mOpen'):canScore()?'mMenu':'mOpen';
+ const mkS=ro&&can&&mkLinkSeen(m),mkB=mkS&&cur.c.marker!==false,action=ro?(mkS?'mLinkMenu':'mOpen'):canScore()?'mMenu':'mOpen';
  const one=m.bo===1,[va,vb]=L?(one?L.p:lvWins(L)):shown(m);
  const fmt=one?'Partida única':'Melhor de 3 partidas';
  const games=!one&&m.a&&m.b?'<div class="gms">'+[0,1,2].map(i=>{let[k,l]=gameState(mv,i),g=mv.sets&&mv.sets[i];if(L&&!g&&i===L.s.length&&!lvDecided(m,L)){k='live';l='Em andamento';g=L.p}return'<button class="gm '+k+'" data-a="'+action+'" data-id="'+m.id+'" '+(can?'':'disabled')+'><span>Partida '+(i+1)+' — '+l+'</span>'+(g?'<b>'+g[0]+' × '+g[1]+'</b>':'')+'</button>'}).join('')+'</div>':'';
@@ -1471,7 +1472,7 @@ function vConfig(c){const ph=getPhase(c);cur.ph=ph;const pd=pendings(c),ts=champ
  <label class="chk"><input type="checkbox" data-a="cOpt" data-k="isFinal" ${c.isFinal?'checked':''}><span>Este é o torneio final da temporada <small class="muted">(não soma pontos no Ranking Geral)</small></span></label>
  <label class="chk"><input type="checkbox" data-a="cOpt" data-k="requireApproval" ${c.requireApproval?'checked':''}><span>Exigir minha aprovação para resultados enviados pelo link compartilhado</span></label>
  <label class="chk"><input type="checkbox" data-a="cOpt" data-k="teamMode" ${c.teamMode?'checked':''} ${CLOUD?'':'disabled'}><span><b>Lançamento pelas duplas (celular vinculado)</b> — no link do campeonato, cada jogador vincula o celular pelo nome e só lança os jogos da sua dupla; o placar só vale quando as duas duplas informarem o mesmo. Neste modo só o master corrige resultados e finaliza ou reabre fases.${CLOUD?'':' <small class="muted">(disponível quando o sistema está ligado ao banco)</small>'}</span></label>
- <label class="chk"><input type="checkbox" data-a="cOpt" data-k="marker" ${c.marker?'checked':''} ${CLOUD?'':'disabled'}><span><b>Marcador no link (em desenvolvimento)</b> — as duplas também podem usar o marcador de pontos pelo link do campeonato. Para você, o marcador já aparece ao tocar no placar do confronto. Deixe desligado enquanto estiver testando.</span></label>
+ <label class="chk"><input type="checkbox" data-a="cOpt" data-k="marker" ${c.marker!==false?'checked':''} ${CLOUD?'':'disabled'}><span><b>Marcador no link (em desenvolvimento)</b> — as duplas também podem usar o marcador de pontos pelo link do campeonato (vem ligado). Para você, o marcador aparece ao tocar no placar do confronto.</span></label>
  <h2 style="margin-top:16px">Resultados aguardando aprovação</h2>${pd.length?`<ul class="rows">${pd.map(({ph,r,m})=>`<li><span style="flex:1;min-width:200px">${esc(ph.name)} · ${esc(r.title)} — <b>${esc(dl(T(m.a)))}</b> ${esc(setsTxt(m.pending.sets))} <b>${esc(dl(T(m.b)))}</b>${m.pending.by?` <small class="muted">· informado por ${esc(m.pending.by)}</small>`:''}</span><button class="pill sm" data-a="mApprove" data-id="${m.id}">Aprovar</button><button class="pill ghost sm" data-a="mReject" data-id="${m.id}">Rejeitar</button></li>`).join('')}</ul>`:'<p class="muted">Nenhum resultado pendente.</p>'}
  ${tmOn(c)&&isMaster()?lkPanels(c):''}
  <h2 style="margin-top:16px">Excluir campeonato</h2><p class="note">Remove o campeonato, suas fases, partidas e os pontos que ele gerou no ranking.</p><button class="pill red" data-a="cDel">Excluir campeonato</button></section></div>`}
@@ -2718,7 +2719,7 @@ function mkKeep(){if(!mk)return;try{if(mk.dirty&&!mk.done)localStorage.setItem(M
 function mkAdminOK(x){const{c,ph,m}=x;return!visitor&&canScore()&&!!m.a&&!!m.b&&!m.pending&&mStatus(m)!=='done'&&!phaseLock(c,ph)}
 // no link o marcador sempre aparece (estrutura pronta); só funciona com a opção "Marcador no link" ligada pelo organizador
 function mkLinkSeen(m){return!!visitor&&CLOUD&&!!cur.c&&!!lkTok()&&!m.lq&&!/\/telao$/.test(location.hash)}
-function mkLinkOK(m){return mkLinkSeen(m)&&!!cur.c.marker}
+function mkLinkOK(m){return mkLinkSeen(m)&&cur.c.marker!==false}   // ligado por padrão; o organizador pode desligar
 const mkNew=m=>({s:m.bo===1?[]:(m.sets||[]).filter(Boolean).map(g=>[+g[0],+g[1]]),p:[0,0],t:1});
 const lvTxt=L=>[...L.s.map(g=>g[0]+' × '+g[1]),lvEnd(L)?L.p[0]+' × '+L.p[1]:L.p[0]+' × '+L.p[1]+' (em andamento)'].join(' · ');
 const TRN={1:['TRUCO!','toque quando pedirem truco','mão'],3:['SEIS!','valendo 3 · toque se pedirem seis','truco'],6:['NOVE!','valendo 6 · toque se pedirem nove','seis'],9:['DOZE!','valendo 9 · toque se pedirem doze','nove'],12:['VALENDO 12','a mão vale 12 pontos','doze']};
