@@ -736,6 +736,7 @@ const lkMe=()=>lkLink&&lkLink.me||null;
 const lkSide=m=>{const me=lkMe();return me?(m.a===me.team?'A':m.b===me.team?'B':null):null};
 // no modo por dupla, o visitante só lança jogo em aberto da PRÓPRIA dupla; depois de informar, espera a outra (só a divergência libera de novo)
 const teamOK=(c,m)=>{if(!tmOn(c)||!visitor)return true;const sd=lkSide(m);if(!sd)return false;if(m.lq)return true;const cl=m.claims||{},o=sd==='A'?'B':'A';return!(cl[sd]&&!cl[o])};
+const ownFix=(c,m)=>{if(!tmOn(c)||!visitor||!m.a||!m.b||mStatus(m)==='done'||m.pending||m.lq)return false;const sd=lkSide(m);if(!sd)return false;const cl=m.claims||{};return!!cl[sd]&&!cl[sd==='A'?'B':'A']};
 const lkWatch=t=>{if(ui.watchMem===t)return true;try{return localStorage.getItem('gc_watch:'+t)==='1'}catch(e){return false}};
 const fold=x=>String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 const LKSYN={jr:'junior',junior:'junior','fº':'filho',fo:'filho',filho:'filho',neto:'neto',sr:'senior',senior:'senior'};
@@ -955,7 +956,10 @@ function liveOf(m){if(!m||!m.a||!m.b||m.pending||mStatus(m)==='done')return null
 const shownSt=(m,L)=>{const st=mStatus(m);if(st==='done')return'done';if(!m.a||!m.b)return'wait';return L||hasSets(m)||m.pending||m.lq||(m.claims&&(m.claims.A||m.claims.B))?'live':'wait'};
 // partidas do ao vivo: as terminadas valem como vitória; a atual dá vitória provisória a quem lidera e, empatada, só soma os pontos
 function liveGames(m,L){const out=L.s.map(g=>({a:g[0],b:g[1],winner:g[0]>g[1]?m.a:m.b}));const[a,b]=L.p;if(a||b)out.push({a,b,winner:a>b?m.a:b>a?m.b:null});return out}
-const phLive=ph=>phMatches(ph).some(m=>liveOf(m));
+// informe de UMA dupla (falta a outra): na classificação exibida conta jogo, vitória/derrota e pontos — PP, PC e DP só depois de confirmar
+function claimWL(m){if(!m||!m.a||!m.b||mStatus(m)==='done'||m.pending)return null;const c=m.claims;if(!c)return null;const ks=['A','B'].filter(k=>c[k]);if(ks.length!==1)return null;
+ const x=c[ks[0]],wl=Array.isArray(x.wl)?x.wl:Array.isArray(x.sets)?x.sets.filter(g=>g&&g[0]!==g[1]).map(g=>g[0]>g[1]?'A':'B'):null;return wl&&wl.length?wl.map(k=>k==='A'?m.a:m.b):null}
+const phLive=ph=>phMatches(ph).some(m=>liveOf(m)||claimWL(m));
 
 /* ----- partidas ----- */
 function setsWon(m){let a=0,b=0;const limit=need(m);for(const s of m.sets||[]){if(!s||a>=limit||b>=limit)break;if(s[0]>s[1])a++;else if(s[1]>s[0])b++}return[a,b]}
@@ -1004,7 +1008,7 @@ const phaseLock=(c,ph)=>ph.status==='done'?['Fase finalizada','Reabra a fase (bo
 function resultGames(ph,m){if(!m.a||!m.b)return[];if(m.bo===1&&(mStatus(m)!=='done'||!winner(m)))return[];const out=[];let a=0,b=0,limit=need(m);for(const s of m.sets||[]){if(a>=limit||b>=limit)break;if(!Array.isArray(s)||s.length!==2||!Number.isInteger(+s[0])||!Number.isInteger(+s[1])||+s[0]===+s[1])continue;const g={a:+s[0],b:+s[1],winner:+s[0]>+s[1]?m.a:m.b};out.push(g);g.winner===m.a?a++:b++}return out}
 function phaseStats(ph,live){const st={},z=id=>st[id]||(st[id]={pts:0,j:0,v:0,d:0,pg:0,pc:0,dp:0,pe:0,e:0});
  ph.teamIds.forEach(z);
- for(const m of phMatches(ph)){const L=live&&liveOf(m);for(const g of L?liveGames(m,L):resultGames(ph,m)){const A=z(m.a),B=z(m.b),ap=g.a,bp=g.b;
+ for(const m of phMatches(ph)){const L=live&&liveOf(m),W=live&&!L&&claimWL(m);for(const g of L?liveGames(m,L):W?W.map(w=>({a:0,b:0,winner:w})):resultGames(ph,m)){const A=z(m.a),B=z(m.b),ap=g.a,bp=g.b;
   A.pg+=ap;A.pc+=bp;B.pg+=bp;B.pc+=ap;if(!g.winner)continue;A.j++;B.j++;
   const w=winPts(ph);if(g.winner===m.a){A.v++;B.d++;A.pts+=w}else{B.v++;A.d++;B.pts+=w}}}
  for(const k in st)st[k].dp=st[k].pg-st[k].pc;return st}
@@ -1308,7 +1312,7 @@ function tieModal(c,ph,tie){cur.ph=ph;const common='<input type="hidden" name="t
 const qualTxt=ph=>{const a=ph.advance||{};if(a.mode!=='total'&&!ph.groups.length&&+(ph.plan&&ph.plan.groups)>1){const v=Array.from({length:+ph.plan.groups},(_,i)=>perOf(a,i));return new Set(v).size===1?v[0]+' por grupo':v.map((x,i)=>gLetter(i)+': '+x).join(', ')}if(a.mode==='total'||!ph.groups.length)return(a.total||0)+' no total';const v=ph.groups.map(g=>+(a.byGroup?.[g.id]??a.total)||0);return new Set(v).size===1?v[0]+' por grupo':ph.groups.map((g,i)=>g.name+': '+v[i]).join(', ')};
 
 // Zona de classificação: sempre a mesma função da finalização (phaseQualifiers); vale igual em "Por grupo" e "Geral".
-function qualState(ph,live){const none={ok:new Set(),pend:new Set(),on:false};if(!hasNextPhase(ph)||!phMatches(ph).some(m=>mStatus(m)==='done'||(live&&liveOf(m))))return none;const q=phaseQualifiers(ph,live);if(q.errors.length)return none;return{ok:new Set(q.ids),pend:new Set(q.ties.flatMap(t=>t.candidates)),on:true}}
+function qualState(ph,live){const none={ok:new Set(),pend:new Set(),on:false};if(!hasNextPhase(ph)||!phMatches(ph).some(m=>mStatus(m)==='done'||(live&&(liveOf(m)||claimWL(m)))))return none;const q=phaseQualifiers(ph,live);if(q.errors.length)return none;return{ok:new Set(q.ids),pend:new Set(q.ties.flatMap(t=>t.candidates)),on:true}}
 function standHTML(ph,pick){const cols=ph.cols.filter(x=>x.on),all=ui.cls==='all'||!ph.groups.length,lv=phLive(ph),Q=qualState(ph,lv);
  // ao vivo: a seta compara com a posição oficial (só partidas encerradas); o placar mostra a partida atual, a dupla primeiro
  const base={};if(lv)standData(ph,all,false).forEach(s=>s.rows.forEach(r=>base[r.id]=r.pos));
@@ -1382,7 +1386,7 @@ function matchCard(m,r,ro){const L=liveOf(m),mv=L?{...m,sets:lvSets(L)}:m,st=sho
  '<button class="score" data-a="'+action+'" data-id="'+m.id+'" '+(can?'':'disabled')+' aria-label="'+(ro?'Informar placar':'Opções do confronto')+'"><span class="sbox">'+va+'</span>×<span class="sbox">'+vb+'</span></button>'+
  '<button class="mt r" data-a="'+action+'" data-id="'+m.id+'" '+(ro||!canEdit()?'disabled':'')+'>'+nm(m.b)+'</button>'+
  '<div class="mfoot"><span><span class="tag '+st+'">'+ST[st]+'</span> '+(m.lq?'<span class="tag lq">Aguardando envio</span>':m.pending?'<span class="tag pend">Aguardando aprovação</span>':'')+(m.third?' <span class="tag pend">Disputa de 3º lugar</span>':'')+' <small class="muted">'+esc(fmt)+'</small></span>'+
- (ro?(mkS?'<button class="pill sm ghost" data-a="mkOpen" data-id="'+m.id+'"'+(mkB?'':' disabled title="Em desenvolvimento: ainda não liberado pelo organizador"')+'>'+(!mkB?'♣ Marcador (em desenvolvimento)':L&&lvDecided(m,L)?'Confirmar placar':'♣ Marcador')+'</button> ':'')+(can?'<button class="pill sm" data-a="mOpen" data-id="'+m.id+'">Informar placar</button>':''):'')+'</div>'+(m.lq||m.pending?'':claimLine(m))+games+'</div>'}
+ (ro?(mkS?'<button class="pill sm ghost" data-a="mkOpen" data-id="'+m.id+'"'+(mkB?'':' disabled title="Em desenvolvimento: ainda não liberado pelo organizador"')+'>'+(!mkB?'♣ Marcador (em desenvolvimento)':L&&lvDecided(m,L)?'Confirmar placar':'♣ Marcador')+'</button> ':'')+(can?'<button class="pill sm" data-a="mOpen" data-id="'+m.id+'">Informar placar</button>':'')+(!can&&ownFix(cur.c,m)&&linkOK(r)&&statusKey(cur.c)!=='done'&&!/\/telao$/.test(location.hash)?'<button class="pill sm ghost" data-a="mFix" data-id="'+m.id+'">Corrigir meu informe</button>':''):'')+'</div>'+(m.lq||m.pending?'':claimLine(m))+games+'</div>'}
 
 // Confrontos aguardando a confirmação da outra dupla (ou com placares divergentes), em todo o campeonato.
 function confList(c,ro){const out=[];c.phases.forEach(ph=>ph.rounds.forEach(r=>{if(ro&&r.hidden)return;r.matches.forEach(m=>{const cl=m.claims;if(!cl||!m.a||!m.b||mStatus(m)==='done')return;const ks=['A','B'].filter(k=>cl[k]);if(!ks.length)return;
@@ -1419,6 +1423,7 @@ function lkPanelsIn(c){const A0=ui.lkAdm[c.id];if(!A0||!A0.devices)return'<h2 st
   vinculo_pin:['inf','Outro navegador (PIN)',g=>esc(g.info&&g.info.name||lkName(g.info&&g.info.player))+(g.info&&g.info.device?' · '+esc(g.info.device):'')],
   pin_criado:['inf','PIN criado',g=>esc(lkName(g.info&&g.info.player))],
   pin_zerado:['inf','PIN zerado',g=>esc(lkName(g.info&&g.info.player))],
+  informe_corrigido:['inf','Informe corrigido pela dupla',g=>mlab(g.match)+'<br>'+(g.info&&g.info.side==='B'?nmB(g.match):nmA(g.match))+': <b>'+esc(setsTxt(g.info&&g.info.from)||'?')+'</b> → <b>'+esc(setsTxt(g.info&&g.info.to)||'?')+'</b>'],
   informe_excluido:['inf','Informe excluído pelo master',g=>mlab(g.match)+'<br>'+(g.info&&g.info.side==='B'?nmB(g.match):nmA(g.match))+' tinha informado <b>'+esc(setsTxt(g.info&&g.info.sets)||'?')+'</b>'],
   pin_errado:['div','PIN errado',g=>esc(g.info&&g.info.name||lkName(g.info&&g.info.player))+(g.info&&g.info.device?' · '+esc(g.info.device):'')]};
  const hist=log.filter(g=>H[g.kind]),dm=new Set(log.filter(g=>g.kind==='divergencia').map(g=>g.match)),rm=new Set(log.filter(g=>(g.kind==='resolvido_duplas'||g.kind==='resolvido_lancado')&&dm.has(g.match)).map(g=>g.match));
@@ -1581,7 +1586,7 @@ function helpModal(){const kind=visitor?'vis':'adm',c=cur.c,team=!!(c&&c.teamMod
 
 /* ===================== Ações ===================== */
 const A={},F={};
-const MKA=['mkOpen','mkAdd','mkSub','mkTruco','mkTrucoX','mkNext','mkUndo','mkHide','mLinkMenu'];
+const MKA=['mFix','mkOpen','mkAdd','mkSub','mkTruco','mkTrucoX','mkNext','mkUndo','mkHide','mLinkMenu'];
 const VIS=new Set([...MKA,'pinNew','help','helpTab','bindQ','bindAll','bindPick','bindYes','bindWrong','bindWatch','bindBack','byPick','lqSync','lqConf','lqDismiss','pvTab','rkSet','rkMode','rkQ','rkIna','pwEye','tvOpen','tvExit','tvNext','tvPause','tGames','clsView','retry','closeM','vTab','vMode','mOpen','rkCell','rkTot','selPhase','selRound']);
 A.closeM=()=>closeModal();
 A.pushOn=async(d,el)=>{if(!isMaster())return;if(!pushOK())return alertBox('Notificações','Este navegador não recebe notificações.'+(isIOS()?' No iPhone, instale o app e abra pelo ícone.':''));el&&(el.disabled=true);
@@ -2420,7 +2425,7 @@ A.mLinkMenu=d=>{const x=findMatch(d.id);if(!x)return;const on=mkLinkOK(x.m);
 // Confirmação pelas duas duplas: uma informou → aguarda a outra; as duas informaram valores diferentes → divergência.
 // Linha discreta embaixo do confronto: falta uma dupla informar / placares diferentes.
 function claimLine(m){const c=m.claims,ks=c?['A','B'].filter(k=>c[k]):[];if(!ks.length||mStatus(m)==='done'||!m.a||!m.b)return'';const tv=/\/telao$/.test(location.hash),nm=k=>esc(dl(T(k==='A'?m.a:m.b)));
- if(ks.length<2)return'<div class="cline">'+I.info+'<span>Aguardando confirmação'+(tv?'':' — falta <b>'+nm(ks[0]==='A'?'B':'A')+'</b> informar')+'</span></div>';
+ if(ks.length<2)return'<div class="cline">'+I.info+'<span>Aguardando confirmação'+(tv?'':' — falta <b>'+nm(ks[0]==='A'?'B':'A')+'</b> informar'+(c[ks[0]].mine&&c[ks[0]].sets?' · sua dupla informou <b>'+esc(setsTxt(c[ks[0]].sets))+'</b>':''))+'</span></div>';
  return'<div class="cline div">'+I.alert+'<span><b>Placar informado divergente</b>'+(!tv&&c.A.sets&&c.B.sets?' — '+nm('A')+' informou <b>'+esc(setsTxt(c.A.sets))+'</b> · '+nm('B')+' informou <b>'+esc(setsTxt(c.B.sets))+'</b>':'')+'</span></div>'}
 function claimTag(m){const c=m.claims,ks=c?Object.keys(c).filter(k=>k==='A'||k==='B'):[];if(!ks.length||mStatus(m)==='done')return'';
  if(ks.length<2)return'<span class="tag pend">Aguardando confirmação</span>';
@@ -2469,22 +2474,23 @@ A.mGame=async(d,el)=>{const f=el.closest('form'),x=f&&findMatch(f.id.value);if(!
  const state=wa===2||wb===2?'done':'live';if(el.disabled)return;await commitScore(f,x,out,state,el);
  if(!stack.length&&state==='live')toast('Partida '+N+' salva. Disputa em '+wa+' × '+wb+(out.length===2?': a Partida 3 decide.':'.'))};
 F.mGameForm=f=>{const b=[...f.querySelectorAll('[data-a=mGame]')].find(z=>!z.hidden);if(b)A.mGame(b.dataset,b)};
-A.mOpen=d=>{const fnd=findMatch(d.id);if(!fnd)return;const{m,ph,r}=fnd,has=hasSets(m),locked=mStatus(m)==='done'&&!(visitor&&m.lq);
+A.mFix=d=>{ui.fix=d.id;A.mOpen(d)};
+A.mOpen=d=>{const fnd=findMatch(d.id);if(!fnd)return;const fix=visitor&&ui.fix===d.id&&ownFix(fnd.c,fnd.m);ui.fix=null;const{m,ph,r}=fnd,has=hasSets(m),locked=mStatus(m)==='done'&&!(visitor&&m.lq);
  if((!m.a||!m.b)&&m.src)return visitor?undefined:alertBox('Confronto a definir','As duplas deste confronto serão preenchidas automaticamente quando os confrontos anteriores forem encerrados.');
  if(!m.a||!m.b){if(visitor||!canEdit())return;cur.ph=ph;cur.r=r;return pairModal(m)}
  if(!visitor){const lk=phaseLock(fnd.c,ph);if(lk)return alertBox(lk[0],lk[1])}
- if(visitor&&(!linkOK(r)||statusKey(fnd.c)==='done'||(locked&&!m.lq)||!m.a||!m.b||(m.pending&&!m.lq)||!teamOK(fnd.c,m)))return;
+ if(visitor&&(!linkOK(r)||statusKey(fnd.c)==='done'||(locked&&!m.lq)||!m.a||!m.b||(m.pending&&!m.lq)||!(teamOK(fnd.c,m)||fix)))return;
  if(!visitor&&tmOn(fnd.c)&&!isMaster()&&mStatus(m)==='done')return alertBox('Só o master corrige','Neste campeonato (lançamento pelas duplas), só o master corrige um resultado já encerrado.');
  if(!visitor&&m.bo!==1)return gamesModal(fnd);
- const score=i=>m.sets?.[i]||['',''],state=locked?'done':'live';
+ const mineS=fix&&m.claims[lkSide(m)].sets,score=i=>(mineS?mineS[i]:m.sets?.[i])||['',''],state=locked?'done':'live';
  const statusInput=visitor?'<input type="hidden" name="state" value="done">':
   '<label class="field"><span>Situação da partida</span><select name="state" data-c="mState" data-id="'+m.id+'" data-was-done="'+(locked?'true':'false')+'" style="width:auto;min-width:190px"><option value="live" '+(state==='live'?'selected':'')+'>Em andamento</option><option value="done" '+(state==='done'?'selected':'')+'>Encerrado</option></select></label>';
  const teamLabel=(side,id)=>id&&T(id)?esc(dl(T(id))):'Dupla '+(side==='a'?'1':'2');
  const participant=side=>'<span class="score-team-label '+side+'">'+teamLabel(side,side==='a'?m.a:m.b)+'</span>';
  const scoreFields=Array.from({length:m.bo===1?1:3},(_,i)=>'<div class="score-game"><span class="score-game-title">Partida '+(i+1)+'</span><div class="score-pair">'+participant('a',i)+'<input type="number" min="0" max="12" step="1" name="s'+i+'a" data-i="mAuto" inputmode="numeric" value="'+score(i)[0]+'" aria-label="Placar da Dupla 1, partida '+(i+1)+'" '+(locked?'disabled':'')+'><span class="score-times">×</span><input type="number" min="0" max="12" step="1" name="s'+i+'b" data-i="mAuto" inputmode="numeric" value="'+score(i)[1]+'" aria-label="Placar da Dupla 2, partida '+(i+1)+'" '+(locked?'disabled':'')+'>'+participant('b',i)+'</div></div>').join('');
  const participantNote='';
- modal('<form data-f="mSave" novalidate>'+mHead(visitor?'Informar placar':'Editar resultado',esc(ph.name)+' · '+esc(r.title))+
-  '<input type="hidden" name="id" value="'+m.id+'"><input type="hidden" name="rev" value="'+(m.rev||0)+'">'+statusInput+(visitor?byField(m):'')+
+ modal('<form data-f="mSave" novalidate>'+mHead(fix?'Corrigir meu informe':visitor?'Informar placar':'Editar resultado',esc(ph.name)+' · '+esc(r.title))+
+  '<input type="hidden" name="id" value="'+m.id+'"><input type="hidden" name="rev" value="'+(m.rev||0)+'">'+(fix?'<input type="hidden" name="fix" value="1"><p class="note">O placar novo <b>substitui</b> o que sua dupla informou'+(mineS?' ('+esc(setsTxt(mineS))+')':'')+'. Fica registrado no histórico.</p>':'')+statusInput+(visitor?byField(m):'')+
   '<div class="score-list">'+scoreFields+'</div>'+participantNote+'<p class="note">'+(m.bo===1?'Partida única: o placar define o vencedor.':'Melhor de 3 partidas: a disputa termina quando uma dupla alcançar duas vitórias. A 3ª partida fica vazia se não for necessária.')+'</p>'+
   (locked?'<p class="note">Para corrigir um resultado encerrado, altere a situação para “Em andamento” e confirme a reabertura.</p>':'')+resExtras(m)+
   '<p class="err" role="alert"></p><div class="acts"><button type="button" class="pill ghost" data-a="closeM">Cancelar</button><button class="pill">Salvar</button></div></form>',{cls:'res',guard:true})};
@@ -2502,14 +2508,15 @@ F.mSave=async f=>{const x=findMatch(f.id.value);if(!x)return setErr(f,'Este conf
  if(state==='done'&&!v.winner)return setErr(f,'Informe o placar das duas duplas antes de encerrar a partida.');
  if(visitor){if(!linkOK(r)||statusKey(c)==='done'||(mStatus(m)==='done'&&!m.lq)||(m.pending&&!m.lq))return setErr(f,'Este placar não pode mais ser alterado pelo link. Procure o organizador.');
   if(!v.winner)return setErr(f,'Informe o placar das duas duplas antes de encerrar a partida.');
-  const tm=tmOn(c);if(tm&&!lkSide(m))return setErr(f,'Seu celular não está vinculado a uma dupla deste confronto.');if(tm&&!teamOK(c,m))return setErr(f,'Sua dupla já informou este placar. Agora falta a outra dupla.');
+  const tm=tmOn(c),fix=!!(f.fix&&f.fix.value==='1');if(tm&&!lkSide(m))return setErr(f,'Seu celular não está vinculado a uma dupla deste confronto.');if(tm&&!teamOK(c,m)&&!(fix&&ownFix(c,m)))return setErr(f,'Sua dupla já informou este placar. Agora falta a outra dupla.');
   const bw=f.by?f.by.value:'',side=tm?lkSide(m):null,by=tm?((P(lkMe().player)||{}).name||'jogador'):bw==='A'?dl(T(m.a)):bw==='B'?dl(T(m.b)):bw==='o'?clean(f.byn.value).slice(0,40):'';
   if(!by)return setErr(f,bw==='o'?'Informe o nome de quem está informando o placar.':'Informe quem está informando o placar.');if(!tm&&bw==='o')try{localStorage.setItem('gc_byn',by)}catch(e){}
   if(CLOUD){const tok=lkTok(),base=m.lq?m.lq.base:(m.rev||0),queue=()=>{lqAdd(tok,m,v.sets,by,base,side);closeModal(true);render();toast('Sem internet: placar guardado neste aparelho. Ele será enviado sozinho quando a conexão voltar.')};
+   if(fix&&(m.lq||lk.off))return setErr(f,'Para corrigir o informe é preciso estar com internet.');
    if(m.lq||lk.off)return queue();
    if(btn)btn.disabled=true;mut++;let res;
-   try{res=await rpc('gc_submit_score_link',{p_token:tok,p_match_id:m.id,p_sets:v.sets,p_expected_rev:base,p_by:by,p_side:side,p_device:devTok()},true)}catch(e){if(btn)btn.disabled=false;if(!e.status){lk.off=true;return queue()}return setErr(f,errTxt(e))}
-   if(res.ok&&res.confirm){closeModal(true);try{await loadShared(tok)}catch(e){}render();return res.confirm==='divergente'?alertBox('Placar informado divergente','A outra dupla informou um placar diferente deste. Os dois aparecem no confronto: conversem e lancem de novo. O placar vale assim que os dois forem iguais.'):toast('Placar registrado. Agora a outra dupla precisa informar o mesmo placar.')}
+   try{res=await rpc('gc_submit_score_link',{p_token:tok,p_match_id:m.id,p_sets:v.sets,p_expected_rev:base,p_by:by,p_side:side,p_device:devTok(),p_fix:fix},true)}catch(e){if(btn)btn.disabled=false;if(!e.status){lk.off=true;return queue()}return setErr(f,errTxt(e))}
+   if(res.ok&&res.confirm){closeModal(true);try{await loadShared(tok)}catch(e){}render();if(res.fixed)return toast('Informe corrigido. Agora falta a outra dupla informar.');return res.confirm==='divergente'?alertBox('Placar informado divergente','A outra dupla informou um placar diferente deste. Os dois aparecem no confronto: conversem e lancem de novo. O placar vale assim que os dois forem iguais.'):toast('Placar registrado. Agora a outra dupla precisa informar o mesmo placar.')}
    mut++;if(!res.ok){applyRemote(m,res);if(btn)btn.disabled=false;render();return setErr(f,conflictMsg(m))}
    m.rev=res.rev;if(res.pending){m.pending={sets:v.sets,at:Date.now()};m.status='live'}else{m.sets=v.sets;m.status='done'}
    closeModal(true);render();return toast(res.pending?'Placar enviado. Aguardando aprovação do organizador.':'Placar salvo.')}
