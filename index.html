@@ -947,7 +947,9 @@ const lvEnd=L=>L.p[0]===12||L.p[1]===12;
 const lvWins=L=>{let a=0,b=0;for(const g of L.s)g[0]>g[1]?a++:b++;if(L.p[0]===12)a++;else if(L.p[1]===12)b++;return[a,b]};
 const lvDecided=(m,L)=>{const[a,b]=lvWins(L),n=need(m);return a>=n||b>=n};
 const lvSets=L=>[...L.s.map(g=>[g[0],g[1]]),...(lvEnd(L)?[[L.p[0],L.p[1]]]:[])];
-function liveOf(m){if(!m||!m.a||!m.b||m.pending||mStatus(m)==='done')return null;const L=mk&&mk.id===m.id?mk.st:(LIVE.get(m.id)||{}).d;
+function liveOf(m){if(!m||!m.a||!m.b||m.pending||mStatus(m)==='done')return null;
+ if(m.claims&&(m.claims.A||m.claims.B))return null;   // uma dupla já informou: o placar só aparece quando as duas informarem
+ const L=mk&&mk.id===m.id?mk.st:(LIVE.get(m.id)||{}).d;
  return L&&Array.isArray(L.s)&&Array.isArray(L.p)&&(L.s.length||L.p[0]||L.p[1])?L:null}   // só depois do 1º ponto marcado
 // situação exibida: "Aguardando" até marcarem ponto no marcador ou uma dupla informar o placar; "Encerrado" com resultado
 const shownSt=(m,L)=>{const st=mStatus(m);if(st==='done')return'done';if(!m.a||!m.b)return'wait';return L||hasSets(m)||m.pending||m.lq||(m.claims&&(m.claims.A||m.claims.B))?'live':'wait'};
