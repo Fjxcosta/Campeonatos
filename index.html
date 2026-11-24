@@ -1589,7 +1589,7 @@ function helpModal(){const kind=visitor?'vis':'adm',c=cur.c,team=!!(c&&c.teamMod
 
 /* ===================== Ações ===================== */
 const A={},F={};
-const MKA=['mFix','mkOpen','mkAdd','mkSub','mkTruco','mkTrucoX','mkNext','mkUndo','mkHide','mLinkMenu'];
+const MKA=['mkClear','mFix','mkOpen','mkAdd','mkSub','mkTruco','mkTrucoX','mkNext','mkUndo','mkHide','mLinkMenu'];
 const VIS=new Set([...MKA,'pinNew','help','helpTab','bindQ','bindAll','bindPick','bindYes','bindWrong','bindWatch','bindBack','byPick','lqSync','lqConf','lqDismiss','pvTab','rkSet','rkMode','rkQ','rkIna','pwEye','tvOpen','tvExit','tvNext','tvPause','tGames','clsView','retry','closeM','vTab','vMode','mOpen','rkCell','rkTot','selPhase','selRound']);
 A.closeM=()=>closeModal();
 A.pushOn=async(d,el)=>{if(!isMaster())return;if(!pushOK())return alertBox('Notificações','Este navegador não recebe notificações.'+(isIOS()?' No iPhone, instale o app e abra pelo ícone.':''));el&&(el.disabled=true);
@@ -2421,8 +2421,13 @@ F.tieSave=async f=>{const c=cur.c,ph=cur.ph,type=f.elements.type.value,key=f.ele
  save();closeModal(true);render();toast('Decisão administrativa registrada. Finalize a fase para aplicar a classificação.')};
 
 /* ----- partida / placar ----- */
-A.mMenu=d=>{const x=findMatch(d.id);if(!x)return toast('Este confronto não existe mais.','err');const mko=mkAdminOK(x);if(!canEdit()&&!mko)return A.mOpen(d);
- modal('<div style="display:flex;flex-direction:column;gap:6px">'+(mko?'<button data-a="mkOpen" data-id="'+d.id+'" data-close="1"><span class="mkico">♣</span><span>Marcador <small style="opacity:.75">(em desenvolvimento)</small></span></button>':'')+'<button data-a="mOpen" data-id="'+d.id+'" data-close="1">'+I.edit+'Editar resultado</button>'+(canEdit()?'<button data-a="mDel" data-id="'+d.id+'" data-close="1">'+I.trash+'Excluir confronto</button>':'')+'</div>',{cls:'menu'})};
+A.mMenu=d=>{const x=findMatch(d.id);if(!x)return toast('Este confronto não existe mais.','err');const mko=mkAdminOK(x),lvx=CLOUD&&LIVE.has(d.id)&&mStatus(x.m)!=='done';if(!canEdit()&&!mko&&!lvx)return A.mOpen(d);
+ modal('<div style="display:flex;flex-direction:column;gap:6px">'+(mko?'<button data-a="mkOpen" data-id="'+d.id+'" data-close="1"><span class="mkico">♣</span><span>Marcador <small style="opacity:.75">(em desenvolvimento)</small></span></button>':'')+'<button data-a="mOpen" data-id="'+d.id+'" data-close="1">'+I.edit+'Editar resultado</button>'+(lvx?'<button data-a="mkClear" data-id="'+d.id+'" data-close="1"><span class="mkico">♣</span>Apagar placar do marcador</button>':'')+(canEdit()?'<button data-a="mDel" data-id="'+d.id+'" data-close="1">'+I.trash+'Excluir confronto</button>':'')+'</div>',{cls:'menu'})};
+// apaga o placar ao vivo (marcador) de um confronto — ex.: marcação abandonada ou informe excluído
+A.mkClear=async d=>{const x=findMatch(d.id),S=LIVE.get(d.id);if(!x||!S)return render();
+ if(!await confirmBox({title:'Apagar placar do marcador',msg:'O placar marcado neste confronto (<b>'+esc(lvTxt(S.d))+'</b>) será apagado. Ele ainda não é resultado: nada na classificação oficial muda. Quem estiver com o marcador aberto recomeça do zero.',ok:'Apagar',danger:true}))return;
+ try{const r=await rpc('gc_live_save_admin',{p_match_id:d.id,p_data:null,p_expected_rev:S.rev});if(!r.ok&&r.rev!=null)await rpc('gc_live_save_admin',{p_match_id:d.id,p_data:null,p_expected_rev:r.rev})}catch(e){return toast(errTxt(e),'err')}
+ LIVE.delete(d.id);try{localStorage.removeItem(MKK(d.id))}catch(e){}render();toast('Placar do marcador apagado.')};
 A.mLinkMenu=d=>{const x=findMatch(d.id);if(!x)return;const on=mkLinkOK(x.m);
  modal('<div style="display:flex;flex-direction:column;gap:6px"><button data-a="mkOpen" data-id="'+d.id+'" data-close="1"'+(on?'':' disabled')+'><span class="mkico">♣</span><span>Marcador <small style="opacity:.75">(em desenvolvimento'+(on?'':' · ainda não liberado')+')</small></span></button><button data-a="mOpen" data-id="'+d.id+'" data-close="1">'+I.edit+'Informar placar</button></div>',{cls:'menu'})};
 // Confirmação pelas duas duplas: uma informou → aguarda a outra; as duas informaram valores diferentes → divergência.
@@ -2485,13 +2490,14 @@ A.mOpen=d=>{const fnd=findMatch(d.id);if(!fnd)return;const fix=visitor&&ui.fix==
  if(visitor&&(!linkOK(r)||statusKey(fnd.c)==='done'||(locked&&!m.lq)||!m.a||!m.b||(m.pending&&!m.lq)||!(teamOK(fnd.c,m)||fix)))return;
  if(!visitor&&tmOn(fnd.c)&&!isMaster()&&mStatus(m)==='done')return alertBox('Só o master corrige','Neste campeonato (lançamento pelas duplas), só o master corrige um resultado já encerrado.');
  if(!visitor&&m.bo!==1)return gamesModal(fnd);
- const mineS=fix&&m.claims[lkSide(m)].sets,score=i=>(mineS?mineS[i]:m.sets?.[i])||['',''],state=locked?'done':'live';
+ const LV=!visitor&&!hasSets(m)&&LIVE.get(m.id),lvS=LV&&LV.d&&lvDecided(m,LV.d)?lvSets(LV.d):null;
+ const mineS=fix&&m.claims[lkSide(m)].sets,score=i=>(mineS?mineS[i]:lvS?lvS[i]:m.sets?.[i])||['',''],state=locked?'done':'live';
  const statusInput=visitor?'<input type="hidden" name="state" value="done">':
   '<label class="field"><span>Situação da partida</span><select name="state" data-c="mState" data-id="'+m.id+'" data-was-done="'+(locked?'true':'false')+'" style="width:auto;min-width:190px"><option value="live" '+(state==='live'?'selected':'')+'>Em andamento</option><option value="done" '+(state==='done'?'selected':'')+'>Encerrado</option></select></label>';
  const teamLabel=(side,id)=>id&&T(id)?esc(dl(T(id))):'Dupla '+(side==='a'?'1':'2');
  const participant=side=>'<span class="score-team-label '+side+'">'+teamLabel(side,side==='a'?m.a:m.b)+'</span>';
  const scoreFields=Array.from({length:m.bo===1?1:3},(_,i)=>'<div class="score-game"><span class="score-game-title">Partida '+(i+1)+'</span><div class="score-pair">'+participant('a',i)+'<input type="number" min="0" max="12" step="1" name="s'+i+'a" data-i="mAuto" inputmode="numeric" value="'+score(i)[0]+'" aria-label="Placar da Dupla 1, partida '+(i+1)+'" '+(locked?'disabled':'')+'><span class="score-times">×</span><input type="number" min="0" max="12" step="1" name="s'+i+'b" data-i="mAuto" inputmode="numeric" value="'+score(i)[1]+'" aria-label="Placar da Dupla 2, partida '+(i+1)+'" '+(locked?'disabled':'')+'>'+participant('b',i)+'</div></div>').join('');
- const participantNote='';
+ const participantNote=lvS?'<p class="note"><b>Placar do marcador:</b> '+esc(lvSets(LV.d).map(g=>g[0]+' × '+g[1]).join(' · '))+'. Confira e salve para valer.</p>':'';
  modal('<form data-f="mSave" novalidate>'+mHead(fix?'Corrigir meu informe':visitor?'Informar placar':'Editar resultado',esc(ph.name)+' · '+esc(r.title))+
   '<input type="hidden" name="id" value="'+m.id+'"><input type="hidden" name="rev" value="'+(m.rev||0)+'">'+(fix?'<input type="hidden" name="fix" value="1"><p class="note">O placar novo <b>substitui</b> o que sua dupla informou'+(mineS?' ('+esc(setsTxt(mineS))+')':'')+'. Fica registrado no histórico.</p>':'')+statusInput+(visitor?byField(m):'')+
   '<div class="score-list">'+scoreFields+'</div>'+participantNote+'<p class="note">'+(m.bo===1?'Partida única: o placar define o vencedor.':'Melhor de 3 partidas: a disputa termina quando uma dupla alcançar duas vitórias. A 3ª partida fica vazia se não for necessária.')+'</p>'+
