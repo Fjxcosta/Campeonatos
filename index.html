@@ -522,6 +522,53 @@ table.rk tr.qt .posb{background:#DBEAFE;color:#1E3A8A;box-shadow:inset 0 0 0 1.5
 .lkpin{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#EEF7F1;border:1px solid #CFE8D8;border-radius:12px;padding:10px 12px;margin:8px 0}.lkpin span{flex:1;min-width:180px}
 .instbar{display:flex;gap:10px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:14px;padding:8px 10px;margin:0 0 12px}.instbar img{border-radius:10px;flex:none}.instbar span{flex:1;min-width:0;font-size:14px;line-height:1.3}.instbar .ibtn{font-size:20px;line-height:1}
 .insthd{display:flex;gap:12px;align-items:center;margin:4px 0 10px}.insthd img{border-radius:12px;flex:none}.insthd p{margin:0}.inststeps{margin:0 0 10px 18px;padding:0;display:grid;gap:6px}
+#updbar{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:2000;display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;background:#164734;color:#fff;border-radius:16px;padding:10px 12px 10px 16px;box-shadow:0 8px 28px rgba(0,0,0,.25);max-width:calc(100% - 24px)}
+#updbar span{display:flex;gap:8px;align-items:center}#updbar .updi{width:18px;height:18px;color:#2ECD71}#updbar .pill.ghost{color:#fff;border-color:rgba(255,255,255,.5);background:transparent}
+/* ----- marcador de pontos (em desenvolvimento) e placar ao vivo ----- */
+.lvc{display:inline-block;margin-left:6px;font-size:11px;font-weight:800;line-height:1;padding:3px 5px;border-radius:5px;color:#fff;vertical-align:1px;white-space:nowrap}
+.lvc.w{background:#22A05A}.lvc.l{background:#D64545}.lvc.e{background:#8A958F}
+.lva{display:inline-block;margin-left:3px;font-size:10.5px;font-weight:800;white-space:nowrap}.lva.up{color:#1F9A52}.lva.dn{color:#D23B3B}
+.match.lv{border-color:#F2C46B;box-shadow:inset 0 0 0 1px #F2C46B}
+.gm.live{border-color:#F2C46B;background:#FFF8E6}
+.mkico{display:inline-grid;place-items:center;width:20px;font-size:18px}
+.ov.mkov{padding:0;place-items:stretch;background:#0b1f17}
+.modal.mk{max-width:none;max-height:none;height:100%;min-height:100dvh;border-radius:0;padding:0;position:relative;overflow:hidden;color:#fff;display:flex;flex-direction:column;
+ background:radial-gradient(120% 80% at 50% 30%,#1f6b4b 0%,#14513a 45%,#0e3d2b 100%);user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.mk button{color:inherit;font-family:inherit}
+.mkh{display:flex;align-items:center;gap:10px;padding:12px 14px 4px}
+.mkib{width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.12);display:grid;place-items:center;font-size:22px;flex:none}
+.mkib:disabled{opacity:.35}.mkib svg{width:20px;height:20px}
+.mkhd{flex:1;min-width:0;text-align:center}.mkhd b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mkhd small{display:block;font-size:12px;opacity:.8}
+.mkdev{display:inline-block;margin-top:3px;font-size:10.5px;font-weight:700;letter-spacing:.3px;background:#FFD54A;color:#3B2C00;border-radius:999px;padding:1px 8px}
+.mks{display:block;text-align:center;font-size:11.5px;font-weight:600;opacity:.75;min-height:16px}.mks.off{color:#FFD54A;opacity:1}
+.mkts{flex:1;display:grid;grid-template-columns:1fr 1fr;align-items:start;align-content:center;padding:6px 6px 0;min-height:0}
+.mkt{display:flex;flex-direction:column;align-items:center;gap:6px;padding:0 6px;min-width:0}
+.mkn{font-weight:700;font-size:15px;text-align:center;line-height:1.2;min-height:38px;display:flex;align-items:center;overflow-wrap:anywhere}
+.mkp{font-weight:900;font-size:clamp(64px,19vw,112px);line-height:1;letter-spacing:-3px;text-shadow:0 4px 0 rgba(0,0,0,.25);font-variant-numeric:tabular-nums}
+.mkminus{width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.14);border:2px solid rgba(255,255,255,.35);display:grid;place-items:center;font-size:26px;font-weight:800}
+.mkminus:disabled{opacity:.3}
+.mkplus{margin-top:6px;width:min(40vw,150px);height:min(40vw,150px);border-radius:30px;background:#fff;color:#164734!important;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 6px 0 #0a2c1f,0 10px 20px rgba(0,0,0,.3);position:relative}
+.mkplus:active{transform:translateY(4px);box-shadow:0 2px 0 #0a2c1f}
+.mkplus .s1,.mkplus .s2{position:absolute;font-size:20px}.mkplus .s1{top:8px;left:12px}.mkplus .s2{bottom:8px;right:12px;transform:rotate(180deg)}
+.mkplus big{font-weight:900;font-size:52px;line-height:1}.mkplus em{font-style:normal;font-weight:700;font-size:12px;opacity:.7;margin-top:2px}
+.mkplus.hot{background:#FFD54A;color:#3B2C00!important;box-shadow:0 6px 0 #A8861A,0 10px 20px rgba(0,0,0,.3)}
+.mkplus:disabled{opacity:.35}
+.mkf{padding:10px 16px calc(14px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:8px}
+.mktr{width:100%;min-height:68px;border-radius:20px;background:#0a2c1f;border:2px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:space-between;padding:0 18px;gap:10px}
+.mktr b{display:block;font-weight:900;font-size:24px;letter-spacing:.5px}.mktr small{display:block;font-size:12px;font-weight:600;opacity:.8}
+.mktr.on{background:#FFD54A;color:#3B2C00!important;border-color:#FFD54A}.mktr.off{justify-content:center;text-align:center;opacity:.85}
+.mktr:disabled{opacity:.6}
+.mkcan{align-self:center;font-size:12.5px;font-weight:600;text-decoration:underline;opacity:.85;padding:2px 8px}
+.mkb{text-align:center}.mkb small{display:block;font-weight:700;font-size:11px;opacity:.75;letter-spacing:1px}.mkb b{font-weight:900;font-size:24px}
+.mkdim{position:absolute;inset:0;background:rgba(0,0,0,.55);display:grid;place-items:center;padding:16px;z-index:2}
+.mkpan{width:100%;max-width:420px;background:#fff;color:#20302A;border-radius:22px;padding:20px;box-shadow:0 20px 40px rgba(0,0,0,.4)}
+.mkpan h3{margin:0 0 4px;font-size:20px}.mkpan p{margin:0 0 10px;color:#4A5A50}
+.mkpan button{color:inherit}
+.mkfin{display:flex;align-items:center;justify-content:center;gap:10px;font-weight:900;font-size:38px;white-space:nowrap;color:#164734;margin:8px 0}
+.mkfin span{font-size:12px;font-weight:700;color:#4A5A50;max-width:90px;white-space:normal;text-align:center}
+.mkgl{margin:0 0 10px;font-size:13px;color:#4A5A50;text-align:center}
+.mkpan .pill{width:100%;justify-content:center;margin-top:8px}
+.mkpan .err{margin:6px 0 0}
 </style>
 </head>
 <body>
@@ -656,7 +703,7 @@ async function loadCloud(){const L=await rpc('gc_load',{});me=(L&&L.me)||{};
  if(!me.role){if(me.must_change&&isMember()){setDb({});members=[];return}if(isMember()){setSess(null);throw Object.assign(new Error('nao_autenticado'),{status:401})}throw Object.assign(new Error('sem_acesso'),{noaccess:true})}
  // trabalho offline ainda não enviado neste aparelho: reabre e envia, em vez de carregar o banco por cima
  if(!ws.offline){const sm=me,u=pendingU;pendingU=null;if(await olPending(u,pendingPw)){me=sm;setTimeout(()=>trySync(true),60);return}}
- const row=L.ws,has=!!(row&&row.data&&row.data.players);ws.rev=row?row.rev:0;ws.empty=!has;srvRev=new Map();setCloudDb(has?row.data:{});mergeResults(L.results||[]);
+ const row=L.ws,has=!!(row&&row.data&&row.data.players);ws.rev=row?row.rev:0;ws.empty=!has;srvRev=new Map();setCloudDb(has?row.data:{});mergeResults(L.results||[]);liveSet(L.live);
  db.caixa=cashNorm(L.cash&&L.cash.data);cx.rev=L.cash?L.cash.rev:0;members=L.accounts||[];
  const hm={};(L.history||[]).forEach(h=>(hm[h.match_id]=hm[h.match_id]||[]).push({at:Date.parse(h.at),by:h.origin,sets:h.sets}));eachM(m=>m.history=hm[m.id]||[]);
  ws.last=has?JSON.stringify(wsData()):'';setSync('ok');
@@ -719,7 +766,7 @@ async function lqFlush(t,manual){if(lk.busy||!t)return null;const o=lqGet(t),ids
 async function loadShared(tok){let j;try{j=await rpc('gc_get_shared',{p_token:tok,p_device:devTok()},true)}catch(e){if(e.status&&/link_invalido/.test(e.message)){setDb({});shSig='invalido';return}
   if(e.status)throw e;let c=null;try{c=JSON.parse(localStorage.getItem(LSK(tok)))}catch(x){}if(!c||!c.champ)throw new Error('sem_copia');lk.off=true;shSig='';sharedDb(c);lqOverlay(tok);return}
  lk.off=false;try{localStorage.setItem(LSK(tok),JSON.stringify(j))}catch(e){}shSig=JSON.stringify(j);sharedDb(j);lqOverlay(tok);if(lqN(tok))setTimeout(()=>A.lqSync(),50)}
-function sharedDb(j){const had=lkLink&&lkLink.me;lkLink=j.link||null;if(had&&lkLink&&!lkLink.me&&visitor)setTimeout(()=>toast('Este celular foi desvinculado pelo organizador.','err'),60);setCloudDb({players:j.players,teams:j.teams,champs:[j.champ],settings:j.settings||{},user:{name:j.organizer||'Organizador'}});const r=mergeResults(j.results);elimSyncAll();return r}
+function sharedDb(j){const had=lkLink&&lkLink.me;lkLink=j.link||null;if(had&&lkLink&&!lkLink.me&&visitor)setTimeout(()=>toast('Este celular foi desvinculado pelo organizador.','err'),60);setCloudDb({players:j.players,teams:j.teams,champs:[j.champ],settings:j.settings||{},user:{name:j.organizer||'Organizador'}});const r=mergeResults(j.results);liveSet(j.live);elimSyncAll();return r}
 /* ----- modo offline (contingência): tudo fica guardado neste aparelho e é enviado sozinho quando a internet volta ----- */
 let off=null;const OFFK='gc_off';
 const offUser=()=>sess?(sess.kind==='member'?'m:'+sess.username:'o:'+(sess.email||'')):'';
@@ -834,7 +881,7 @@ async function offerMigration(){if(migAsked||!ws.empty)return;migAsked=true;let 
  if(!d||!((d.players||[]).length+(d.champs||[]).length))return;
  if(await confirmBox({title:'Enviar dados para o banco?',msg:`Encontrei dados salvos neste navegador (${(d.players||[]).length} jogadores, ${(d.teams||[]).length} equipes, ${(d.champs||[]).length} campeonatos) e o banco está vazio. Deseja enviar esses dados para o banco?`,ok:'Enviar'}))await importData(d)}
 const SRV={endereco_invalido:'Endereço da função de notificação inválido.',inscricao_invalida:'Não foi possível registrar este celular para notificações.',senha_igual:'A nova senha precisa ser diferente da senha provisória.',link_invalido:'Link inválido ou expirado.',campeonato_finalizado:'O campeonato está finalizado.',lancamento_nao_permitido:'O lançamento desta rodada está reservado ao organizador.',partida_sem_duplas:'Esta partida ainda não tem as duas duplas.',partida_inexistente:'Esta partida não existe mais. Recarregue a página.',dados_muito_grandes:'Os dados ficaram grandes demais para gravar.',placar_invalido:'Placar inválido.',nao_autenticado:'Sessão expirada. Entre novamente.',sem_permissao:'Seu perfil não permite esta ação.',usuario_invalido:'Nome de usuário inválido.',senha_curta:'A senha precisa ter pelo menos 6 caracteres.',nome_obrigatorio:'Informe o nome.'};
-SRV.celular_nao_vinculado='Este celular não está vinculado (ou foi desvinculado pelo organizador). Abra o link de novo para vincular.';SRV.nao_e_sua_partida='Este confronto não é da sua dupla.';SRV.jogador_fora='Jogador não encontrado neste campeonato.';SRV.modo_desligado='Este campeonato não usa o lançamento pelas duplas.';SRV.celular_invalido='Não foi possível identificar este celular. Recarregue a página.';SRV.informe_dupla='Escolha qual dupla está informando o placar.';SRV.dupla_ja_informou='Esta dupla já informou o placar deste confronto. Agora falta a outra dupla.';SRV.sem_copia='Sem internet. Para usar este link sem internet, abra-o uma vez com internet neste aparelho.';
+SRV.marcador_desligado='O marcador ainda não está liberado neste campeonato.';SRV.ja_lancado='Este confronto já tem resultado.';SRV.celular_nao_vinculado='Este celular não está vinculado (ou foi desvinculado pelo organizador). Abra o link de novo para vincular.';SRV.nao_e_sua_partida='Este confronto não é da sua dupla.';SRV.jogador_fora='Jogador não encontrado neste campeonato.';SRV.modo_desligado='Este campeonato não usa o lançamento pelas duplas.';SRV.celular_invalido='Não foi possível identificar este celular. Recarregue a página.';SRV.informe_dupla='Escolha qual dupla está informando o placar.';SRV.dupla_ja_informou='Esta dupla já informou o placar deste confronto. Agora falta a outra dupla.';SRV.sem_copia='Sem internet. Para usar este link sem internet, abra-o uma vez com internet neste aparelho.';
 const errTxt=e=>SRV[(e.message||'').split(':')[0].trim()]||(e.status?'Não foi possível concluir ('+e.message+').':'Sem conexão com o servidor. Nada foi gravado.');
 const conflictMsg=m=>`Outra pessoa alterou esta partida enquanto você digitava. Placar atual: ${setsTxt(m.sets)||'sem placar'}${m.pending?' (há um resultado aguardando aprovação)':''}. Nada foi gravado: feche e abra a partida para conferir.`;
 async function scoreAdmin(m,sets,by,status){mut++;const previousSets=(m.sets||[]).map(x=>x?[...x]:x),previousStatus=m.status||mStatus(m);
@@ -858,11 +905,12 @@ setInterval(async()=>{if(!CLOUD||document.hidden||ws.poll||loading||!loaded||me.
     const idle=!stack.length&&!typing();
     if((PL.ws_rev>ws.rev||(PL.cash_rev!=null&&PL.cash_rev>cx.rev&&!cx.busy&&!cx.err))&&!ws.busy&&!ws.dirty){if(idle){await loadCloud();render()}}
     else if(mergeResults(PL.results||[])){ws.stale=true;if(elimSyncAll()&&canEdit())ws.needSync=Date.now()+Math.random()*4000}
+    if(liveSet(PL.live))ws.stale=true;mkRemote();
     if(ws.needSync&&Date.now()>ws.needSync&&!ws.busy&&!ws.dirty){ws.needSync=0;save()}
     if(ws.stale&&idle){ws.stale=false;render();if(cur.c&&cur.ph&&/^#\/c\/[^/]+\/classificacao/.test(location.hash)&&db.champs.includes(cur.c))maybeAutoFinalize(cur.c,cur.ph)}}}
   else if(loaded.startsWith('p:')&&visitor){const key=loaded,j=await rpc('gc_get_portal',{p_token:key.slice(2)},true);if(m0===mut&&loaded===key&&JSON.stringify(j)!==ptSig){ptSig=JSON.stringify(j);portalDb(j);if(!stack.length)render()}}
   else if(loaded.startsWith('s:')&&visitor){const key=loaded,tok=key.slice(2);if(lqN(tok))await lqFlush(tok);const sig=shSig,j=await rpc('gc_get_shared',{p_token:tok,p_device:devTok()},true),was=lk.off;lk.off=false;try{localStorage.setItem(LSK(tok),JSON.stringify(j))}catch(x){}
-   if(m0===mut&&loaded===key&&(JSON.stringify(j)!==sig||was)){shSig=JSON.stringify(j);sharedDb(j);lqOverlay(tok);if(!stack.length)render()}}}
+   if(m0===mut&&loaded===key&&(JSON.stringify(j)!==sig||was)){shSig=JSON.stringify(j);sharedDb(j);lqOverlay(tok);if(!stack.length)render();mkRemote()}}}
  catch(e){if(visitor&&e.status&&/link_invalido/.test(e.message||'')&&/^[sp]:/.test(loaded||'')){const k=loaded;if(k.startsWith('s:')){shSig='invalido';try{localStorage.removeItem(LSK(k.slice(2)))}catch(x){}}else ptSig='invalido';setDb({});while(stack.length)closeModal(true);render()}
   else if(visitor&&!e.status&&/^s:/.test(loaded||'')&&!lk.off){lk.off=true;if(!stack.length)render()}}ws.poll=false},4000);
 window.addEventListener('beforeunload',e=>{if(CLOUD&&(ws.busy||cx.busy||ws.dirty||cx.err||ws.state==='err')){e.preventDefault();e.returnValue=''}});
@@ -878,6 +926,23 @@ const newRound=title=>({id:uid(),title,hidden:false,allowLink:true,matches:[]});
 const newMatch=(a,b,bo)=>({id:uid(),a:a||null,b:b||null,bo:bo===1?1:3,status:'live',sets:[],history:[]});
 const need=m=>m.bo===1?1:2;
 const BOT={1:'Partida única',3:'Melhor de 3 partidas'};
+/* ----- placar ao vivo (marcador de pontos — em desenvolvimento) -----
+   LIVE guarda o que está sendo marcado AGORA em cada confronto: s = partidas anteriores já terminadas,
+   p = pontos da partida atual (chega a 12 quando ela termina), t = quanto vale a mão (1, 3, 6, 9, 12).
+   Nunca é resultado oficial: só a classificação exibida usa o ao vivo; finalizar fase, mata-mata e Ranking Geral usam só resultados gravados. */
+const LIVE=new Map();let mk=null;
+function liveSet(rows){let ch=false;const seen=new Set();
+ for(const r of arr(rows)){if(!r||!r.match_id||!r.data)continue;seen.add(r.match_id);const o=LIVE.get(r.match_id);if(!o||o.rev!==r.rev){LIVE.set(r.match_id,{d:r.data,rev:r.rev});ch=true}}
+ for(const k of [...LIVE.keys()])if(!seen.has(k)){LIVE.delete(k);ch=true}return ch}
+const lvEnd=L=>L.p[0]===12||L.p[1]===12;
+const lvWins=L=>{let a=0,b=0;for(const g of L.s)g[0]>g[1]?a++:b++;if(L.p[0]===12)a++;else if(L.p[1]===12)b++;return[a,b]};
+const lvDecided=(m,L)=>{const[a,b]=lvWins(L),n=need(m);return a>=n||b>=n};
+const lvSets=L=>[...L.s.map(g=>[g[0],g[1]]),...(lvEnd(L)?[[L.p[0],L.p[1]]]:[])];
+function liveOf(m){if(!m||!m.a||!m.b||m.pending||mStatus(m)==='done')return null;const L=mk&&mk.id===m.id?mk.st:(LIVE.get(m.id)||{}).d;
+ return L&&Array.isArray(L.s)&&Array.isArray(L.p)?L:null}
+// partidas do ao vivo: as terminadas valem como vitória; a atual dá vitória provisória a quem lidera e, empatada, só soma os pontos
+function liveGames(m,L){const out=L.s.map(g=>({a:g[0],b:g[1],winner:g[0]>g[1]?m.a:m.b}));const[a,b]=L.p;if(a||b)out.push({a,b,winner:a>b?m.a:b>a?m.b:null});return out}
+const phLive=ph=>phMatches(ph).some(m=>liveOf(m));
 
 /* ----- partidas ----- */
 function setsWon(m){let a=0,b=0;const limit=need(m);for(const s of m.sets||[]){if(!s||a>=limit||b>=limit)break;if(s[0]>s[1])a++;else if(s[1]>s[0])b++}return[a,b]}
@@ -924,10 +989,10 @@ const phaseLock=(c,ph)=>ph.status==='done'?['Fase finalizada','Reabra a fase (bo
 
 /* ----- classificação da fase ----- */
 function resultGames(ph,m){if(!m.a||!m.b)return[];if(m.bo===1&&(mStatus(m)!=='done'||!winner(m)))return[];const out=[];let a=0,b=0,limit=need(m);for(const s of m.sets||[]){if(a>=limit||b>=limit)break;if(!Array.isArray(s)||s.length!==2||!Number.isInteger(+s[0])||!Number.isInteger(+s[1])||+s[0]===+s[1])continue;const g={a:+s[0],b:+s[1],winner:+s[0]>+s[1]?m.a:m.b};out.push(g);g.winner===m.a?a++:b++}return out}
-function phaseStats(ph){const st={},z=id=>st[id]||(st[id]={pts:0,j:0,v:0,d:0,pg:0,pc:0,dp:0,pe:0,e:0});
+function phaseStats(ph,live){const st={},z=id=>st[id]||(st[id]={pts:0,j:0,v:0,d:0,pg:0,pc:0,dp:0,pe:0,e:0});
  ph.teamIds.forEach(z);
- for(const m of phMatches(ph)){for(const g of resultGames(ph,m)){const A=z(m.a),B=z(m.b),ap=g.a,bp=g.b;
-  A.j++;B.j++;A.pg+=ap;A.pc+=bp;B.pg+=bp;B.pc+=ap;
+ for(const m of phMatches(ph)){const L=live&&liveOf(m);for(const g of L?liveGames(m,L):resultGames(ph,m)){const A=z(m.a),B=z(m.b),ap=g.a,bp=g.b;
+  A.pg+=ap;A.pc+=bp;B.pg+=bp;B.pc+=ap;if(!g.winner)continue;A.j++;B.j++;
   const w=winPts(ph);if(g.winner===m.a){A.v++;B.d++;A.pts+=w}else{B.v++;A.d++;B.pts+=w}}}
  for(const k in st)st[k].dp=st[k].pg-st[k].pc;return st}
 function rankGroups(ph,st,ids){const done=phMatches(ph).filter(m=>mStatus(m)==='done');
@@ -938,7 +1003,7 @@ function rankGroups(ph,st,ids){const done=phMatches(ph).filter(m=>mStatus(m)==='
   for(let j=1;j<s.length;j++){if(val(s[j])===val(s[j-1]))cur.push(s[j]);else{out.push(...part(cur,i+1));cur=[s[j]]}}
   out.push(...part(cur,i+1));return out};
  return ids.length?part(ids,0):[]}
-function standData(ph,all){const st=phaseStats(ph);
+function standData(ph,all,live){const st=phaseStats(ph,live);
  const secs=all?[{title:ph.groups.length?'Classificação geral':'',ids:[...ph.teamIds]}]:ph.groups.length?ph.groups.map(g=>({title:g.name,groupId:g.id,ids:g.teamIds.filter(id=>ph.teamIds.includes(id))})):[{title:'',ids:[...ph.teamIds]}];
  if(ph.groups.length&&!all){const un=ph.teamIds.filter(id=>!ph.groups.some(g=>g.teamIds.includes(id)));if(un.length)secs.push({title:'Sem grupo',ids:un})}
  return secs.map(s=>{let pos=1;const rows=[];
@@ -1202,7 +1267,7 @@ function getPhase(c){return c.phases.find(p=>p.id===ui.phase[c.id])||c.phases[0]
 function getRound(ph,ro){const rs=ro?ph.rounds.filter(r=>!r.hidden):ph.rounds;return rs.find(r=>r.id===ui.round[ph.id])||rs[0]}
 function hasNextPhase(ph){return db.champs.some(c=>{const i=c.phases.indexOf(ph);return i>=0&&i<c.phases.length-1})}
 function tieKey(scope,seen,candidates,slots){return scope+'|'+seen+'|'+[...candidates].sort().join('|')+'|'+slots}
-function phaseQualifiers(ph){const adv=ph.advance||{mode:ph.groups.length?'group':'total',total:0,byGroup:{}},st=phaseStats(ph),ids=[],ties=[],errors=[],decisions=ph.qualifierDecisions||{};
+function phaseQualifiers(ph,live){const adv=ph.advance||{mode:ph.groups.length?'group':'total',total:0,byGroup:{}},st=phaseStats(ph,live),ids=[],ties=[],errors=[],decisions=ph.qualifierDecisions||{};
  const apply=(order,n,scope,label)=>{let seen=0;for(const g of order){if(seen>=n)break;const slots=Math.min(g.length,n-seen),sorted=[...g].sort((a,b)=>cmpN(dl(T(a)),dl(T(b))));if(slots===g.length)ids.push(...sorted);else if(slots>0){const key=tieKey(scope,seen,g,slots),chosen=decisions[key],valid=Array.isArray(chosen)&&chosen.length===slots&&chosen.every(x=>g.includes(x))&&new Set(chosen).size===slots;if(valid)ids.push(...chosen);else ties.push({type:'qualifier',key,label,slots,candidates:sorted})}seen+=g.length}};
  if(adv.mode==='total'){const n=Math.max(0,Math.floor(+adv.total||0));if(n<1)errors.push('Defina uma quantidade positiva de duplas classificadas.');if(n>ph.teamIds.length)errors.push('A quantidade de classificados supera o total de duplas da fase.');apply(rankGroups(ph,st,ph.teamIds),n,'total','Classificação geral')}
  else if(!ph.groups.length)errors.push('A classificação por grupo exige grupos cadastrados.');else{const assigned=new Set(ph.groups.flatMap(g=>g.teamIds)),un=ph.teamIds.filter(id=>!assigned.has(id));if(un.length)errors.push('Distribua todas as duplas em grupos antes de classificar por grupo.');for(const g of ph.groups){const eligible=g.teamIds.filter(id=>ph.teamIds.includes(id)),n=Math.max(0,Math.floor(+(adv.byGroup?.[g.id]??adv.total)||0));if(n<1)errors.push('Defina uma quantidade positiva para o grupo '+g.name+'.');if(n>eligible.length)errors.push('A quantidade de classificados supera as duplas elegíveis do grupo '+g.name+'.');apply(rankGroups(ph,st,eligible),n,'group:'+g.id,g.name)}}
@@ -1230,10 +1295,14 @@ function tieModal(c,ph,tie){cur.ph=ph;const common='<input type="hidden" name="t
 const qualTxt=ph=>{const a=ph.advance||{};if(a.mode!=='total'&&!ph.groups.length&&+(ph.plan&&ph.plan.groups)>1){const v=Array.from({length:+ph.plan.groups},(_,i)=>perOf(a,i));return new Set(v).size===1?v[0]+' por grupo':v.map((x,i)=>gLetter(i)+': '+x).join(', ')}if(a.mode==='total'||!ph.groups.length)return(a.total||0)+' no total';const v=ph.groups.map(g=>+(a.byGroup?.[g.id]??a.total)||0);return new Set(v).size===1?v[0]+' por grupo':ph.groups.map((g,i)=>g.name+': '+v[i]).join(', ')};
 
 // Zona de classificação: sempre a mesma função da finalização (phaseQualifiers); vale igual em "Por grupo" e "Geral".
-function qualState(ph){const none={ok:new Set(),pend:new Set(),on:false};if(!hasNextPhase(ph)||!phMatches(ph).some(m=>mStatus(m)==='done'))return none;const q=phaseQualifiers(ph);if(q.errors.length)return none;return{ok:new Set(q.ids),pend:new Set(q.ties.flatMap(t=>t.candidates)),on:true}}
-function standHTML(ph,pick){const cols=ph.cols.filter(x=>x.on),all=ui.cls==='all'||!ph.groups.length,Q=qualState(ph);
- return standData(ph,all).filter((s,i)=>!pick||pick.includes(i)).map(s=>`<div class="gcard">${s.title?`<h3 class="gt">${esc(s.title)}</h3>`:''}<div class="tw"><table class="cls"><thead><tr><th>Pos.</th><th class="l">Dupla</th>${cols.map(x=>`<th title="${COL[x.k][0]}">${COL[x.k][1]}</th>`).join('')}</tr></thead><tbody>${
-  s.rows.length?s.rows.map(r=>{const k=Q.ok.has(r.id)?'q':Q.pend.has(r.id)?'qt':'';return`<tr class="${k}"><td class="${k}" title="${k==='q'?'Classificada para a próxima fase':k==='qt'?'Empate na última vaga: aguarda decisão':r.tie?'Empatadas em todos os critérios':''}"><span class="posb">${r.pos}º${r.tie?'<small>=</small>':''}</span></td><td class="l" style="white-space:normal"><button class="name" data-a="tGames" data-id="${r.id}" data-ph="${ph.id}" title="Ver os confrontos desta dupla">${esc(r.name)}</button></td>${cols.map(x=>`<td class="${x.k==='pts'?'tot':''}">${r.s[x.k]}</td>`).join('')}</tr>`}).join(''):`<tr><td colspan="${cols.length+2}" class="muted">Sem duplas neste grupo.</td></tr>`}</tbody></table></div></div>`).join('')+(Q.pend.size?'<p class="note" style="margin:0 0 10px"><b>Posição em amarelo:</b> empate na última vaga de classificação. A definição só acontece na finalização da fase, com decisão registrada.</p>':'')}
+function qualState(ph,live){const none={ok:new Set(),pend:new Set(),on:false};if(!hasNextPhase(ph)||!phMatches(ph).some(m=>mStatus(m)==='done'||(live&&liveOf(m))))return none;const q=phaseQualifiers(ph,live);if(q.errors.length)return none;return{ok:new Set(q.ids),pend:new Set(q.ties.flatMap(t=>t.candidates)),on:true}}
+function standHTML(ph,pick){const cols=ph.cols.filter(x=>x.on),all=ui.cls==='all'||!ph.groups.length,lv=phLive(ph),Q=qualState(ph,lv);
+ // ao vivo: a seta compara com a posição oficial (só partidas encerradas); o placar mostra a partida atual, a dupla primeiro
+ const base={};if(lv)standData(ph,all,false).forEach(s=>s.rows.forEach(r=>base[r.id]=r.pos));
+ const chip=id=>{if(!lv)return'';const m=phMatches(ph).find(x=>(x.a===id||x.b===id)&&liveOf(x));if(!m)return'';const L=liveOf(m),i=m.a===id?0:1,a=L.p[i],b=L.p[1-i];return'<span class="lvc '+(a>b?'w':a<b?'l':'e')+'" title="Partida em andamento">'+a+'×'+b+'</span>'};
+ const arw=r=>{if(!lv||base[r.id]==null)return'';const d=base[r.id]-r.pos;return d>0?'<small class="lva up" title="Subiu '+d+' posição(ões) com os jogos em andamento">▲'+d+'</small>':d<0?'<small class="lva dn" title="Caiu '+(-d)+' posição(ões) com os jogos em andamento">▼'+(-d)+'</small>':''};
+ return standData(ph,all,lv).filter((s,i)=>!pick||pick.includes(i)).map(s=>`<div class="gcard">${s.title?`<h3 class="gt">${esc(s.title)}</h3>`:''}<div class="tw"><table class="cls"><thead><tr><th>Pos.</th><th class="l">Dupla</th>${cols.map(x=>`<th title="${COL[x.k][0]}">${COL[x.k][1]}</th>`).join('')}</tr></thead><tbody>${
+  s.rows.length?s.rows.map(r=>{const k=Q.ok.has(r.id)?'q':Q.pend.has(r.id)?'qt':'';return`<tr class="${k}"><td class="${k}" title="${k==='q'?'Classificada para a próxima fase':k==='qt'?'Empate na última vaga: aguarda decisão':r.tie?'Empatadas em todos os critérios':''}"><span class="posb">${r.pos}º${r.tie?'<small>=</small>':''}</span>${arw(r)}</td><td class="l" style="white-space:normal"><button class="name" data-a="tGames" data-id="${r.id}" data-ph="${ph.id}" title="Ver os confrontos desta dupla">${esc(r.name)}${chip(r.id)}</button></td>${cols.map(x=>`<td class="${x.k==='pts'?'tot':''}">${r.s[x.k]}</td>`).join('')}</tr>`}).join(''):`<tr><td colspan="${cols.length+2}" class="muted">Sem duplas neste grupo.</td></tr>`}</tbody></table></div></div>`).join('')+(Q.pend.size?'<p class="note" style="margin:0 0 10px"><b>Posição em amarelo:</b> empate na última vaga de classificação. A definição só acontece na finalização da fase, com decisão registrada.</p>':'')}
 function bracketHTML(ph,ro){if(!ph.rounds.length)return'<div class="center"><span class="muted">O chaveamento aparece aqui depois de gerar as partidas.</span></div>';
  const R=ph.rounds.map(r=>({r,items:(arr(r.slots).length?r.slots:[...(r.byes||[]).map(t=>({t})),...r.matches.map(m=>({m:m.id}))]).map(s=>({s,m:s.m?r.matches.find(x=>x.id===s.m):null})).filter(it=>!it.s.m||it.m)}));
  const key=(it,ri)=>it.m?'m'+it.m.id:'b'+ri+(it.s.src?'m'+it.s.src.m:'t'+it.s.t);
@@ -1242,8 +1311,8 @@ function bracketHTML(ph,ro){if(!ph.rounds.length)return'<div class="center"><spa
    if(it.f.length)it.o=it.f.reduce((a,p)=>a+p.o,0)/it.f.length});if(ri){col.items.sort((a,b)=>a.o-b.o);col.items.forEach((it,i)=>it.o=i)}});
  const pre=R.length>1&&R[0].items.some(it=>it.m)&&R[0].items.some(it=>!it.m);if(pre)R[0].items.forEach(it=>{if(!it.m)it.ghost=true});
  const name=id=>id&&T(id)?esc(dl(T(id))):'<span class="ph">A definir</span>';
- const mb=(m,col,k,fk,sub)=>{const st=mStatus(m),w=winner(m),[va,vb]=shown(m),can=ro?(linkOK(col.r)&&statusKey(cur.c)!=='done'&&(st!=='done'||m.lq)&&m.a&&m.b&&(!m.pending||m.lq)&&teamOK(cur.c,m)):canScore(),act=ro?'mOpen':canEdit()?'mMenu':'mOpen',row=(id,v)=>'<div class="br-t'+(w?(w===id?' win':' lose'):'')+'"><span class="br-n">'+name(id)+'</span><span class="sbox">'+v+'</span></div>';
-   return'<div class="br-m '+st+(sub?' third':'')+'" data-k="'+k+'" data-f="'+fk+'"'+(sub?' data-dash="1"':'')+'>'+(sub?'<div class="br-sub">'+sub+'</div>':'')+'<button class="br-hit" data-a="'+act+'" data-id="'+m.id+'" '+(can&&m.a&&m.b?'':'disabled')+' aria-label="Confronto: '+(m.a&&T(m.a)?esc(dl(T(m.a))):'a definir')+' contra '+(m.b&&T(m.b)?esc(dl(T(m.b))):'a definir')+'">'+row(m.a,va)+row(m.b,vb)+'</button><div class="br-foot"><span class="tag '+st+'">'+ST[st]+'</span>'+(m.lq?'<span class="tag lq">Aguardando envio</span>':m.pending?'<span class="tag pend">Aguardando aprovação</span>':claimTag(m))+(m.bo!==1?'<small>'+(setsTxt(m.sets)?'Partidas: '+esc(setsTxt(m.sets)):'Melhor de 3 partidas')+'</small>':'')+'</div></div>'};
+ const mb=(m,col,k,fk,sub)=>{const st=mStatus(m),w=winner(m),Lm=liveOf(m),[va,vb]=Lm?(m.bo===1?Lm.p:lvWins(Lm)):shown(m),can=ro?(linkOK(col.r)&&statusKey(cur.c)!=='done'&&(st!=='done'||m.lq)&&m.a&&m.b&&(!m.pending||m.lq)&&teamOK(cur.c,m)):canScore(),act=ro?(can&&mkLinkOK(m)?'mLinkMenu':'mOpen'):canScore()?'mMenu':'mOpen',row=(id,v)=>'<div class="br-t'+(w?(w===id?' win':' lose'):'')+'"><span class="br-n">'+name(id)+'</span><span class="sbox">'+v+'</span></div>';
+   return'<div class="br-m '+st+(sub?' third':'')+'" data-k="'+k+'" data-f="'+fk+'"'+(sub?' data-dash="1"':'')+'>'+(sub?'<div class="br-sub">'+sub+'</div>':'')+'<button class="br-hit" data-a="'+act+'" data-id="'+m.id+'" '+(can&&m.a&&m.b?'':'disabled')+' aria-label="Confronto: '+(m.a&&T(m.a)?esc(dl(T(m.a))):'a definir')+' contra '+(m.b&&T(m.b)?esc(dl(T(m.b))):'a definir')+'">'+row(m.a,va)+row(m.b,vb)+'</button><div class="br-foot"><span class="tag '+(Lm?'live':st)+'">'+ST[Lm?'live':st]+'</span>'+(m.lq?'<span class="tag lq">Aguardando envio</span>':m.pending?'<span class="tag pend">Aguardando aprovação</span>':claimTag(m))+(m.bo!==1?'<small>'+(setsTxt(m.sets)?'Partidas: '+esc(setsTxt(m.sets)):'Melhor de 3 partidas')+'</small>':'')+'</div></div>'};
  const tm=thirdOf(ph);
  const item=(it,col)=>{const fk=it.f.filter(p=>!p.ghost).map(p=>p.k).join(' ');if(it.ghost)return'<div class="br-m br-ghost" data-k="'+it.k+'" aria-hidden="true"></div>';
    if(ro&&col.r.hidden)return'<div class="br-m wait" data-k="'+it.k+'" data-f="'+fk+'"><div class="br-t"><span class="br-n"><span class="ph">Rodada oculta</span></span></div></div>';
@@ -1282,24 +1351,25 @@ function phasePreview(c,ph){const i=c.phases.indexOf(ph),pv=c.phases[i-1];if(i<1
  const prevCls=ui.cls;ui.cls='all';let h=standHTML(tmp);ui.cls=prevCls;
  return note(ph.groups.length?'A divisão em grupos desta fase é feita depois, em Configurações → Grupos':'')+'<div class="preview">'+noAct(h).replace(/<span class="posb">[^<]*(<small>=<\/small>)?<\/span>/g,'<span class="posb">–</span>').replace(/ title="Empatadas em todos os critérios"/g,'')+'</div>'}
 const emptyPhase=(c,ph,manage)=>phasePreview(c,ph)||('<div class="center"><span class="muted">'+(c.phases.indexOf(ph)>0?'As duplas desta fase chegam da fase anterior. Defina quantas se classificam em + → Fases → Editar fase.':'Ainda não há duplas.')+'</span>'+(manage&&c.phases.indexOf(ph)===0?'<button class="pill dark big" data-a="cDuplas">ADICIONAR DUPLAS</button>':'')+'</div>');
-function classBlock(c,ph,manage){if(ph.type==='elim')return '<div class="cls-top"><div class="cls-ctl"><select data-c="selPhase" aria-label="Fase">'+c.phases.map(p=>'<option value="'+p.id+'" '+(p===ph?'selected':'')+'>'+esc(p.name)+' — '+TYPE[p.type]+'</option>').join('')+'</select><span class="muted" style="font-size:13px">Chaveamento · '+BOT[ph.bo]+'</span></div>'+(manage?'<div class="panel-plus-row"><button class="panel-plus" data-a="cMenu" aria-label="Gerenciar classificação" title="Gerenciar classificação">+</button></div>':'')+'</div><section class="cls-body" aria-label="Chaveamento">'+(ph.teamIds.length?bracketHTML(ph,!manage&&visitor):emptyPhase(c,ph,manage))+'</section>';const grp=ph.groups.length>0,all=ui.cls==='all'||!grp,Q=qualState(ph);
+function classBlock(c,ph,manage){if(ph.type==='elim')return '<div class="cls-top"><div class="cls-ctl"><select data-c="selPhase" aria-label="Fase">'+c.phases.map(p=>'<option value="'+p.id+'" '+(p===ph?'selected':'')+'>'+esc(p.name)+' — '+TYPE[p.type]+'</option>').join('')+'</select><span class="muted" style="font-size:13px">Chaveamento · '+BOT[ph.bo]+'</span></div>'+(manage?'<div class="panel-plus-row"><button class="panel-plus" data-a="cMenu" aria-label="Gerenciar classificação" title="Gerenciar classificação">+</button></div>':'')+'</div><section class="cls-body" aria-label="Chaveamento">'+(ph.teamIds.length?bracketHTML(ph,!manage&&visitor):emptyPhase(c,ph,manage))+'</section>';const grp=ph.groups.length>0,all=ui.cls==='all'||!grp,Q=qualState(ph,phLive(ph));
  return '<div class="cls-top"><div class="cls-ctl"><select data-c="selPhase" aria-label="Fase">'+c.phases.map(p=>'<option value="'+p.id+'" '+(p===ph?'selected':'')+'>'+esc(p.name)+' — '+TYPE[p.type]+'</option>').join('')+'</select><span class="seg" role="group" aria-label="Visualização"><button class="'+(all?'':'on')+'" data-a="clsView" data-v="g" '+(grp?'':'disabled title="Esta fase não tem grupos"')+'>Por grupo</button><button class="'+(all?'on':'')+'" data-a="clsView" data-v="all">Geral</button></span></div>'+
   (manage?'<div class="panel-plus-row"><button class="panel-plus" data-a="cMenu" aria-label="Gerenciar classificação" title="Gerenciar classificação">+</button></div>':'')+
   (hasNextPhase(ph)&&Q.on?'<p class="note" style="margin:0 0 8px"><i class="qdot"></i>Posição em verde: duplas na zona de classificação para a próxima fase ('+esc(qualTxt(ph))+').</p>':'')+
   '</div><section class="cls-body" aria-label="Classificação">'+(ph.teamIds.length?standHTML(ph):emptyPhase(c,ph,manage))+'</section>'}
 // Situação de cada partida de uma disputa Melhor de 3 (as três partidas pertencem ao MESMO confronto).
 function gameState(m,i){const n=(m.sets||[]).filter(Boolean).length,[a,b]=setsWon(m),dec=a>=2||b>=2;return i<n?['done','Encerrada']:dec?['na','Não necessária']:i===2&&n<2?['if','Se necessária']:['wait','Aguardando']}
-function matchCard(m,r,ro){const st=mStatus(m),[sa,sb]=setsWon(m),has=hasSets(m),action=ro?'mOpen':canEdit()?'mMenu':'mOpen';
+function matchCard(m,r,ro){const L=liveOf(m),mv=L?{...m,sets:lvSets(L)}:m,st=L?'live':mStatus(m);
  const nm=id=>id&&T(id)?esc(dl(T(id))):'<span class="ph">A definir</span>';
  const can=ro?(linkOK(r)&&statusKey(cur.c)!=='done'&&(st!=='done'||m.lq)&&m.a&&m.b&&(!m.pending||m.lq)&&teamOK(cur.c,m)):canScore();
- const one=m.bo===1,[va,vb]=shown(m);
+ const mkB=ro&&can&&mkLinkOK(m),action=ro?(mkB?'mLinkMenu':'mOpen'):canScore()?'mMenu':'mOpen';
+ const one=m.bo===1,[va,vb]=L?(one?L.p:lvWins(L)):shown(m);
  const fmt=one?'Partida única':'Melhor de 3 partidas';
- const games=!one&&m.a&&m.b?'<div class="gms">'+[0,1,2].map(i=>{const[k,l]=gameState(m,i),g=m.sets&&m.sets[i];return'<button class="gm '+k+'" data-a="'+action+'" data-id="'+m.id+'" '+(can?'':'disabled')+'><span>Partida '+(i+1)+' — '+l+'</span>'+(g?'<b>'+g[0]+' × '+g[1]+'</b>':'')+'</button>'}).join('')+'</div>':'';
- return '<div class="match"><button class="mt l" data-a="'+action+'" data-id="'+m.id+'" '+(ro||!canEdit()?'disabled':'')+'>'+nm(m.a)+'</button>'+
+ const games=!one&&m.a&&m.b?'<div class="gms">'+[0,1,2].map(i=>{let[k,l]=gameState(mv,i),g=mv.sets&&mv.sets[i];if(L&&!g&&i===L.s.length&&!lvDecided(m,L)){k='live';l='Em andamento';g=L.p}return'<button class="gm '+k+'" data-a="'+action+'" data-id="'+m.id+'" '+(can?'':'disabled')+'><span>Partida '+(i+1)+' — '+l+'</span>'+(g?'<b>'+g[0]+' × '+g[1]+'</b>':'')+'</button>'}).join('')+'</div>':'';
+ return '<div class="match'+(L?' lv':'')+'"><button class="mt l" data-a="'+action+'" data-id="'+m.id+'" '+(ro||!canEdit()?'disabled':'')+'>'+nm(m.a)+'</button>'+
  '<button class="score" data-a="'+action+'" data-id="'+m.id+'" '+(can?'':'disabled')+' aria-label="'+(ro?'Informar placar':'Opções do confronto')+'"><span class="sbox">'+va+'</span>×<span class="sbox">'+vb+'</span></button>'+
  '<button class="mt r" data-a="'+action+'" data-id="'+m.id+'" '+(ro||!canEdit()?'disabled':'')+'>'+nm(m.b)+'</button>'+
  '<div class="mfoot"><span><span class="tag '+st+'">'+ST[st]+'</span> '+(m.lq?'<span class="tag lq">Aguardando envio</span>':m.pending?'<span class="tag pend">Aguardando aprovação</span>':'')+(m.third?' <span class="tag pend">Disputa de 3º lugar</span>':'')+' <small class="muted">'+esc(fmt)+'</small></span>'+
- (ro?(can?'<button class="pill sm" data-a="mOpen" data-id="'+m.id+'">Informar placar</button>':''):'')+'</div>'+(m.lq||m.pending?'':claimLine(m))+games+'</div>'}
+ (ro?(mkB?'<button class="pill sm ghost" data-a="mkOpen" data-id="'+m.id+'">'+(L&&lvDecided(m,L)?'Confirmar placar':'♣ Marcador')+'</button> ':'')+(can?'<button class="pill sm" data-a="mOpen" data-id="'+m.id+'">Informar placar</button>':''):'')+'</div>'+(m.lq||m.pending?'':claimLine(m))+games+'</div>'}
 
 // Confrontos aguardando a confirmação da outra dupla (ou com placares divergentes), em todo o campeonato.
 function confList(c,ro){const out=[];c.phases.forEach(ph=>ph.rounds.forEach(r=>{if(ro&&r.hidden)return;r.matches.forEach(m=>{const cl=m.claims;if(!cl||!m.a||!m.b||mStatus(m)==='done')return;const ks=['A','B'].filter(k=>cl[k]);if(!ks.length)return;
@@ -1390,6 +1460,7 @@ function vConfig(c){const ph=getPhase(c);cur.ph=ph;const pd=pendings(c),ts=champ
  <label class="chk"><input type="checkbox" data-a="cOpt" data-k="isFinal" ${c.isFinal?'checked':''}><span>Este é o torneio final da temporada <small class="muted">(não soma pontos no Ranking Geral)</small></span></label>
  <label class="chk"><input type="checkbox" data-a="cOpt" data-k="requireApproval" ${c.requireApproval?'checked':''}><span>Exigir minha aprovação para resultados enviados pelo link compartilhado</span></label>
  <label class="chk"><input type="checkbox" data-a="cOpt" data-k="teamMode" ${c.teamMode?'checked':''} ${CLOUD?'':'disabled'}><span><b>Lançamento pelas duplas (celular vinculado)</b> — no link do campeonato, cada jogador vincula o celular pelo nome e só lança os jogos da sua dupla; o placar só vale quando as duas duplas informarem o mesmo. Neste modo só o master corrige resultados e finaliza ou reabre fases.${CLOUD?'':' <small class="muted">(disponível quando o sistema está ligado ao banco)</small>'}</span></label>
+ <label class="chk"><input type="checkbox" data-a="cOpt" data-k="marker" ${c.marker?'checked':''} ${CLOUD?'':'disabled'}><span><b>Marcador no link (em desenvolvimento)</b> — as duplas também podem usar o marcador de pontos pelo link do campeonato. Para você, o marcador já aparece ao tocar no placar do confronto. Deixe desligado enquanto estiver testando.</span></label>
  <h2 style="margin-top:16px">Resultados aguardando aprovação</h2>${pd.length?`<ul class="rows">${pd.map(({ph,r,m})=>`<li><span style="flex:1;min-width:200px">${esc(ph.name)} · ${esc(r.title)} — <b>${esc(dl(T(m.a)))}</b> ${esc(setsTxt(m.pending.sets))} <b>${esc(dl(T(m.b)))}</b>${m.pending.by?` <small class="muted">· informado por ${esc(m.pending.by)}</small>`:''}</span><button class="pill sm" data-a="mApprove" data-id="${m.id}">Aprovar</button><button class="pill ghost sm" data-a="mReject" data-id="${m.id}">Rejeitar</button></li>`).join('')}</ul>`:'<p class="muted">Nenhum resultado pendente.</p>'}
  ${tmOn(c)&&isMaster()?lkPanels(c):''}
  <h2 style="margin-top:16px">Excluir campeonato</h2><p class="note">Remove o campeonato, suas fases, partidas e os pontos que ele gerou no ranking.</p><button class="pill red" data-a="cDel">Excluir campeonato</button></section></div>`}
@@ -1496,7 +1567,8 @@ function helpModal(){const kind=visitor?'vis':'adm',c=cur.c,team=!!(c&&c.teamMod
 
 /* ===================== Ações ===================== */
 const A={},F={};
-const VIS=new Set(['pinNew','help','helpTab','bindQ','bindAll','bindPick','bindYes','bindWrong','bindWatch','bindBack','byPick','lqSync','lqConf','lqDismiss','pvTab','rkSet','rkMode','rkQ','rkIna','pwEye','tvOpen','tvExit','tvNext','tvPause','tGames','clsView','retry','closeM','vTab','vMode','mOpen','rkCell','rkTot','selPhase','selRound']);
+const MKA=['mkOpen','mkAdd','mkSub','mkTruco','mkTrucoX','mkNext','mkUndo','mkHide','mLinkMenu'];
+const VIS=new Set([...MKA,'pinNew','help','helpTab','bindQ','bindAll','bindPick','bindYes','bindWrong','bindWatch','bindBack','byPick','lqSync','lqConf','lqDismiss','pvTab','rkSet','rkMode','rkQ','rkIna','pwEye','tvOpen','tvExit','tvNext','tvPause','tGames','clsView','retry','closeM','vTab','vMode','mOpen','rkCell','rkTot','selPhase','selRound']);
 A.closeM=()=>closeModal();
 A.pushOn=async(d,el)=>{if(!isMaster())return;if(!pushOK())return alertBox('Notificações','Este navegador não recebe notificações.'+(isIOS()?' No iPhone, instale o app e abra pelo ícone.':''));el&&(el.disabled=true);
  try{const st=await rpc('gc_push_setup',{p_url:PUSHFN()});let key='';
@@ -1851,7 +1923,7 @@ function portalModal(){if(!db.portalToken||String(db.portalToken).length<32){db.
 A.pShare=portalModal;
 A.pNew=async()=>{if(!await confirmBox({title:'Gerar novo link geral',msg:'O link geral atual deixará de funcionar imediatamente. Os links de cada campeonato continuam valendo. Continuar?',ok:'Gerar novo link',danger:true}))return;db.portalToken=mkToken();save();closeModal(true);portalModal();toast('Novo link gerado.')};
 let ptSig='';
-function portalDb(j){setCloudDb({players:j.players,teams:j.teams,champs:j.champs,settings:j.settings||{},user:{name:'Organizador'}});mergeResults(j.results||[]);elimSyncAll()}
+function portalDb(j){setCloudDb({players:j.players,teams:j.teams,champs:j.champs,settings:j.settings||{},user:{name:'Organizador'}});mergeResults(j.results||[]);liveSet(j.live);elimSyncAll()}
 async function loadPortal(tok){let j;try{j=await rpc('gc_get_portal',{p_token:tok},true)}catch(e){if(e.status&&/link_invalido/.test(e.message)){setDb({});ptSig='invalido';return}throw e}ptSig=JSON.stringify(j);portalDb(j)}
 // Página do link geral — SOMENTE VISUALIZAÇÃO: seletor Campeonatos | Ranking geral | Colocações.
 function vPortal(tk,okp){const top=`<header class="top">${I.trophy}<span>Campeonatos</span><button class="hbtn" data-a="help" style="margin-left:auto" aria-label="Ajuda">${HI.help}<span>Ajuda</span></button></header>`;
@@ -2315,8 +2387,10 @@ F.tieSave=async f=>{const c=cur.c,ph=cur.ph,type=f.elements.type.value,key=f.ele
  save();closeModal(true);render();toast('Decisão administrativa registrada. Finalize a fase para aplicar a classificação.')};
 
 /* ----- partida / placar ----- */
-A.mMenu=d=>{const x=findMatch(d.id);if(!x)return toast('Este confronto não existe mais.','err');
- modal('<div style="display:flex;flex-direction:column;gap:6px"><button data-a="mOpen" data-id="'+d.id+'" data-close="1">'+I.edit+'Editar resultado</button><button data-a="mDel" data-id="'+d.id+'" data-close="1">'+I.trash+'Excluir confronto</button></div>',{cls:'menu'})};
+A.mMenu=d=>{const x=findMatch(d.id);if(!x)return toast('Este confronto não existe mais.','err');const mko=mkAdminOK(x);if(!canEdit()&&!mko)return A.mOpen(d);
+ modal('<div style="display:flex;flex-direction:column;gap:6px">'+(mko?'<button data-a="mkOpen" data-id="'+d.id+'" data-close="1"><span class="mkico">♣</span><span>Marcador <small style="opacity:.75">(em desenvolvimento)</small></span></button>':'')+'<button data-a="mOpen" data-id="'+d.id+'" data-close="1">'+I.edit+'Editar resultado</button>'+(canEdit()?'<button data-a="mDel" data-id="'+d.id+'" data-close="1">'+I.trash+'Excluir confronto</button>':'')+'</div>',{cls:'menu'})};
+A.mLinkMenu=d=>{const x=findMatch(d.id);if(!x)return;
+ modal('<div style="display:flex;flex-direction:column;gap:6px"><button data-a="mkOpen" data-id="'+d.id+'" data-close="1"><span class="mkico">♣</span><span>Marcador <small style="opacity:.75">(em desenvolvimento)</small></span></button><button data-a="mOpen" data-id="'+d.id+'" data-close="1">'+I.edit+'Informar placar</button></div>',{cls:'menu'})};
 // Confirmação pelas duas duplas: uma informou → aguarda a outra; as duas informaram valores diferentes → divergência.
 // Linha discreta embaixo do confronto: falta uma dupla informar / placares diferentes.
 function claimLine(m){const c=m.claims,ks=c?['A','B'].filter(k=>c[k]):[];if(!ks.length||mStatus(m)==='done'||!m.a||!m.b)return'';const tv=/\/telao$/.test(location.hash),nm=k=>esc(dl(T(k==='A'?m.a:m.b)));
@@ -2574,7 +2648,7 @@ A.jExpGo=d=>{const c=cur.c,ph=cur.ph,r=cur.r,all=!!document.querySelector('.ov:l
 
 /* ===================== Eventos ===================== */
 const READ=new Set([...VIS,'nav','sair','sair2','openC','rkSet','rkMode','rkIna','rkQ','pSort','crInfo','cxScope','offSync','confOpen','confKeep','cExp','jExp','cExpGo','jExpGo','jExpPick']);
-const SCORE=new Set(['mState','mAuto','mGame','confMine']),MASTER=new Set(['pushWait','pushOn','pushOff','pushTest','instGo','instApp','lkPinReset','rkTie','rkTieDel','lkUnbind','lkMove','lkAllow','cpUse','cpTab','lkRefresh','mbEdit','mbDel','cOpt','cDel','cfgPlayers','cpAll','cpSel','cpDel','cfgRank','wipe','bkImp','bkExp']),CASH=new Set(['cxAdd','cxEdit','cxDel']),MASTERF=new Set(['rkTieSave','lkMoveF','uSave','cSave','tieSave','mbSave']);
+const SCORE=new Set([...MKA,'mMenu','mState','mAuto','mGame','confMine']),MASTER=new Set(['pushWait','pushOn','pushOff','pushTest','instGo','instApp','lkPinReset','rkTie','rkTieDel','lkUnbind','lkMove','lkAllow','cpUse','cpTab','lkRefresh','mbEdit','mbDel','cOpt','cDel','cfgPlayers','cpAll','cpSel','cpDel','cfgRank','wipe','bkImp','bkExp']),CASH=new Set(['cxAdd','cxEdit','cxDel']),MASTERF=new Set(['rkTieSave','lkMoveF','uSave','cSave','tieSave','mbSave']);
 const DENY='Seu perfil não permite esta ação.';
 A.offSync=()=>trySync(true);
 // Conflitos de placar (lançado offline × o que já estava online): as duas versões ficam guardadas até alguém autorizado decidir.
@@ -2611,6 +2685,98 @@ A.tvOpen=()=>{const h=location.hash.replace(/^#\/?/,'').split('/');ui.tv.i=0;ui.
 A.tvExit=()=>{const h=location.hash.replace(/^#\/?/,'').split('/');try{document.fullscreenElement&&document.exitFullscreen().catch(()=>{})}catch(e){}location.hash='#/'+h[0]+'/'+h[1]+(h[0]==='p'?'/'+h[2]:'')+(h[0]==='c'?'/classificacao':'')};
 A.tvNext=()=>{ui.tv.i++;render()};A.tvPause=()=>{ui.tv.pause=!ui.tv.pause;render()};
 setInterval(()=>{if(/\/telao$/.test(location.hash)&&document.querySelector('.tv')&&!ui.tv.pause&&!stack.length&&!document.hidden){ui.tv.i++;render()}},12000);
+/* ===================== Marcador de pontos (em desenvolvimento) =====================
+   Uma tela por confronto. Cada toque grava o placar ao vivo no banco (com versão: se outro celular marcou antes,
+   este adota o placar do servidor em vez de somar duas vezes). Sem internet, continua marcando e guarda neste aparelho.
+   No fim: organizador → o resultado vale direto; link → vale como o informe desta dupla (a outra confirma). */
+const MKK=id=>'gc_mk:'+id;
+const mkLocal=id=>{try{const o=JSON.parse(localStorage.getItem(MKK(id)));return o&&o.st&&Array.isArray(o.st.s)?o:null}catch(e){return null}};
+function mkKeep(){if(!mk)return;try{if(mk.dirty&&!mk.done)localStorage.setItem(MKK(mk.id),JSON.stringify({st:mk.st,rev:mk.rev,at:Date.now()}));else localStorage.removeItem(MKK(mk.id))}catch(e){}}
+function mkAdminOK(x){const{c,ph,m}=x;return!visitor&&canScore()&&!!m.a&&!!m.b&&!m.pending&&mStatus(m)!=='done'&&!phaseLock(c,ph)}
+function mkLinkOK(m){return!!visitor&&CLOUD&&!!cur.c&&!!cur.c.marker&&!!lkTok()&&!m.lq&&!/\/telao$/.test(location.hash)}
+const mkNew=m=>({s:m.bo===1?[]:(m.sets||[]).filter(Boolean).map(g=>[+g[0],+g[1]]),p:[0,0],t:1});
+const lvTxt=L=>[...L.s.map(g=>g[0]+' × '+g[1]),lvEnd(L)?L.p[0]+' × '+L.p[1]:L.p[0]+' × '+L.p[1]+' (em andamento)'].join(' · ');
+const TRN={1:['TRUCO!','toque quando pedirem truco','mão'],3:['SEIS!','valendo 3 · toque se pedirem seis','truco'],6:['NOVE!','valendo 6 · toque se pedirem nove','seis'],9:['DOZE!','valendo 9 · toque se pedirem doze','nove'],12:['VALENDO 12','a mão vale 12 pontos','doze']};
+A.mkOpen=d=>{const x=findMatch(d.id);if(!x)return;const{m,c,r}=x;
+ const ok=visitor?mkLinkOK(m)&&linkOK(r)&&statusKey(c)!=='done'&&mStatus(m)!=='done'&&!m.pending&&!!m.a&&!!m.b&&teamOK(c,m):mkAdminOK(x);
+ if(!ok)return toast('O marcador não está disponível para este confronto.','err');
+ const srv=LIVE.get(m.id),loc=mkLocal(m.id);
+ mk={id:m.id,st:srv?JSON.parse(JSON.stringify(srv.d)):mkNew(m),rev:srv?srv.rev:0,undo:[],dirty:false,busy:false,off:false,ver:0};
+ if(loc&&JSON.stringify(loc.st)!==JSON.stringify(mk.st)){mk.st=loc.st;mk.rev=loc.rev;mk.dirty=true;mk.off=true}   // marcado sem internet e ainda não enviado
+ const el=modal('<div class="mkwrap"></div>',{cls:'mk',mk:true,done:mkGone});el.parentElement.classList.add('mkov');
+ mkPaint();mkTouch();if(mk.dirty)mkSend()};
+function mkGone(){const me=mk;if(!me)return;clearTimeout(me.idle);clearTimeout(me.bgT);try{me.wl&&me.wl.release()}catch(e){}mkKeep();mk=null;setTimeout(()=>{if(!stack.length)render()},0)}
+function mkPaint(){if(!mk)return;const o=stack.find(z=>z.opt.mk);if(!o)return;const w=o.ov.querySelector('.mkwrap');if(!w)return;
+ const keep=w.querySelector('.mkpan select,.mkpan input'),sel=keep?{by:(w.querySelector('[name=by]')||{}).value,byn:(w.querySelector('[name=byn]')||{}).value}:null;
+ w.innerHTML=mkHTML();if(sel){const b=w.querySelector('[name=by]'),n=w.querySelector('[name=byn]');if(b&&sel.by!=null){b.value=sel.by;const o2=w.querySelector('.byo');if(o2)o2.hidden=b.value!=='o'}if(n&&sel.byn!=null)n.value=sel.byn}}
+function mkHTML(){const x=findMatch(mk.id);if(!x)return'<div class="mkdim"><div class="mkpan"><h3>Confronto removido</h3><p>Este confronto não existe mais.</p><button class="pill" data-a="closeM">Fechar</button></div></div>';
+ const{m,c,r}=x,L=mk.st,[wa,wb]=lvWins(L),dec=wa>=need(m)||wb>=need(m),end=lvEnd(L),onze=!end&&(L.p[0]===11||L.p[1]===11),one=m.bo===1,val=onze?1:L.t;
+ const NA=esc(dl(T(m.a))),NB=esc(dl(T(m.b)));
+ const sync=!CLOUD?'':mk.off?'<span class="mks off">Sem internet · marcando neste celular</span>':mk.dirty||mk.busy?'<span class="mks">enviando…</span>':'<span class="mks">sincronizado</span>';
+ const team=(i,nmx)=>'<div class="mkt"><div class="mkn">'+nmx+'</div><div class="mkp">'+L.p[i]+'</div><button class="mkminus" data-a="mkSub" data-s="'+i+'" '+(L.p[i]?'':'disabled')+' aria-label="Tirar 1 ponto de '+nmx+'">−</button>'+
+  '<button class="mkplus'+(val>1?' hot':'')+'" data-a="mkAdd" data-s="'+i+'" '+(end?'disabled':'')+' aria-label="Mão para '+nmx+': mais '+val+'"><span class="s1">♣</span><big>+'+val+'</big><em>'+(onze?'mão de onze':TRN[val][2])+'</em><span class="s2">♣</span></button></div>';
+ const tr=onze?'<div class="mktr off"><div style="flex:1"><b>MÃO DE ONZE</b><small>esta mão vale 1 ponto</small></div></div>'
+  :'<button class="mktr'+(L.t>1?' on':'')+'" data-a="mkTruco" '+(end||L.t===12?'disabled':'')+'><span>♣</span><div><b>'+TRN[L.t][0]+'</b><small>'+TRN[L.t][1]+'</small></div><span>♣</span></button>'+(L.t>1&&!end?'<button class="mkcan" data-a="mkTrucoX">cancelar aposta (volta a valer 1)</button>':'');
+ let pan='';
+ if(mk.done)pan='<h3>'+(mk.done==='pend'?'Placar enviado':'Resultado confirmado')+'</h3><p>'+(mk.done==='pend'?'O placar aguarda a aprovação do organizador.':'O placar deste confronto já vale.')+'</p><div class="mkfin"><span>'+NA+'</span>'+esc(setsTxt(m.pending?m.pending.sets:m.sets).replace(/-/g,' × ')||'')+'<span>'+NB+'</span></div><button class="pill" data-a="closeM">Fechar</button>';
+ else if(mk.div)pan='<h3>Placar divergente</h3><p>A outra dupla informou um placar diferente deste. Os dois aparecem no confronto: conversem e lancem de novo pelo “Informar placar”. O placar vale assim que os dois forem iguais.</p><button class="pill" data-a="closeM">Fechar</button>';
+ else if(mk.wait){const os=lkSide(m)==='A'?NB:NA;pan='<h3>Placar enviado</h3><div class="mkfin"><span>'+NA+'</span>'+esc(lvSets(L).map(g=>g[0]+' × '+g[1]).join(' · '))+'<span>'+NB+'</span></div><p>Aguardando <b>'+os+'</b> confirmar. Quando confirmar, o resultado passa a valer e esta tela avisa.</p><button class="pill ghost" data-a="closeM">Sair e aguardar</button>'}
+ else if(end&&dec&&!mk.hide){const ss=lvSets(L),fin=one?ss[0][0]+' × '+ss[0][1]:wa+' × '+wb,tm=visitor&&tmOn(c);
+  pan='<form data-f="mkFinF" novalidate><h3>Fim de jogo</h3><p>'+(wa>wb?NA:NB)+' venceu'+(one?'':' a disputa')+'.</p><div class="mkfin"><span>'+NA+'</span>'+fin+'<span>'+NB+'</span></div>'+(one?'':'<p class="mkgl">'+ss.map((g,i)=>'Partida '+(i+1)+': '+g[0]+' × '+g[1]).join(' · ')+'</p>')+
+   (visitor?(tm?'<p class="note" style="margin:0">O placar vale quando a outra dupla também confirmar (pelo marcador ou pelo “Informar placar”).</p>':byField(m)):'')+
+   '<p class="err" role="alert"></p><button class="pill" type="submit">'+(visitor?'Confirmar placar':'Salvar resultado')+'</button><button type="button" class="pill ghost" data-a="mkHide">Voltar e corrigir a marcação</button></form>'}
+ else if(end&&!mk.hide){const n=L.s.length+1;pan='<h3>Partida '+n+' encerrada</h3><p>'+(L.p[0]===12?NA:NB)+' venceu a partida '+n+'.</p><div class="mkfin"><span>'+NA+'</span>'+L.p[0]+' × '+L.p[1]+'<span>'+NB+'</span></div><p class="mkgl">Disputa: '+wa+' × '+wb+'</p><button class="pill" data-a="mkNext">Começar a Partida '+(n+1)+'</button><button class="pill ghost" data-a="mkHide">Voltar e corrigir a marcação</button>'}
+ return'<div class="mkh"><button class="mkib" data-a="closeM" aria-label="Sair do marcador">'+I.back+'</button><div class="mkhd"><b>'+esc(c.name)+'</b><small>'+esc(r.title)+' · '+(one?'Partida única':'Melhor de 3 · Partida '+Math.min(3,L.s.length+1))+'</small><span class="mkdev">Marcador · em desenvolvimento</span></div><button class="mkib" data-a="mkUndo" '+(mk.undo.length&&!mk.wait&&!mk.done?'':'disabled')+' aria-label="Desfazer a última marcação">↶</button></div>'+sync+
+  '<div class="mkts">'+team(0,NA)+team(1,NB)+'</div><div class="mkf">'+tr+(one?'':'<div class="mkb"><small>PARTIDAS</small><b>'+wa+' × '+wb+'</b></div>')+'</div>'+(pan?'<div class="mkdim"><div class="mkpan">'+pan+'</div></div>':'')}
+// cada marcação: guarda o estado anterior (para desfazer), grava neste aparelho e envia
+function mkDo(fn){if(!mk||mk.wait||mk.done||mk.div)return;const before=JSON.stringify(mk.st),st=JSON.parse(before);fn(st);if(JSON.stringify(st)===before)return;mk.undo.push(before);if(mk.undo.length>80)mk.undo.shift();mk.st=st;mk.hide=false;mkChanged()}
+function mkChanged(){mk.ver++;mk.dirty=true;mkKeep();mkTouch();mkPaint();clearTimeout(mk.bgT);mk.bgT=setTimeout(()=>{if(mk&&!typing())render()},350);mkSend()}
+A.mkAdd=d=>mkDo(L=>{const i=+d.s;if(lvEnd(L))return;const v=L.p[0]===11||L.p[1]===11?1:L.t;L.p[i]=Math.min(12,L.p[i]+v);L.t=1});
+A.mkSub=d=>mkDo(L=>{const i=+d.s;if(L.p[i]>0)L.p[i]--;L.t=1});
+A.mkTruco=()=>mkDo(L=>{const nx={1:3,3:6,6:9,9:12}[L.t];if(nx&&!lvEnd(L)&&L.p[0]!==11&&L.p[1]!==11)L.t=nx});
+A.mkTrucoX=()=>mkDo(L=>{L.t=1});
+A.mkNext=()=>{const x=mk&&findMatch(mk.id);if(!x||lvDecided(x.m,mk.st))return;mkDo(L=>{if(lvEnd(L)){L.s.push([L.p[0],L.p[1]]);L.p=[0,0];L.t=1}})};
+A.mkUndo=()=>{if(!mk||!mk.undo.length||mk.wait||mk.done)return;mk.st=JSON.parse(mk.undo.pop());mk.hide=false;mkChanged()};
+A.mkHide=()=>{if(mk){mk.hide=true;mkPaint()}};
+// envio ao banco: só o estado mais recente importa; com versão velha, o servidor devolve o placar dele
+async function mkSend(){const me=mk;if(!me||!me.dirty)return;
+ if(!CLOUD){me.rev++;LIVE.set(me.id,{d:JSON.parse(JSON.stringify(me.st)),rev:me.rev});me.dirty=false;mkKeep();return}
+ if(me.busy){me.again=true;return}const ver=me.ver,data=JSON.parse(JSON.stringify(me.st));me.busy=true;me.again=false;let res;
+ try{res=visitor?await rpc('gc_live_save_link',{p_token:lkTok(),p_match_id:me.id,p_data:data,p_expected_rev:me.rev,p_device:devTok()},true):await rpc('gc_live_save_admin',{p_match_id:me.id,p_data:data,p_expected_rev:me.rev})}
+ catch(e){me.busy=false;if(mk!==me)return;if(!e.status){if(!me.off){me.off=true;mkPaint()}return}me.dirty=false;mkKeep();mkPaint();return toast(errTxt(e),'err')}
+ me.busy=false;if(mk!==me)return;
+ if(res.ok){me.rev=res.rev;LIVE.set(me.id,{d:data,rev:res.rev});me.off=false;if(me.ver===ver)me.dirty=false;mkKeep();mkPaint();if(me.dirty)mkSend();return}
+ if(!res.data||JSON.stringify(res.data)===JSON.stringify(data)){me.rev=res.rev;if(!res.data)return mkSend();LIVE.set(me.id,{d:data,rev:res.rev});me.off=false;if(me.ver===ver)me.dirty=false;mkKeep();mkPaint();if(me.dirty)mkSend();return}
+ if(me.off){const keep=await confirmBox({title:'Placar marcado em outro celular',msg:'Enquanto este celular estava sem internet, este confronto também foi marcado em outro celular.<br><br>Outro celular: <b>'+esc(lvTxt(res.data))+'</b><br>Este celular: <b>'+esc(lvTxt(me.st))+'</b><br><br>Qual deve continuar valendo no marcador?',ok:'Usar o deste celular',cancel:'Usar o do outro celular'});
+  if(mk!==me)return;me.rev=res.rev;me.off=false;if(keep){me.dirty=true;return mkSend()}}
+ else toast('O outro celular marcou ao mesmo tempo. O placar foi atualizado: confira e marque de novo, se precisar.','err');
+ me.st=JSON.parse(JSON.stringify(res.data));me.rev=res.rev;me.undo=[];me.dirty=false;me.hide=false;LIVE.set(me.id,{d:res.data,rev:res.rev});mkKeep();mkPaint();render()}
+// o que chegou do banco (outro celular marcou, ou o resultado passou a valer)
+function mkRemote(){if(!mk)return;const x=findMatch(mk.id);if(!x)return mkPaint();
+ if(!mk.done&&(mStatus(x.m)==='done'||x.m.pending)){mk.done=x.m.pending?'pend':'done';mk.dirty=false;mkKeep();return mkPaint()}
+ if(mk.dirty||mk.busy||mk.wait||mk.div)return;const S=LIVE.get(mk.id);if(S&&S.rev>mk.rev){mk.st=JSON.parse(JSON.stringify(S.d));mk.rev=S.rev;mk.undo=[];mk.hide=false;mkPaint()}}
+// fim do jogo: organizador grava o resultado; pelo link, vale como o informe desta dupla
+F.mkFinF=async f=>{if(!mk)return;const x=findMatch(mk.id);if(!x)return;const{m,c,r}=x,L=mk.st;if(!lvDecided(m,L))return;const sets=lvSets(L),btn=f.querySelector('button[type=submit]');if(btn&&btn.disabled)return;
+ if(!visitor){const lk0=phaseLock(c,x.ph);if(lk0)return setErr(f,lk0[0]+': '+lk0[1]);await commitScore(f,x,sets,'done',btn);if(mk&&mStatus(m)==='done'){mk.done='done';mkKeep()}return}
+ const tm=tmOn(c);if(!linkOK(r)||statusKey(c)==='done'||mStatus(m)==='done'||m.pending)return setErr(f,'Este placar não pode mais ser enviado pelo link. Procure o organizador.');
+ if(tm&&!lkSide(m))return setErr(f,'Seu celular não está vinculado a uma dupla deste confronto.');if(tm&&!teamOK(c,m))return setErr(f,'Sua dupla já informou este placar. Agora falta a outra dupla.');
+ const bw=f.by?f.by.value:'',side=tm?lkSide(m):null,by=tm?((P(lkMe().player)||{}).name||'jogador'):bw==='A'?dl(T(m.a)):bw==='B'?dl(T(m.b)):bw==='o'?clean(f.byn.value).slice(0,40):'';
+ if(!by)return setErr(f,bw==='o'?'Informe o nome de quem está informando o placar.':'Informe quem está informando o placar.');if(!tm&&bw==='o')try{localStorage.setItem('gc_byn',by)}catch(e){}
+ const tok=lkTok(),base=m.rev||0,queue=()=>{lqAdd(tok,m,sets,by,base,side);mk.dirty=false;mkKeep();closeModal(true);render();toast('Sem internet: placar guardado neste aparelho. Ele será enviado sozinho quando a conexão voltar.')};
+ if(lk.off)return queue();
+ if(btn)btn.disabled=true;mut++;let res;
+ try{res=await rpc('gc_submit_score_link',{p_token:tok,p_match_id:m.id,p_sets:sets,p_expected_rev:base,p_by:by,p_side:side,p_device:devTok()},true)}catch(e){if(btn)btn.disabled=false;if(!e.status){lk.off=true;return queue()}return setErr(f,errTxt(e))}
+ if(!mk)return;
+ if(res.ok&&res.confirm){if(res.confirm==='divergente')mk.div=true;else mk.wait=true;mkKeep();if(mk.dirty)mkSend();try{await loadShared(tok)}catch(e){}mkPaint();render();return}
+ mut++;if(!res.ok){applyRemote(m,res);if(btn)btn.disabled=false;render();return setErr(f,conflictMsg(m))}
+ m.rev=res.rev;if(res.pending){m.pending={sets,at:Date.now()};m.status='live'}else{m.sets=sets;m.status='done'}
+ mk.done=res.pending?'pend':'done';mk.dirty=false;mkKeep();closeModal(true);render();toast(res.pending?'Placar enviado. Aguardando aprovação do organizador.':'Placar salvo.')};
+// tela acesa enquanto se marca; apaga sozinha depois de 5 minutos sem nenhum toque
+async function mkWake(on){const me=mk;if(!me)return;try{if(on){if(!me.wl&&navigator.wakeLock&&document.visibilityState==='visible'){const w=await navigator.wakeLock.request('screen');if(mk!==me){w.release();return}me.wl=w;w.addEventListener('release',()=>{if(me.wl===w)me.wl=null})}}else if(me.wl){const w=me.wl;me.wl=null;await w.release()}}catch(e){}}
+function mkTouch(){if(!mk)return;clearTimeout(mk.idle);mkWake(true);mk.idle=setTimeout(()=>mkWake(false),5*60*1000)}
+document.addEventListener('visibilitychange',()=>{if(mk&&document.visibilityState==='visible')mkTouch()});
+document.addEventListener('pointerdown',()=>{if(mk)mkTouch()},true);
+setInterval(()=>{if(mk&&mk.dirty&&!mk.busy&&CLOUD&&!document.hidden)mkSend()},5000);
 const BRLOCK=new Set(['addRound','addMatch','rDel','mDel']);
 const PHLOCK=new Set(['brReset','addRound','addMatch','gen','cDuplas','cGrupos','cCrit','rDel','rReord','mDel']);
 function run(name,d,el,e){if(visitor){if(!VIS.has(name))return}
@@ -2623,8 +2789,8 @@ document.addEventListener('click',e=>{const link=e.target.closest('.side a');if(
  if(el.tagName==='BUTTON')e.preventDefault();if(el.dataset.close)closeModal(true);run(el.dataset.a,el.dataset,el,e)});
 document.addEventListener('change',e=>{const el=e.target.closest('[data-c]');el&&run(el.dataset.c,el.dataset,el,e)});
 document.addEventListener('input',e=>{const el=e.target.closest('[data-i]');el&&run(el.dataset.i,el.dataset,el,e)});
-document.addEventListener('submit',e=>{e.preventDefault();const k=e.target.dataset.f;if(visitor){if(!['mSave','bindPinF','pinNewF'].includes(k))return}
- else if(k!=='login'&&k!=='confNoop'&&!(k==='firstPw'?!!sess:k==='pwSave'?!!me.role:MASTERF.has(k)?(k==='cSave'||k==='tieSave'?canEdit():isMaster()):(k==='mSave'||k==='mGameForm')?canScore():k==='cxSave'||k==='cxCota'?canCashEdit():canEdit()))return toast(DENY,'err');
+document.addEventListener('submit',e=>{e.preventDefault();const k=e.target.dataset.f;if(visitor){if(!['mSave','bindPinF','pinNewF','mkFinF'].includes(k))return}
+ else if(k!=='login'&&k!=='confNoop'&&!(k==='firstPw'?!!sess:k==='pwSave'?!!me.role:MASTERF.has(k)?(k==='cSave'||k==='tieSave'?canEdit():isMaster()):(k==='mSave'||k==='mGameForm'||k==='mkFinF')?canScore():k==='cxSave'||k==='cxCota'?canCashEdit():canEdit()))return toast(DENY,'err');
  F[k]&&F[k](e.target)});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(stack.length)closeModal();else if(document.querySelector('.tv'))A.tvExit();else document.body.classList.remove('nav')}
  if(e.key==='Tab'&&stack.length){const m=stack[stack.length-1].ov,fs=[...m.querySelectorAll('button,input:not([type=hidden]),select,textarea,a[href],summary')].filter(x=>!x.disabled&&x.offsetParent!==null);if(!fs.length)return;
@@ -2639,6 +2805,21 @@ if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostnam
 if(CLOUD)setDb({});else load();
 {const base=render;render=function(){base();try{if(document.getElementById('pushSt'))pushPaint();document.body.classList.toggle('tvon',!!document.querySelector('.tv'));drawBracket();fitTelao()}catch(e){}}}
 window.addEventListener('resize',()=>{try{fitTelao();drawBracket()}catch(e){}});if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{try{drawBracket();fitTelao()}catch(e){}});
+/* ----- aviso de nova versão: compara o arquivo publicado com o que está rodando ----- */
+const upd={base:null,hideUntil:0,on:false};
+async function updHash(){const r=await fetch(location.pathname.replace(/[^/]*$/,'')+'index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('http');const t=await r.text();
+ if(!/<script>/.test(t))throw new Error('conteudo');try{const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return[...new Uint8Array(d)].map(x=>x.toString(16).padStart(2,'0')).join('')}catch(e){let h=0;for(let i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))|0;return t.length+':'+h}}
+async function updCheck(){if(!navigator.onLine||document.hidden)return;let h;try{h=await updHash()}catch(e){return}if(upd.base===null){upd.base=h;return}if(h!==upd.base){upd.on=true;updBar()}}
+function updBar(){let el=document.getElementById('updbar');if(!upd.on||Date.now()<upd.hideUntil){if(el)el.remove();return}
+ if(!el){el=document.createElement('div');el.id='updbar';el.setAttribute('role','status');el.innerHTML='<span>'+HI.check.replace('<svg','<svg class="updi"')+'<b>Nova versão do app disponível.</b></span><button class="pill sm" data-a="updGo">Atualizar</button><button class="pill ghost sm" data-a="updLater">Depois</button>';document.body.appendChild(el)}}
+A.updGo=async()=>{const b=document.querySelector('#updbar [data-a=updGo]');if(b){b.disabled=true;b.textContent='Atualizando…'}
+ try{if(CLOUD&&!visitor&&(ws.dirty||ws.busy))await flushWs()}catch(e){}
+ try{const r=await navigator.serviceWorker?.getRegistration();if(r)await r.update()}catch(e){}
+ location.reload()};
+A.updLater=()=>{upd.hideUntil=Date.now()+30*60*1000;updBar()};
+VIS.add('updGo');VIS.add('updLater');READ.add('updGo');READ.add('updLater');
+setTimeout(updCheck,3000);setInterval(updCheck,5*60*1000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){updCheck();updBar()}});
 render();
 </script>
 </body>
