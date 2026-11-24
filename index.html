@@ -539,6 +539,7 @@ table.rk tr.qt .posb{background:#DBEAFE;color:#1E3A8A;box-shadow:inset 0 0 0 1.5
 .gm.live{border-color:#F2C46B;background:#FFF8E6}
 .modal.menu button:disabled{opacity:.5;cursor:not-allowed}.modal.menu button:disabled:hover{background:none}
 .pill:disabled{cursor:not-allowed}
+.sbox.pend{border-style:dashed;border-color:#C9A227;color:#5C4300}
 .mkico{display:inline-grid;place-items:center;width:20px;font-size:18px}
 .ov.mkov{padding:0;place-items:stretch;background:#0b1f17}
 .modal.mk{max-width:none;max-height:none;height:100%;min-height:100dvh;border-radius:0;padding:0;position:relative;overflow:hidden;color:#fff;display:flex;flex-direction:column;
@@ -1379,11 +1380,13 @@ function matchCard(m,r,ro){const L=liveOf(m),mv=L?{...m,sets:lvSets(L)}:m,st=sho
  const nm=id=>id&&T(id)?esc(dl(T(id))):'<span class="ph">A definir</span>';
  const can=ro?(linkOK(r)&&statusKey(cur.c)!=='done'&&(st!=='done'||m.lq)&&m.a&&m.b&&(!m.pending||m.lq)&&teamOK(cur.c,m)):canScore();
  const mkS=ro&&can&&mkLinkSeen(m),mkB=mkS&&cur.c.marker!==false,action=ro?(mkS?'mLinkMenu':'mOpen'):canScore()?'mMenu':'mOpen';
- const one=m.bo===1,[va,vb]=L?(one?L.p:lvWins(L)):shown(m);
+ // placar que a PRÓPRIA dupla informou (aguardando a outra): aparece nas caixas só para ela, com borda tracejada
+ const myC=!L&&visitor&&m.claims&&mStatus(m)!=='done'&&['A','B'].filter(k=>m.claims[k]).length===1&&['A','B'].map(k=>m.claims[k]).find(x=>x&&x.mine&&Array.isArray(x.sets))||null;
+ const one=m.bo===1,[va,vb]=L?(one?L.p:lvWins(L)):myC?shown({...m,sets:myC.sets}):shown(m);
  const fmt=one?'Partida única':'Melhor de 3 partidas';
  const games=!one&&m.a&&m.b?'<div class="gms">'+[0,1,2].map(i=>{let[k,l]=gameState(mv,i),g=mv.sets&&mv.sets[i];if(L&&!g&&i===L.s.length&&!lvDecided(m,L)){k='live';l='Em andamento';g=L.p}return'<button class="gm '+k+'" data-a="'+action+'" data-id="'+m.id+'" '+(can?'':'disabled')+'><span>Partida '+(i+1)+' — '+l+'</span>'+(g?'<b>'+g[0]+' × '+g[1]+'</b>':'')+'</button>'}).join('')+'</div>':'';
  return '<div class="match'+(L?' lv':'')+'"><button class="mt l" data-a="'+action+'" data-id="'+m.id+'" '+(ro||!canEdit()?'disabled':'')+'>'+nm(m.a)+'</button>'+
- '<button class="score" data-a="'+action+'" data-id="'+m.id+'" '+(can?'':'disabled')+' aria-label="'+(ro?'Informar placar':'Opções do confronto')+'"><span class="sbox">'+va+'</span>×<span class="sbox">'+vb+'</span></button>'+
+ '<button class="score" data-a="'+action+'" data-id="'+m.id+'" '+(can?'':'disabled')+' aria-label="'+(ro?'Informar placar':'Opções do confronto')+'"><span class="sbox'+(myC?' pend':'')+'"'+(myC?' title="Informado pela sua dupla · aguardando a outra"':'')+'>'+va+'</span>×<span class="sbox'+(myC?' pend':'')+'">'+vb+'</span></button>'+
  '<button class="mt r" data-a="'+action+'" data-id="'+m.id+'" '+(ro||!canEdit()?'disabled':'')+'>'+nm(m.b)+'</button>'+
  '<div class="mfoot"><span><span class="tag '+st+'">'+ST[st]+'</span> '+(m.lq?'<span class="tag lq">Aguardando envio</span>':m.pending?'<span class="tag pend">Aguardando aprovação</span>':'')+(m.third?' <span class="tag pend">Disputa de 3º lugar</span>':'')+' <small class="muted">'+esc(fmt)+'</small></span>'+
  (ro?(mkS?'<button class="pill sm ghost" data-a="mkOpen" data-id="'+m.id+'"'+(mkB?'':' disabled title="Em desenvolvimento: ainda não liberado pelo organizador"')+'>'+(!mkB?'♣ Marcador (em desenvolvimento)':L&&lvDecided(m,L)?'Confirmar placar':'♣ Marcador')+'</button> ':'')+(can?'<button class="pill sm" data-a="mOpen" data-id="'+m.id+'">Informar placar</button>':'')+(!can&&ownFix(cur.c,m)&&linkOK(r)&&statusKey(cur.c)!=='done'&&!/\/telao$/.test(location.hash)?'<button class="pill sm ghost" data-a="mFix" data-id="'+m.id+'">Corrigir meu informe</button>':''):'')+'</div>'+(m.lq||m.pending?'':claimLine(m))+games+'</div>'}
@@ -2425,7 +2428,7 @@ A.mLinkMenu=d=>{const x=findMatch(d.id);if(!x)return;const on=mkLinkOK(x.m);
 // Confirmação pelas duas duplas: uma informou → aguarda a outra; as duas informaram valores diferentes → divergência.
 // Linha discreta embaixo do confronto: falta uma dupla informar / placares diferentes.
 function claimLine(m){const c=m.claims,ks=c?['A','B'].filter(k=>c[k]):[];if(!ks.length||mStatus(m)==='done'||!m.a||!m.b)return'';const tv=/\/telao$/.test(location.hash),nm=k=>esc(dl(T(k==='A'?m.a:m.b)));
- if(ks.length<2)return'<div class="cline">'+I.info+'<span>Aguardando confirmação'+(tv?'':' — falta <b>'+nm(ks[0]==='A'?'B':'A')+'</b> informar'+(c[ks[0]].mine&&c[ks[0]].sets?' · sua dupla informou <b>'+esc(setsTxt(c[ks[0]].sets))+'</b>':''))+'</span></div>';
+ if(ks.length<2)return'<div class="cline">'+I.info+'<span>Aguardando confirmação'+(tv?'':' — falta <b>'+nm(ks[0]==='A'?'B':'A')+'</b> informar o placar')+'</span></div>';
  return'<div class="cline div">'+I.alert+'<span><b>Placar informado divergente</b>'+(!tv&&c.A.sets&&c.B.sets?' — '+nm('A')+' informou <b>'+esc(setsTxt(c.A.sets))+'</b> · '+nm('B')+' informou <b>'+esc(setsTxt(c.B.sets))+'</b>':'')+'</span></div>'}
 function claimTag(m){const c=m.claims,ks=c?Object.keys(c).filter(k=>k==='A'||k==='B'):[];if(!ks.length||mStatus(m)==='done')return'';
  if(ks.length<2)return'<span class="tag pend">Aguardando confirmação</span>';
@@ -2859,3 +2862,4 @@ render();
 </script>
 </body>
 </html>
+
