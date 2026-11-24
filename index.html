@@ -589,7 +589,7 @@ function setDb(d){d=d&&typeof d==='object'?d:{};db=Object.assign({},d);
  db.user=d.user&&typeof d.user==='object'?d.user:{};db.user.name=String(db.user.name||'Organizador');db.user.email=String(db.user.email||'');
  db.audit=arr(d.audit);
  const st=d.settings&&typeof d.settings==='object'?d.settings:{},num=(v,def,lo,hi)=>{v=+v;return isFinite(v)?Math.min(hi,Math.max(lo,v)):def};
- db.settings={ppw:3,pct:num(st.pct,30,0,100),slots:num(st.slots,8,1,64),minT:num(st.minT,0,0,99),minP:num(st.minP,0,0,100),ties:st.ties&&typeof st.ties==='object'&&!Array.isArray(st.ties)?st.ties:{}};
+ db.settings={ppw:3,pct:num(st.pct,30,0,100),slots:num(st.slots,8,1,64),minT:num(st.minT,0,0,99),minP:num(st.minP,0,0,100),pushWait:[5,10,15,20,30].includes(+st.pushWait)?+st.pushWait:10,ties:st.ties&&typeof st.ties==='object'&&!Array.isArray(st.ties)?st.ties:{}};
  db.players=arr(d.players).filter(x=>x&&x.id&&typeof x.name==='string');const pid=new Set(db.players.map(x=>x.id));
  db.teams=arr(d.teams).filter(t=>t&&t.id);db.teams.forEach(t=>{t.name=String(t.name||'');t.players=[...new Set(arr(t.players).filter(id=>pid.has(id)))].slice(0,2);t.transfers=arr(t.transfers).filter(x=>x&&isFinite(+x.points));t.active=t.active!==false});
  const tid=new Set(db.teams.map(t=>t.id));
@@ -793,14 +793,30 @@ async function trySync(manual,again){if(!ws.offline||!off||off.busy)return;off.b
  finally{if(off)off.busy=false}}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 // Garante que os cadastros pendentes chegaram ao banco antes de gravar algo que depende deles (ex.: placar de partida recém-criada).
+// Junta três versões dos cadastros: a de antes (base), a deste aparelho (mine) e a do banco (srv).
+// Item a item (jogador, dupla, campeonato): se só um lado mudou, vale a mudança; se os dois mudaram o mesmo item de jeitos diferentes, vale o banco e o item é informado.
+function wsMerge(base,mine,srv){const out=JSON.parse(JSON.stringify(srv)),conf=[],eq=(a,b)=>JSON.stringify(a===undefined?null:a)===JSON.stringify(b===undefined?null:b);
+ const arrM=(k,label)=>{const L=x=>Array.isArray(x)?x.filter(o=>o&&o.id!=null):[],B=new Map(L(base[k]).map(x=>[x.id,x])),Mi=new Map(L(mine[k]).map(x=>[x.id,x])),Sv=L(srv[k]),Sm=new Map(Sv.map(x=>[x.id,x])),res=new Map(Sm);
+  for(const id of new Set([...Mi.keys(),...B.keys()])){const b=B.get(id),m=Mi.get(id),sv=Sm.get(id);if(eq(m,b)||eq(m,sv))continue;
+   if(eq(sv,b)){if(m===undefined)res.delete(id);else res.set(id,m);continue}conf.push(label+': '+((m||sv||b||{}).name||id))}
+  out[k]=[...Sv.filter(x=>res.has(x.id)).map(x=>res.get(x.id)),...[...res.values()].filter(x=>!Sm.has(x.id))]};
+ arrM('players','Jogador');arrM('teams','Dupla');arrM('champs','Campeonato');
+ const lab={settings:'Regras do ranking',user:'Dados do organizador',portalToken:'Link geral'};
+ for(const k of Object.keys(mine))if(!['players','teams','champs','audit'].includes(k)&&!eq(mine[k],base[k])&&!eq(mine[k],srv[k])){if(eq(srv[k],base[k]))out[k]=mine[k];else conf.push(lab[k]||k)}
+ if(Array.isArray(mine.audit)){const bs=new Set(arr(base.audit).map(a=>JSON.stringify(a))),os=new Set(arr(out.audit).map(a=>JSON.stringify(a)));out.audit=[...arr(out.audit),...mine.audit.filter(a=>{const j=JSON.stringify(a);return!bs.has(j)&&!os.has(j)})]}
+ return{data:out,conf}}
 async function flushWs(){for(let i=0;i<100&&ws.busy;i++)await sleep(100);if(ws.dirty&&!ws.busy)await pushWs();for(let i=0;i<100&&ws.busy;i++)await sleep(100)}
 const typing=()=>{const a=document.activeElement;return!!a&&!!a.closest&&!!a.closest('#root')&&((a.tagName==='INPUT'&&!a.dataset.i&&!/^(checkbox|radio|button|submit)$/.test(a.type)&&a.value!=='')||a.tagName==='TEXTAREA')};
 async function pushWs(){if(ws.busy){ws.again=true;return}const body=JSON.stringify(wsData());if(body===ws.last){ws.dirty=false;if(ws.state!=='saving'||!cx.busy)setSync(cx.err?'err':'ok');return}
  ws.busy=true;setSync('saving');
  try{const r=await rpc('gc_save_workspace',{p_data:JSON.parse(body),p_expected_rev:ws.rev});
   if(r.ok){ws.rev=r.rev;ws.last=body;ws.empty=false;ws.dirty=ws.again;setSync(cx.err?'err':'ok')}
-  else{ws.busy=false;ws.again=false;ws.dirty=false;while(stack.length)closeModal(true);await loadCloud();render();
-   toast('Os cadastros foram alterados em outro aparelho. Sua última alteração não foi gravada e os dados foram recarregados.','err');return}}
+  else{ws.busy=false;ws.again=false;ws.dirty=false;
+   // outro aparelho gravou antes: junta as alterações que não se chocam (itens diferentes) e grava de novo
+   let mg=null,r2=null;try{const L=await rpc('gc_load',{}),srv=L&&L.ws&&L.ws.data;if(ws.last&&srv&&srv.players){mg=wsMerge(JSON.parse(ws.last),JSON.parse(body),srv);r2=await rpc('gc_save_workspace',{p_data:mg.data,p_expected_rev:L.ws.rev})}}catch(e){r2=null}
+   while(stack.length)closeModal(true);try{await loadCloud()}catch(e){loaded=null}render();
+   if(r2&&r2.ok){if(mg.conf.length)alertBox('Alteração feita ao mesmo tempo em outro aparelho','Suas alterações foram gravadas junto com as do outro aparelho, <b>exceto</b> em:<ul>'+mg.conf.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>Nesses itens, os dois aparelhos mudaram a mesma coisa e vale o que foi gravado primeiro. Confira e refaça se precisar.');else toast('Suas alterações foram gravadas junto com as feitas em outro aparelho.')}
+   else toast('Os cadastros foram alterados em outro aparelho. Sua última alteração não foi gravada e os dados foram recarregados.','err');return}}
  catch(e){ws.busy=false;
   if(e.status){ws.again=false;ws.dirty=false;clearTimeout(ws.t);while(stack.length)closeModal(true);const msg=errTxt(e);try{await loadCloud()}catch(x){loaded=null}render();return toast('A alteração não foi gravada: '+msg+' Os dados foram recarregados.','err')}
   ws.dirty=true;goOffline();return}
@@ -817,7 +833,7 @@ let migAsked=false;
 async function offerMigration(){if(migAsked||!ws.empty)return;migAsked=true;let d=null;try{d=JSON.parse(localStorage.getItem(KEY))}catch(e){}
  if(!d||!((d.players||[]).length+(d.champs||[]).length))return;
  if(await confirmBox({title:'Enviar dados para o banco?',msg:`Encontrei dados salvos neste navegador (${(d.players||[]).length} jogadores, ${(d.teams||[]).length} equipes, ${(d.champs||[]).length} campeonatos) e o banco está vazio. Deseja enviar esses dados para o banco?`,ok:'Enviar'}))await importData(d)}
-const SRV={senha_igual:'A nova senha precisa ser diferente da senha provisória.',link_invalido:'Link inválido ou expirado.',campeonato_finalizado:'O campeonato está finalizado.',lancamento_nao_permitido:'O lançamento desta rodada está reservado ao organizador.',partida_sem_duplas:'Esta partida ainda não tem as duas duplas.',partida_inexistente:'Esta partida não existe mais. Recarregue a página.',dados_muito_grandes:'Os dados ficaram grandes demais para gravar.',placar_invalido:'Placar inválido.',nao_autenticado:'Sessão expirada. Entre novamente.',sem_permissao:'Seu perfil não permite esta ação.',usuario_invalido:'Nome de usuário inválido.',senha_curta:'A senha precisa ter pelo menos 6 caracteres.',nome_obrigatorio:'Informe o nome.'};
+const SRV={endereco_invalido:'Endereço da função de notificação inválido.',inscricao_invalida:'Não foi possível registrar este celular para notificações.',senha_igual:'A nova senha precisa ser diferente da senha provisória.',link_invalido:'Link inválido ou expirado.',campeonato_finalizado:'O campeonato está finalizado.',lancamento_nao_permitido:'O lançamento desta rodada está reservado ao organizador.',partida_sem_duplas:'Esta partida ainda não tem as duas duplas.',partida_inexistente:'Esta partida não existe mais. Recarregue a página.',dados_muito_grandes:'Os dados ficaram grandes demais para gravar.',placar_invalido:'Placar inválido.',nao_autenticado:'Sessão expirada. Entre novamente.',sem_permissao:'Seu perfil não permite esta ação.',usuario_invalido:'Nome de usuário inválido.',senha_curta:'A senha precisa ter pelo menos 6 caracteres.',nome_obrigatorio:'Informe o nome.'};
 SRV.celular_nao_vinculado='Este celular não está vinculado (ou foi desvinculado pelo organizador). Abra o link de novo para vincular.';SRV.nao_e_sua_partida='Este confronto não é da sua dupla.';SRV.jogador_fora='Jogador não encontrado neste campeonato.';SRV.modo_desligado='Este campeonato não usa o lançamento pelas duplas.';SRV.celular_invalido='Não foi possível identificar este celular. Recarregue a página.';SRV.informe_dupla='Escolha qual dupla está informando o placar.';SRV.dupla_ja_informou='Esta dupla já informou o placar deste confronto. Agora falta a outra dupla.';SRV.sem_copia='Sem internet. Para usar este link sem internet, abra-o uma vez com internet neste aparelho.';
 const errTxt=e=>SRV[(e.message||'').split(':')[0].trim()]||(e.status?'Não foi possível concluir ('+e.message+').':'Sem conexão com o servidor. Nada foi gravado.');
 const conflictMsg=m=>`Outra pessoa alterou esta partida enquanto você digitava. Placar atual: ${setsTxt(m.sets)||'sem placar'}${m.pending?' (há um resultado aguardando aprovação)':''}. Nada foi gravado: feche e abra a partida para conferir.`;
@@ -847,7 +863,8 @@ setInterval(async()=>{if(!CLOUD||document.hidden||ws.poll||loading||!loaded||me.
   else if(loaded.startsWith('p:')&&visitor){const key=loaded,j=await rpc('gc_get_portal',{p_token:key.slice(2)},true);if(m0===mut&&loaded===key&&JSON.stringify(j)!==ptSig){ptSig=JSON.stringify(j);portalDb(j);if(!stack.length)render()}}
   else if(loaded.startsWith('s:')&&visitor){const key=loaded,tok=key.slice(2);if(lqN(tok))await lqFlush(tok);const sig=shSig,j=await rpc('gc_get_shared',{p_token:tok,p_device:devTok()},true),was=lk.off;lk.off=false;try{localStorage.setItem(LSK(tok),JSON.stringify(j))}catch(x){}
    if(m0===mut&&loaded===key&&(JSON.stringify(j)!==sig||was)){shSig=JSON.stringify(j);sharedDb(j);lqOverlay(tok);if(!stack.length)render()}}}
- catch(e){if(visitor&&!e.status&&/^s:/.test(loaded||'')&&!lk.off){lk.off=true;if(!stack.length)render()}}ws.poll=false},4000);
+ catch(e){if(visitor&&e.status&&/link_invalido/.test(e.message||'')&&/^[sp]:/.test(loaded||'')){const k=loaded;if(k.startsWith('s:')){shSig='invalido';try{localStorage.removeItem(LSK(k.slice(2)))}catch(x){}}else ptSig='invalido';setDb({});while(stack.length)closeModal(true);render()}
+  else if(visitor&&!e.status&&/^s:/.test(loaded||'')&&!lk.off){lk.off=true;if(!stack.length)render()}}ws.poll=false},4000);
 window.addEventListener('beforeunload',e=>{if(CLOUD&&(ws.busy||cx.busy||ws.dirty||cx.err||ws.state==='err')){e.preventDefault();e.returnValue=''}});
 const SLOTT={};/* vagas de prévia ("1º Grupo A"): existem só na tela, nunca são gravadas */
 const P=id=>db.players.find(p=>p.id===id), T=id=>db.teams.find(t=>t.id===id)||(id&&id[0]==='?'?SLOTT[id]:undefined), C=id=>db.champs.find(c=>c.id===id);
@@ -878,7 +895,7 @@ function validateSets(raw,bo){const sets=[],n=bo===1?1:2;let a=0,b=0,blank=false
   if(x===''&&y===''){blank=true;sets.push(null);continue}
   if(x===''||y==='')return{err:`Informe o placar das duas duplas na partida ${i+1}.`};
   if(!/^\d+$/.test(x)||!/^\d+$/.test(y)||!Number.isSafeInteger(+x)||!Number.isSafeInteger(+y))return{err:`Informe números inteiros não negativos na partida ${i+1}.`};
-  if(+x>99||+y>99)return{err:`O placar da partida ${i+1} deve ficar entre 0 e 99.`};
+  if(Math.max(+x,+y)!==12||Math.min(+x,+y)>11)return{err:`Partida ${i+1}: No truco a partida termina em 12: o vencedor tem 12 pontos e o perdedor de 0 a 11 (ex.: 12 × 11).`};
   if(blank)return{err:'Preencha as partidas na ordem.'};
   if(+x===+y)return{err:`A partida ${i+1} não pode terminar empatada quando há vencedor obrigatório.`};
   if(a>=n||b>=n)return{err:bo===1?'Formato de partida única: informe somente um placar.':'A disputa já foi decidida em 2 × 0. Deixe a 3ª partida em branco.'};
@@ -1025,7 +1042,7 @@ const vLogin=()=>`<header class="top">${I.trophy}<span>Gerenciamento de Campeona
 /* ===================== Roteamento ===================== */
 let cur={};
 // App instalado (Nossa Liga): botão "Instalar", e o ícone abre direto no último campeonato aberto pelo link.
-let instEv=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();instEv=e;try{render()}catch(x){}});
+let instEv=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();instEv=e;const b=document.getElementById('instGoB');if(b)b.textContent='Instalar agora';try{if(!stack.length)render()}catch(x){}});
 window.addEventListener('appinstalled',()=>{instEv=null;try{toast('App Nossa Liga instalado.');render()}catch(x){}});
 const isApp=()=>{try{return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true}catch(e){return false}};
 const isIOS=()=>/iPhone|iPad|iPod/.test(navigator.userAgent)||(/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1);
@@ -1045,6 +1062,9 @@ function render(){const root=document.getElementById('root'),h=location.hash.rep
  if(CLOUD&&loaded!=='admin')return ensure('admin',loadCloud);
  if(CLOUD&&me.must_change){if(!root.querySelector('form[data-f=firstPw]'))root.innerHTML=vFirst();return}
  let side,main;
+ if(h[0]==='c'&&h[2]==='jogo'){const c=C(h[1]),x=c&&findMatch(h[3]);if(!c){location.replace('#/campeonatos');return}
+  if(x){ui.phase[c.id]=x.ph.id;ui.round[x.ph.id]=x.r.id}location.replace('#/c/'+c.id+'/classificacao');
+  setTimeout(()=>{if(x&&findMatch(h[3]))run('mOpen',{id:h[3]});else toast('Este confronto não existe mais.','err')},350);return}
  if(h[0]==='c'){const c=C(h[1]);if(!c){location.hash='#/campeonatos';return}
   if(h[2]==='telao'){root.innerHTML=vTelao(c,false);return}
   const tab=['inicio','classificacao','config'].includes(h[2])&&(h[2]!=='config'||isMaster())?h[2]:'inicio';cur.c=c;
@@ -1120,6 +1140,14 @@ function usersHTML(){if(!CLOUD)return'<h2 style="margin-top:26px">Usuários e pe
  ${members.map(m=>`<tr><td class="l">${esc(m.name)}${m.must_change?' <span class="tag pend" title="Ainda não criou a senha pessoal">Aguardando 1º acesso</span>':''}</td><td class="l">${esc(m.username)}</td><td>${ROLE[m.role]}</td><td>${m.caixa?'Sim':'Não'}</td><td><button class="ibtn" data-a="mbEdit" data-e="${esc(m.username)}" aria-label="Editar ${esc(m.name)}">${I.edit}</button><button class="ibtn" data-a="mbDel" data-e="${esc(m.username)}" aria-label="Remover ${esc(m.name)}">${I.trash}</button></td></tr>`).join('')}</tbody></table></div>
  <div class="acts" style="justify-content:flex-start"><button class="pill" data-a="mbEdit" data-e="">Adicionar usuário</button></div>
  <details class="note"><summary>O que cada perfil pode fazer</summary><p><b>Master</b> (você): tudo, incluindo Configurações do campeonato, usuários, regras do ranking e backup.<br><b>Organizador</b>: cadastra jogadores e duplas, cria campeonatos, monta fases e partidas, lança e corrige placares.<br><b>Lançador de placares</b>: consulta tudo e lança ou corrige placares.<br><b>Somente leitura</b>: apenas consulta.<br><b>Caixa</b>: marcado, a pessoa vê o Caixa; para lançar no Caixa também precisa ser Organizador.</p></details>`}
+// Notificações no celular do master (push). O envio é feito pela função gc-push do Supabase.
+const PUSHFN=()=>SB.url.replace(/\/+$/,'')+'/functions/v1/gc-push';
+const pushOK=()=>'serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window;
+const b64u=s=>{const p='='.repeat((4-s.length%4)%4),b=atob((s+p).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(b,c=>c.charCodeAt(0))};
+async function pushSub(){try{const r=await navigator.serviceWorker.ready;return await r.pushManager.getSubscription()}catch(e){return null}}
+async function pushPaint(){const el=document.getElementById('pushSt');if(!el)return;if(!pushOK()){el.innerHTML=isIOS()&&!isApp()?'No iPhone, instale o app (Instalar app no menu) e abra pelo ícone para ligar as notificações.':'Este navegador não recebe notificações.';return}
+ const sub=await pushSub(),perm=Notification.permission;el.innerHTML=perm==='denied'?'<b class="neg">Notificações bloqueadas neste celular.</b> Libere nas configurações do navegador (Notificações → Permitir) e toque em Ativar de novo.':sub?'<b class="pos">Ligadas neste celular.</b> Você recebe: placar divergente e dupla que falta lançar (depois de '+(db.settings.pushWait||10)+' min).':'Desligadas neste celular.';
+ const on=document.getElementById('pushOn'),off=document.getElementById('pushOff'),te=document.getElementById('pushTest');if(on)on.hidden=!!sub;if(off)off.hidden=!sub;if(te)te.hidden=!sub}
 function vUser(){const s=db.settings,who=`<p class="muted">${CLOUD?`Conectado como <b>${esc(me.username||me.email||(sess&&sess.email)||'')}</b> · Perfil: <b>${ROLE[me.role]||''}</b>`:'Modo local, sem login.'}</p>`;
  if(!isMaster())return`<h1>Meu usuário</h1>${who}<p class="note">As regras do ranking, os usuários e a cópia de segurança são gerenciados pelo usuário master.</p>
  ${isMember()?`<h2 style="margin-top:22px">Trocar minha senha</h2><form data-f="pwSave" style="max-width:420px"><label class="field"><span>Senha atual</span>${pwInp('o','current-password')}</label><label class="field"><span>Nova senha (mínimo 6 caracteres)</span>${pwInp('n','new-password')}</label><p class="err" role="alert"></p><div class="acts" style="justify-content:flex-start"><button class="pill">Trocar senha</button></div></form>`:''}`;
@@ -1134,6 +1162,9 @@ function vUser(){const s=db.settings,who=`<p class="muted">${CLOUD?`Conectado co
  <p class="note" style="margin-top:-6px">Cada jogador da dupla precisa ter disputado pelo menos esse percentual das etapas já encerradas na temporada, com qualquer parceiro. 0 = sem exigência. Ex.: 70% com 4 etapas encerradas exige 3.</p>
  <p class="err" role="alert"></p><div class="acts" style="justify-content:flex-start"><button class="pill">Salvar alterações</button></div></form>
  ${usersHTML()}
+ ${CLOUD?`<h2 style="margin-top:26px">Notificações no celular</h2><p class="note">Receba um aviso no celular, mesmo bloqueado, quando houver <b>placar divergente</b> (na hora) ou quando uma dupla lançar e a outra não confirmar (o aviso diz quem falta lançar). Tocar no aviso abre o confronto.</p>
+ <label class="field" style="max-width:420px"><span>Avisar “falta lançar” depois de</span><select data-c="pushWait" style="width:100%">${[5,10,15,20,30].map(n=>`<option value="${n}" ${(db.settings.pushWait||10)===n?'selected':''}>${n} minutos</option>`).join('')}</select></label>
+ <p id="pushSt" class="muted">Verificando…</p><div class="acts" style="justify-content:flex-start"><button class="pill" id="pushOn" data-a="pushOn">Ativar neste celular</button><button class="pill ghost" id="pushTest" data-a="pushTest" hidden>Enviar teste</button><button class="pill ghost" id="pushOff" data-a="pushOff" hidden>Desativar neste celular</button></div>`:''}
  <h2 style="margin-top:26px">Cópia de segurança</h2><p class="note">${CLOUD?'Os dados ficam no banco (Supabase). Exportar um arquivo de vez em quando continua sendo uma boa garantia.':'Os dados ficam salvos apenas neste navegador. Exporte um arquivo regularmente.'}</p>
  <div class="acts" style="justify-content:flex-start"><button class="pill ghost" data-a="bkExp">Exportar dados (.json)</button><button class="pill ghost" data-a="bkImp">Importar dados</button><button class="pill red" data-a="wipe">Apagar todos os dados</button></div>`}
 
@@ -1467,10 +1498,25 @@ function helpModal(){const kind=visitor?'vis':'adm',c=cur.c,team=!!(c&&c.teamMod
 const A={},F={};
 const VIS=new Set(['pinNew','help','helpTab','bindQ','bindAll','bindPick','bindYes','bindWrong','bindWatch','bindBack','byPick','lqSync','lqConf','lqDismiss','pvTab','rkSet','rkMode','rkQ','rkIna','pwEye','tvOpen','tvExit','tvNext','tvPause','tGames','clsView','retry','closeM','vTab','vMode','mOpen','rkCell','rkTot','selPhase','selRound']);
 A.closeM=()=>closeModal();
-A.instApp=async()=>{if(!isMaster())return;if(instEv){const ev=instEv;instEv=null;try{ev.prompt();const r=await ev.userChoice;if(r&&r.outcome==='accepted')toast('Instalando o app Nossa Liga…')}catch(e){}render();return}
+A.pushOn=async(d,el)=>{if(!isMaster())return;if(!pushOK())return alertBox('Notificações','Este navegador não recebe notificações.'+(isIOS()?' No iPhone, instale o app e abra pelo ícone.':''));el&&(el.disabled=true);
+ try{const st=await rpc('gc_push_setup',{p_url:PUSHFN()});let key='';
+  try{const r=await fetch(PUSHFN(),{headers:{apikey:SB.key}});const j=await r.json();key=j.key||''}catch(e){}
+  if(!key)return alertBox('Falta criar a função de envio','O banco está pronto, mas a função <b>gc-push</b> ainda não foi criada no Supabase (ou está com “Verify JWT” ligado). Siga o passo a passo que veio junto do schema e tente de novo.');
+  if(!st.net)return alertBox('Falta uma extensão do banco','Ative a extensão <b>pg_net</b> no Supabase (Database → Extensions) e rode o schema.sql de novo.');
+  const perm=await Notification.requestPermission();if(perm!=='granted'){pushPaint();return alertBox('Permissão negada','Sem permissão o celular não mostra notificações. Libere nas configurações do navegador e tente de novo.')}
+  const reg=await navigator.serviceWorker.ready;let sub=await reg.pushManager.getSubscription();if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64u(key)});
+  const j=sub.toJSON();await rpc('gc_push_subscribe',{p_endpoint:j.endpoint,p_p256dh:j.keys.p256dh,p_auth:j.keys.auth,p_info:devInfo()});
+  toast('Notificações ligadas neste celular.'+(st.cron?'':' (Aviso de "aguardando confirmação" precisa da extensão pg_cron.)'))}
+ catch(e){toast(e.status?errTxt(e):'Não foi possível ligar as notificações: '+(e.message||e),'err')}finally{el&&(el.disabled=false);pushPaint()}};
+A.pushWait=(d,el)=>{const v=+el.value;if(![5,10,15,20,30].includes(v))return;db.settings.pushWait=v;save();toast('Aviso de “falta lançar” depois de '+v+' minutos.');pushPaint()};
+A.pushOff=async()=>{const sub=await pushSub();if(sub){try{await rpc('gc_push_unsubscribe',{p_endpoint:sub.endpoint})}catch(e){}try{await sub.unsubscribe()}catch(e){}}toast('Notificações desligadas neste celular.');pushPaint()};
+A.pushTest=async()=>{try{const r=await rpc('gc_push_test',{});toast(r.ok?'Notificação de teste enviada: deve chegar em alguns segundos.':'Não foi enviada: confira se a função gc-push existe e se este celular está ligado.',r.ok?'':'err')}catch(e){toast(errTxt(e),'err')}};
+
+A.instApp=async()=>{if(!isMaster())return;if(!instEv&&!isIOS()){for(let k=0;k<12&&!instEv;k++)await sleep(200)}if(instEv){const ev=instEv;instEv=null;try{ev.prompt();const r=await ev.userChoice;if(r&&r.outcome==='accepted')toast('Instalando o app Nossa Liga…')}catch(e){}render();return}
  const steps=isIOS()?'<ol class="inststeps"><li>Toque em <b>Compartilhar</b> (o quadrado com a seta para cima), na barra do Safari.</li><li>Role e toque em <b>Adicionar à Tela de Início</b>.</li><li>Toque em <b>Adicionar</b>. O ícone <b>Nossa Liga</b> aparece na tela.</li></ol><p class="note">No iPhone a instalação só funciona pelo <b>Safari</b>.</p>'
   :'<ol class="inststeps"><li>Toque no menu do navegador (<b>⋮</b> ou <b>≡</b>).</li><li>Toque em <b>Instalar app</b> ou <b>Adicionar à tela inicial</b>.</li><li>Confirme. O ícone <b>Nossa Liga</b> aparece junto dos outros apps.</li></ol>';
- modal(mHead('Instalar o app','Nossa Liga')+'<div class="insthd"><img src="icon-192.png" alt="" width="56" height="56"><p>Abre em tela cheia, direto no sistema, e funciona sem internet. Só para você (master): os jogadores continuam usando o link. Não baixa arquivo nenhum: é o próprio site, com ícone.</p></div>'+steps+'<div class="acts"><button class="pill" data-a="closeM">Entendi</button></div>')};
+ modal(mHead('Instalar o app','Nossa Liga')+'<div class="insthd"><img src="icon-192.png" alt="" width="56" height="56"><p>Abre em tela cheia, direto no sistema, e funciona sem internet. Só para você (master): os jogadores continuam usando o link. Não baixa arquivo nenhum: é o próprio site, com ícone.</p></div>'+steps+'<div class="acts"><button class="pill" id="instGoB" data-a="instGo">'+(instEv?'Instalar agora':'Entendi')+'</button></div>')};
+A.instGo=async()=>{if(instEv){closeModal(true);const ev=instEv;instEv=null;try{ev.prompt();await ev.userChoice}catch(e){}render();return}closeModal(true)};
 
 A.rkTie=d=>{const season=d.season,L=computeRanking({season,champ:'all',mode:'d',q:'',inactive:false}).list,tied=L.filter(r=>r.qt),dl0=L.filter(r=>r.qd||r.qx),cur0=(db.settings.ties||{})[season];
  const C2=tied.length?tied:dl0;if(!C2.length)return alertBox('Sem empate','Não há empate na última vaga desta temporada.');const spots=tied.length?tied[0].tspots:cur0.win.length,sig=tied.length?tied[0].tsig:cur0.sig;
@@ -1674,7 +1720,7 @@ A.rkTot=d=>{const st={season:d.season,champ:d.champ,mode:d.mode,q:'',inactive:tr
 
 /* ----- usuário / backup ----- */
 F.uSave=f=>{const n=clean(f.name.value);if(!n)return setErr(f,'Informe o nome.');
- db.user={name:n,email:clean(f.email.value)};db.settings={ppw:3,pct:Math.min(100,Math.max(0,+f.pct.value||0)),slots:Math.max(1,+f.slots.value||8),minT:db.settings.minT||0,minP:Math.min(100,Math.max(0,Math.floor(+f.minP.value||0))),ties:db.settings.ties||{}};
+ db.user={name:n,email:clean(f.email.value)};db.settings={ppw:3,pct:Math.min(100,Math.max(0,+f.pct.value||0)),slots:Math.max(1,+f.slots.value||8),minT:db.settings.minT||0,minP:Math.min(100,Math.max(0,Math.floor(+f.minP.value||0))),ties:db.settings.ties||{},pushWait:db.settings.pushWait||10};
  save();render();toast('Dados salvos. Os rankings foram recalculados.')};
 A.bkExp=()=>download(new Blob([JSON.stringify(db,null,1)],{type:'application/json'}),'campeonatos_backup_'+new Date().toISOString().slice(0,10)+'.json');
 A.bkImp=()=>{const i=document.createElement('input');i.type='file';i.accept='.json,application/json';i.onchange=async()=>{let d;try{d=JSON.parse(await i.files[0].text());
@@ -1848,19 +1894,24 @@ function dDraw(){const ph=cur.ph,q=norm(dw.q),l=db.teams.filter(t=>t.players.len
 A.dQ=(d,el)=>{dw.q=el.value;dDraw()};A.dTog=(d,el)=>{el.checked?dw.sel.add(d.id):dw.sel.delete(d.id);dDraw()};
 A.dAll=(d,el)=>{(dw.vis||[]).forEach(id=>el.checked?dw.sel.add(id):dw.sel.delete(id));stack[stack.length-1].dirty=true;dDraw()};
 A.dGrp=(d,el)=>{if(el.value)dw.grp[d.id]=el.value;else delete dw.grp[d.id]};
-A.dSave=()=>{const ph=cur.ph,el=stack[stack.length-1].ov,ids=[...dw.sel].filter(T),seen={};
+A.dSave=async()=>{const ph=cur.ph,el=stack[stack.length-1].ov,ids=[...dw.sel].filter(T),seen={};
  for(const id of ids)for(const p of T(id).players){if(seen[p])return setErr(el,`${P(p).name} está em duas duplas selecionadas (${dl(T(seen[p]))} e ${dl(T(id))}). Um jogador só pode participar de uma dupla por fase.`);seen[p]=id}
  const removed=ph.teamIds.filter(id=>!dw.sel.has(id)),blocked=removed.filter(id=>phMatches(ph).some(m=>m.a===id||m.b===id));
  if(blocked.length)return setErr(el,`Não é possível remover ${blocked.map(id=>dl(T(id))).join('; ')}: há partidas vinculadas nesta fase. Exclua as partidas antes.`);
  const fin=[...ph.teamIds.filter(id=>dw.sel.has(id)),...ids.filter(id=>!ph.teamIds.includes(id))],sig=gs=>JSON.stringify(gs.map(g=>[...g].sort()));
  const before=ph.groups.map(g=>g.teamIds.filter(id=>fin.includes(id))),after=ph.groups.map(g=>fin.filter(id=>dw.grp[id]===g.id));
  if(phMatches(ph).length&&sig(before)!==sig(after))return setErr(el,'Esta fase já possui partidas. Exclua as partidas antes de mudar o grupo de uma dupla.');
+ {const sd=(ph.seeds||[]).filter(id=>fin.includes(id)),by={};sd.forEach(id=>{const gi=after.findIndex(l=>l.includes(id));if(gi>=0)(by[gi]=by[gi]||[]).push(id)});const cf=Object.entries(by).filter(([,l])=>l.length>1);
+  if(cf.length)return setErr(el,cf.map(([gi,l])=>l.map(id=>dl(T(id))).join(' e ')+' são cabeças de chave e ficariam no mesmo grupo ('+ph.groups[+gi].name+')').join('; ')+'. Cabeças de chave precisam ficar em grupos diferentes.')}
+ if(hasNextPhase(ph)&&!phMatches(ph).length){const a=ph.advance||{},msg=[];if(a.mode==='total'||!ph.groups.length){if(+a.total>fin.length)msg.push('A fase classifica <b>'+(+a.total)+'</b> duplas, mas ficará com <b>'+fin.length+'</b>.')}
+  else ph.groups.forEach((g,i)=>{const q=+(a.byGroup?.[g.id]??a.total)||0;if(q>after[i].length)msg.push('O <b>'+esc(g.name)+'</b> classifica <b>'+q+'</b>, mas ficará com <b>'+after[i].length+'</b>.')});
+  if(msg.length&&!await confirmBox({title:'Classificados maiores que as duplas',msg:msg.join('<br>')+'<br><br>Salvar mesmo assim? Antes de gerar os jogos será preciso ajustar em Configurações → Fases → Editar.',ok:'Salvar assim'}))return}
  ph.origin={};fin.forEach(id=>{if(dw.origin[id])ph.origin[id]=dw.origin[id]});
  ph.teamIds=fin;ph.groups.forEach((g,i)=>g.teamIds=after[i]);ph.seeds=(ph.seeds||[]).filter(id=>fin.includes(id));save();closeModal(true);render()};
 
 let gw;
 A.cGrupos=()=>{const ph=cur.ph;gw={n:Math.max(1,ph.groups.length||+(ph.plan&&ph.plan.groups)||0),names:ph.groups.map(g=>g.name),asg:{},open:null,seeds:new Set((ph.seeds||[]).filter(id=>ph.teamIds.includes(id))),sorted:false,redo:false};
- ph.groups.forEach((g,i)=>g.teamIds.forEach(id=>gw.asg[id]=i));const max=32;if(gw.n>max)gw.n=max;gFix();
+ ph.groups.forEach((g,i)=>g.teamIds.forEach(id=>gw.asg[id]=i));const max=ph.teamIds.length>=2?Math.max(1,Math.floor(ph.teamIds.length/2)):32;if(gw.n>max)gw.n=max;gFix();
  modal(`${mHead('Grupos',phPick('cGrupos',ph))}<label class="field"><span>Quantidade de grupos: <b id="gNum">${gw.n}</b></span><span style="display:flex;gap:10px;align-items:center"><button type="button" class="sqb" data-a="gStep" data-v="-1" aria-label="Menos um grupo">−</button><input type="range" id="gRange" min="1" max="${max}" value="${gw.n}" data-i="gN" style="flex:1;accent-color:var(--g1)" aria-label="Quantidade de grupos"><button type="button" class="sqb" data-a="gStep" data-v="1" aria-label="Mais um grupo">+</button></span></label>
  <div id="gOpts"></div><p class="err" role="alert"></p><div class="acts"><button class="pill ghost" data-a="closeM">Cancelar</button><button class="pill" data-a="gSave">Salvar</button></div>`,{cls:'wide w2',guard:true});gDraw()};
 function gFix(){for(let i=0;i<gw.n;i++)if(!gw.names[i])gw.names[i]='Grupo '+(i<26?String.fromCharCode(65+i):i+1);gw.names.length=gw.n;for(const k in gw.asg)if(gw.asg[k]>=gw.n)delete gw.asg[k];while(gw.seeds.size>gw.n)gw.seeds.delete([...gw.seeds].pop())}
@@ -1904,7 +1955,8 @@ A.gSave=()=>{const ph=cur.ph,el=stack[stack.length-1].ov;let groups=[];
   groups=names.map((name,i)=>({id:ph.groups[i]?.id||uid(),name,teamIds:ph.teamIds.filter(id=>gw.asg[id]===i)}));
   if(ph.teamIds.length&&ph.teamIds.length<gw.n)return setErr(el,`Há ${ph.teamIds.length} dupla(s) na fase e ${gw.n} grupos. Reduza a quantidade de grupos ou adicione mais duplas.`);
   if(ph.teamIds.length&&ph.teamIds.some(id=>gw.asg[id]==null))return setErr(el,'Há duplas ainda não distribuídas. Use “Sortear” ou “Definir grupo das duplas”.');
-  if(ph.teamIds.length&&groups.some(g=>!g.teamIds.length))return setErr(el,'Há grupos vazios. Reduza a quantidade ou redistribua as duplas.')}
+  if(ph.teamIds.length&&groups.some(g=>!g.teamIds.length))return setErr(el,'Há grupos vazios. Reduza a quantidade ou redistribua as duplas.');
+  if(ph.teamIds.length&&groups.some(g=>g.teamIds.length===1))return setErr(el,'Cada grupo precisa de pelo menos 2 duplas: '+groups.filter(g=>g.teamIds.length===1).map(g=>g.name).join(', ')+' ficou com uma só. Com '+ph.teamIds.length+' duplas, o máximo é '+Math.floor(ph.teamIds.length/2)+' grupos.')}
  // cabeças de chave nunca no mesmo grupo (ex.: marcados depois do sorteio, ou grupo mudado à mão)
  if(gw.n>=2){const sd=[...gw.seeds].filter(id=>ph.teamIds.includes(id)&&gw.asg[id]!=null),by={};sd.forEach(id=>(by[gw.asg[id]]=by[gw.asg[id]]||[]).push(id));const cf=Object.entries(by).filter(([,l])=>l.length>1);
   if(cf.length){const txt=cf.map(([g,l])=>l.map(id=>'<b>'+esc(dl(T(id)))+'</b>').join(' e ')+' são cabeças de chave e estão no <b>'+esc(gw.names[+g]||'')+'</b>').join('<br>');
@@ -1912,7 +1964,7 @@ A.gSave=()=>{const ph=cur.ph,el=stack[stack.length-1].ov;let groups=[];
    modal(mHead('Cabeças de chave no mesmo grupo')+'<p>'+txt+'.</p><p class="muted" style="margin:0 0 14px"><b>Separar automaticamente</b> troca só o cabeça de chave sobrando com uma dupla comum, sorteada, de um grupo sem cabeça; o resto fica como está. <b>Sortear novamente</b> refaz o sorteio inteiro, com os cabeças em grupos diferentes.</p><div class="bindacts"><button class="pill" data-a="gSeedFix">Separar automaticamente</button><button class="pill ghost" data-a="gSeedRedo">Sortear novamente</button><button class="pill ghost" data-a="closeM">Voltar e ajustar</button></div>');return}}
  const sig=g=>JSON.stringify(g.map(x=>[...x.teamIds].sort()));
  if(phMatches(ph).length&&sig(groups)!==sig(ph.groups))return setErr(el,'Esta fase já possui partidas. Exclua as partidas antes de alterar a distribuição dos grupos (os nomes podem ser alterados).');
- const pix=cur.c?cur.c.phases.indexOf(ph):-1;if(pix>0){if(groups.length>1)ph.plan={groups:groups.length};else if(!ph.zig)delete ph.plan}else delete ph.plan;ph.groups=groups;ph.zig=false;const oldAdvance=ph.advance||{mode:'group',total:0,byGroup:{}},byGroup={};groups.forEach((g,i)=>byGroup[g.id]=oldAdvance.byGroup?.[g.id]??perOf(oldAdvance,i));ph.advance={...oldAdvance,mode:oldAdvance.mode==='total'?'total':'group',byGroup};ph.seeds=groups.length?[...gw.seeds].filter(id=>ph.teamIds.includes(id)):[];ph.drawn=groups.length>0&&ph.teamIds.length>0&&(gw.sorted||!!ph.drawn);save();closeModal(true);render();if(hasNextPhase(ph)&&ph.advance.mode==='group'&&groups.some(g=>{const n=+ph.advance.byGroup[g.id]||0;return g.teamIds.length>0&&n>g.teamIds.length}))alertBox('Revise os classificados','A quantidade de classificados por grupo não combina com a nova distribuição. Ajuste em + → Fases → Editar fase.');toast(groups.length&&!ph.teamIds.length?'Grupos salvos. Adicione as duplas e depois distribua-as nos grupos.':'Grupos salvos.')};
+ const pix=cur.c?cur.c.phases.indexOf(ph):-1;if(pix>0){if(groups.length>1)ph.plan={groups:groups.length};else if(!ph.zig)delete ph.plan}else delete ph.plan;const oldCnt=advCount(ph),toTotal=!groups.length&&ph.groups.length>0&&(ph.advance||{}).mode==='group'&&hasNextPhase(ph);ph.groups=groups;ph.zig=false;const oldAdvance=ph.advance||{mode:'group',total:0,byGroup:{}},byGroup={};groups.forEach((g,i)=>byGroup[g.id]=oldAdvance.byGroup?.[g.id]??perOf(oldAdvance,i));ph.advance={...oldAdvance,mode:groups.length&&oldAdvance.mode!=='total'?'group':'total',byGroup};if(toTotal){ph.advance.total=Math.min(oldCnt,ph.teamIds.length)||oldCnt;delete ph.advance.perG;setTimeout(()=>alertBox('Classificação ajustada','A fase ficou sem grupos, então a classificação passou a ser pela <b>classificação geral</b>: classificam <b>'+ph.advance.total+'</b> duplas. Confira em Configurações → Fases → Editar.'),50)}ph.seeds=groups.length?[...gw.seeds].filter(id=>ph.teamIds.includes(id)):[];ph.drawn=groups.length>0&&ph.teamIds.length>0&&(gw.sorted||!!ph.drawn);save();closeModal(true);render();if(hasNextPhase(ph)&&ph.advance.mode==='group'&&groups.some(g=>{const n=+ph.advance.byGroup[g.id]||0;return g.teamIds.length>0&&n>g.teamIds.length}))alertBox('Revise os classificados','A quantidade de classificados por grupo não combina com a nova distribuição. Ajuste em + → Fases → Editar fase.');toast(groups.length&&!ph.teamIds.length?'Grupos salvos. Adicione as duplas e depois distribua-as nos grupos.':'Grupos salvos.')};
 
 function fasesModal(){const c=cur.c;modal(`${mHead('Fases')}<ul class="slist">${c.phases.map((p,i)=>`<li><span><b>${i+1}ª Fase${p.name!==(i+1)+'ª Fase'?' — '+esc(p.name):''}</b><br><small class="muted">${TYPE[p.type]}</small></span><button class="ibtn" data-a="fEdit" data-id="${p.id}" aria-label="Editar fase">${I.edit}</button></li>`).join('')}</ul>
  <div class="acts"><button class="pill" data-a="fEdit" data-id="">Nova fase</button></div>`,{cls:'gray'})}
@@ -1985,6 +2037,8 @@ F.fSave=async f=>{const c=cur.c,n=clean(f.n.value),p=c.phases.find(x=>x.id===f.i
   else if(advance.mode==='total'){const raw=(f.advTotal?.value||'').trim();if(!/^\d+$/.test(raw)||+raw<1)return setErr(f,'Informe uma quantidade inteira e positiva de duplas classificadas.');const inN=phIn(c,idx);if(inN&&+raw>inN)return setErr(f,(p.teamIds.length?'A quantidade classificada não pode superar o total de duplas elegíveis ('+inN+').':'A '+p.name+' vai receber '+inN+' dupla'+(inN>1?'s':'')+'. Não é possível classificar '+raw+' para a '+next.name+'.'));advance.total=+raw}
   else{const assigned=new Set(p.groups.flatMap(g=>g.teamIds)),unassigned=p.teamIds.filter(id=>!assigned.has(id));if(unassigned.length)return setErr(f,'Distribua todas as duplas em grupos antes de configurar a classificação por grupo.');for(const g of p.groups){const el=f.elements['adv_'+g.id],raw=el?(el.value||'').trim():'';if(!/^\d+$/.test(raw)||+raw<1)return setErr(f,'Informe uma quantidade inteira e positiva para o grupo '+g.name+'.');const eligible=g.teamIds.filter(id=>p.teamIds.includes(id)).length;if(+raw>eligible)return setErr(f,'O grupo '+g.name+' não possui essa quantidade de duplas elegíveis.');advance.byGroup[g.id]=+raw}advance.total=Math.max(0,Math.floor(+advance.total||0))}
   const outN=advance.mode==='total'?advance.total:plannable?advance.perG.reduce((a,b)=>a+b,0):p.groups.reduce((a,g)=>a+(advance.byGroup[g.id]||0),0);if(outN<2)return setErr(f,'A fase seguinte precisa receber pelo menos 2 duplas. Aumente a quantidade de classificados.');
+  {const npg=+(next.plan&&next.plan.groups)||0;if(next.type==='pc'&&npg>1&&!next.groups.length){if(outN<npg*3)return setErr(f,'A '+next.name+' está planejada com '+npg+' grupos e precisa de pelo menos '+(npg*3)+' duplas (3 por grupo). Classifique mais duplas ou diminua os grupos da '+next.name+'.');
+   if(next.advance&&next.advance.mode==='group'){const z=zigSizes(outN,npg),bad=z.findIndex((sz,i)=>perOf(next.advance,i)>sz);if(bad>=0)return setErr(f,'Com '+outN+' duplas, o '+gLetter(bad)+' da '+next.name+' terá '+z[bad]+' duplas, mas está configurado para classificar '+perOf(next.advance,bad)+'. Ajuste primeiro a '+next.name+'.')}}}
   {const nn=advCount(next);if(c.phases[idx+2]&&!next.teamIds.length&&nn>outN)return setErr(f,'A '+next.name+' está configurada para classificar '+nn+' duplas, mas vai receber só '+outN+'. Ajuste primeiro a classificação da '+next.name+'.')}
   const downstream=c.phases.slice(idx+1).filter(q=>q.rounds.length||q.status==='done'||q.status==='live');
   const old=p.advance||{},changed=JSON.stringify(old)!==JSON.stringify(advance);
@@ -2194,6 +2248,7 @@ function elimDraw(){const ph=cur.ph,pl=eplan,O=ph.origin||{},lab=id=>pl.crossed?
 A.elimMode=(d,el)=>{gen.em=el.value==='all'?'all':'bye';const pl=elimPlan(cur.ph,gen.em);if(pl.alert)return;eplan=pl;elimDraw()};
 function phCfgErrs(c,from){const out=[],i0=Math.max(0,c.phases.indexOf(from));
  for(let i=i0;i<c.phases.length-1;i++){const ph=c.phases[i],nx=c.phases[i+1];if(ph.type!=='pc')continue;const n=advCount(ph),inN=phIn(c,i);
+  if((ph.advance||{}).mode==='group'&&!ph.groups.length&&!(+(ph.plan&&ph.plan.groups)>1)&&n>=2){out.push('<b>'+esc(ph.name)+'</b>: está configurada para classificar por grupo, mas não tem grupos. Faça o sorteio dos grupos ou mude para “Classificação geral”.');continue}
   if(n<2)out.push('<b>'+esc(ph.name)+'</b>: falta definir quantas duplas se classificam para a '+esc(nx.name)+'.');
   else if(inN&&n>inN)out.push('<b>'+esc(ph.name)+'</b>: classifica '+n+' duplas, mas a fase recebe só '+inN+'.')}
  for(let i=i0;i<c.phases.length;i++){const ph=c.phases[i],pg=+(ph.plan&&ph.plan.groups)||0;if(ph.type!=='pc'||pg<2||ph.groups.length)continue;if(i===0)continue;if(ph.teamIds.length&&ph===from){out.push('<b>'+esc(ph.name)+'</b>: está configurada com '+pg+' grupos, mas o sorteio ainda não foi feito (Configurações → Grupos).');continue}const inN=phIn(c,i);if(inN&&inN<pg*3)out.push('<b>'+esc(ph.name)+'</b>: '+pg+' grupos precisam de pelo menos '+(pg*3)+' duplas (3 por grupo), mas a fase recebe '+inN+'.');
@@ -2232,7 +2287,9 @@ A.rrSave=()=>{const ph=cur.ph;ph.rounds=[...document.querySelectorAll('#rrL li')
 
 function sameIds(a,b){return JSON.stringify(a||[])===JSON.stringify(b||[])}
 function qualifierOrigins(ph,ids){const out={},st=phaseStats(ph),apv=x=>x&&x.j?x.pts/(x.j*winPts(ph)):0;if((ph.advance||{}).mode==='group'){ph.groups.forEach((g,gi)=>{let pos=1;rankGroups(ph,st,g.teamIds.filter(id=>ph.teamIds.includes(id))).forEach(t=>{t.forEach(id=>{if(ids.includes(id))out[id]={pos,g:gi+1,gn:g.name,ap:apv(st[id]),dp:(st[id]||{}).dp||0};});pos+=t.length})})}else{let pos=1;rankGroups(ph,st,ph.teamIds).forEach(t=>{t.forEach(id=>{if(ids.includes(id))out[id]={pos,g:0,gn:'',ap:apv(st[id]),dp:(st[id]||{}).dp||0}});pos+=t.length})}return out}
-async function finalizePhase(c,ph){const v=phaseCompletion(ph,c);if(!v.scheduleValid){alertBox('Não é possível finalizar',v.issues.map(esc).join('<br>'));return false}if(v.ties.length){tieModal(c,ph,v.ties[0]);return false}
+// Uma finalização por vez: clique duplo ou dois botões ao mesmo tempo não finalizam duas vezes.
+let finBusy=false;async function finalizePhase(c,ph){if(finBusy)return false;finBusy=true;try{return await finalizePhase0(c,ph)}finally{finBusy=false}}
+async function finalizePhase0(c,ph){const v=phaseCompletion(ph,c);if(!v.scheduleValid){alertBox('Não é possível finalizar',v.issues.map(esc).join('<br>'));return false}if(v.ties.length){tieModal(c,ph,v.ties[0]);return false}
  const i=c.phases.indexOf(ph),next=c.phases[i+1],ids=next?v.qualifiers:[],sig=phaseResultSignature(ph),old=ph.finalizedSnapshot,finalInfo=next?null:phaseFinalInfo(ph);
  if(!next&&(finalInfo?.error||finalInfo?.ties?.length)){alertBox('Resultado final pendente',finalInfo.error||'Resolva o empate antes de finalizar.');return false}
  const downstream=c.phases.slice(i+1),hasActivity=downstream.some(p=>p.teamIds.length||p.rounds.length||p.status==='done'||p.status==='live'),changedOrder=!!old&&!sameIds(old.ids,ids),targetMismatch=!!next&&!sameIds(next.teamIds,ids),needsRebuild=!!next&&((changedOrder&&hasActivity)||(targetMismatch&&(next.teamIds.length>0||hasActivity)));
@@ -2292,9 +2349,9 @@ async function commitScore(f,x,sets,state,btn){const{m,ph,r,c}=x;
 function gamesModal(x){const{m,ph,r}=x,[wa,wb]=setsWon(m),n=(m.sets||[]).filter(Boolean).length,dec=wa>=2||wb>=2,NA=esc(dl(T(m.a))),NB=esc(dl(T(m.b)));
  const card=i=>{const[k,l]=gameState(m,i),g=(m.sets&&m.sets[i])||['',''],edit=k==='wait'&&i===n,w=k==='done'?(g[0]>g[1]?'a':'b'):'';
   return'<div class="gcardm '+k+(edit?' cur':'')+'" data-g="'+i+'"><div class="gh"><b>Partida '+(i+1)+'</b><span class="tag '+(k==='done'?'done':edit?'live':'')+'">'+l+'</span></div>'+
-   '<div class="score-pair"><span class="score-team-label a'+(w==='a'?' w':'')+'">'+NA+'</span><input type="number" min="0" max="99" step="1" name="s'+i+'a" inputmode="numeric" value="'+g[0]+'" '+(edit?'':'disabled')+' aria-label="Placar da Dupla 1, partida '+(i+1)+'"><span class="score-times">×</span><input type="number" min="0" max="99" step="1" name="s'+i+'b" inputmode="numeric" value="'+g[1]+'" '+(edit?'':'disabled')+' aria-label="Placar da Dupla 2, partida '+(i+1)+'"><span class="score-team-label b'+(w==='b'?' w':'')+'">'+NB+'</span></div>'+
+   '<div class="score-pair"><span class="score-team-label a'+(w==='a'?' w':'')+'">'+NA+'</span><input type="number" min="0" max="12" step="1" name="s'+i+'a" inputmode="numeric" value="'+g[0]+'" '+(edit?'':'disabled')+' aria-label="Placar da Dupla 1, partida '+(i+1)+'"><span class="score-times">×</span><input type="number" min="0" max="12" step="1" name="s'+i+'b" inputmode="numeric" value="'+g[1]+'" '+(edit?'':'disabled')+' aria-label="Placar da Dupla 2, partida '+(i+1)+'"><span class="score-team-label b'+(w==='b'?' w':'')+'">'+NB+'</span></div>'+
    '<div class="gacts">'+(k==='done'&&canEdit()?'<button type="button" class="pill ghost sm" data-a="mGameEdit" data-g="'+i+'">Corrigir</button>':'')+'<button type="button" class="pill sm" data-a="mGame" data-g="'+i+'" '+(edit?'':'hidden')+'>Salvar Partida '+(i+1)+'</button></div></div>'};
- modal('<form data-f="mGameForm">'+mHead('Editar resultado',esc(ph.name)+' · '+esc(r.title)+' · Melhor de 3 partidas')+'<input type="hidden" name="id" value="'+m.id+'"><input type="hidden" name="rev" value="'+(m.rev||0)+'">'+
+ modal('<form data-f="mGameForm" novalidate>'+mHead('Editar resultado',esc(ph.name)+' · '+esc(r.title)+' · Melhor de 3 partidas')+'<input type="hidden" name="id" value="'+m.id+'"><input type="hidden" name="rev" value="'+(m.rev||0)+'">'+
   '<div class="gsum"><span class="score-team-label a">'+NA+'</span><span class="sbox">'+wa+'</span><span class="score-times">×</span><span class="sbox">'+wb+'</span><span class="score-team-label b">'+NB+'</span></div><p class="note" style="text-align:center;margin:4px 0 12px">'+(dec?'Disputa encerrada por '+Math.max(wa,wb)+' × '+Math.min(wa,wb)+'.':'Placar da disputa (vitórias). Cada partida é salva separadamente; vence quem chegar a 2 vitórias.')+'</p>'+
   [0,1,2].map(card).join('')+resExtras(m)+'<p class="err" role="alert"></p><div class="acts"><button type="button" class="pill ghost" data-a="closeM">Fechar</button></div></form>',{cls:'res',guard:true})}
 A.mGameEdit=async(d,el)=>{const c=el.closest('.gcardm');if(!c)return;if(!await confirmBox({title:'Corrigir Partida '+(+d.g+1),msg:'O placar atual desta partida fica guardado no histórico. Depois de salvar a correção, as vitórias da disputa são recalculadas.',ok:'Corrigir'}))return;
@@ -2303,7 +2360,8 @@ A.mGame=async(d,el)=>{const f=el.closest('form'),x=f&&findMatch(f.id.value);if(!
  if(+f.rev.value!==(m.rev||0))return setErr(f,conflictMsg(m));
  const va=String(f['s'+i+'a'].value).trim(),vb=String(f['s'+i+'b'].value).trim();
  if(va===''||vb==='')return setErr(f,'Informe o placar das duas duplas na Partida '+N+'.');
- if(!/^\d+$/.test(va)||!/^\d+$/.test(vb)||+va>99||+vb>99)return setErr(f,'O placar da Partida '+N+' deve ser um número inteiro entre 0 e 99.');
+ if(!/^\d+$/.test(va)||!/^\d+$/.test(vb))return setErr(f,'O placar da Partida '+N+' deve ser um número inteiro.');
+ if(Math.max(+va,+vb)!==12||Math.min(+va,+vb)>11)return setErr(f,'Partida '+N+': No truco a partida termina em 12: o vencedor tem 12 pontos e o perdedor de 0 a 11 (ex.: 12 × 11).');
  if(+va===+vb)return setErr(f,'A Partida '+N+' não pode terminar empatada.');
  const cur0=(m.sets||[]).filter(Boolean).map(z=>[z[0],z[1]]);if(i>cur0.length)return setErr(f,'Lance antes a Partida '+(cur0.length+1)+'.');
  cur0[i]=[+va,+vb];let wa=0,wb=0;const out=[];for(const g of cur0){out.push(g);g[0]>g[1]?wa++:wb++;if(wa===2||wb===2)break}
@@ -2323,9 +2381,9 @@ A.mOpen=d=>{const fnd=findMatch(d.id);if(!fnd)return;const{m,ph,r}=fnd,has=hasSe
   '<label class="field"><span>Situação da partida</span><select name="state" data-c="mState" data-id="'+m.id+'" data-was-done="'+(locked?'true':'false')+'" style="width:auto;min-width:190px"><option value="live" '+(state==='live'?'selected':'')+'>Em andamento</option><option value="done" '+(state==='done'?'selected':'')+'>Encerrado</option></select></label>';
  const teamLabel=(side,id)=>id&&T(id)?esc(dl(T(id))):'Dupla '+(side==='a'?'1':'2');
  const participant=side=>'<span class="score-team-label '+side+'">'+teamLabel(side,side==='a'?m.a:m.b)+'</span>';
- const scoreFields=Array.from({length:m.bo===1?1:3},(_,i)=>'<div class="score-game"><span class="score-game-title">Partida '+(i+1)+'</span><div class="score-pair">'+participant('a',i)+'<input type="number" min="0" step="1" name="s'+i+'a" data-i="mAuto" inputmode="numeric" value="'+score(i)[0]+'" aria-label="Placar da Dupla 1, partida '+(i+1)+'" '+(locked?'disabled':'')+'><span class="score-times">×</span><input type="number" min="0" step="1" name="s'+i+'b" data-i="mAuto" inputmode="numeric" value="'+score(i)[1]+'" aria-label="Placar da Dupla 2, partida '+(i+1)+'" '+(locked?'disabled':'')+'>'+participant('b',i)+'</div></div>').join('');
+ const scoreFields=Array.from({length:m.bo===1?1:3},(_,i)=>'<div class="score-game"><span class="score-game-title">Partida '+(i+1)+'</span><div class="score-pair">'+participant('a',i)+'<input type="number" min="0" max="12" step="1" name="s'+i+'a" data-i="mAuto" inputmode="numeric" value="'+score(i)[0]+'" aria-label="Placar da Dupla 1, partida '+(i+1)+'" '+(locked?'disabled':'')+'><span class="score-times">×</span><input type="number" min="0" max="12" step="1" name="s'+i+'b" data-i="mAuto" inputmode="numeric" value="'+score(i)[1]+'" aria-label="Placar da Dupla 2, partida '+(i+1)+'" '+(locked?'disabled':'')+'>'+participant('b',i)+'</div></div>').join('');
  const participantNote='';
- modal('<form data-f="mSave">'+mHead(visitor?'Informar placar':'Editar resultado',esc(ph.name)+' · '+esc(r.title))+
+ modal('<form data-f="mSave" novalidate>'+mHead(visitor?'Informar placar':'Editar resultado',esc(ph.name)+' · '+esc(r.title))+
   '<input type="hidden" name="id" value="'+m.id+'"><input type="hidden" name="rev" value="'+(m.rev||0)+'">'+statusInput+(visitor?byField(m):'')+
   '<div class="score-list">'+scoreFields+'</div>'+participantNote+'<p class="note">'+(m.bo===1?'Partida única: o placar define o vencedor.':'Melhor de 3 partidas: a disputa termina quando uma dupla alcançar duas vitórias. A 3ª partida fica vazia se não for necessária.')+'</p>'+
   (locked?'<p class="note">Para corrigir um resultado encerrado, altere a situação para “Em andamento” e confirme a reabertura.</p>':'')+resExtras(m)+
@@ -2516,7 +2574,7 @@ A.jExpGo=d=>{const c=cur.c,ph=cur.ph,r=cur.r,all=!!document.querySelector('.ov:l
 
 /* ===================== Eventos ===================== */
 const READ=new Set([...VIS,'nav','sair','sair2','openC','rkSet','rkMode','rkIna','rkQ','pSort','crInfo','cxScope','offSync','confOpen','confKeep','cExp','jExp','cExpGo','jExpGo','jExpPick']);
-const SCORE=new Set(['mState','mAuto','mGame','confMine']),MASTER=new Set(['instApp','lkPinReset','rkTie','rkTieDel','lkUnbind','lkMove','lkAllow','cpUse','cpTab','lkRefresh','mbEdit','mbDel','cOpt','cDel','cfgPlayers','cpAll','cpSel','cpDel','cfgRank','wipe','bkImp','bkExp']),CASH=new Set(['cxAdd','cxEdit','cxDel']),MASTERF=new Set(['rkTieSave','lkMoveF','uSave','cSave','tieSave','mbSave']);
+const SCORE=new Set(['mState','mAuto','mGame','confMine']),MASTER=new Set(['pushWait','pushOn','pushOff','pushTest','instGo','instApp','lkPinReset','rkTie','rkTieDel','lkUnbind','lkMove','lkAllow','cpUse','cpTab','lkRefresh','mbEdit','mbDel','cOpt','cDel','cfgPlayers','cpAll','cpSel','cpDel','cfgRank','wipe','bkImp','bkExp']),CASH=new Set(['cxAdd','cxEdit','cxDel']),MASTERF=new Set(['rkTieSave','lkMoveF','uSave','cSave','tieSave','mbSave']);
 const DENY='Seu perfil não permite esta ação.';
 A.offSync=()=>trySync(true);
 // Conflitos de placar (lançado offline × o que já estava online): as duas versões ficam guardadas até alguém autorizado decidir.
@@ -2577,9 +2635,9 @@ window.addEventListener('storage',e=>{if(CLOUD||e.key!==KEY)return;const id={c:c
  if(stack.length){cur.c=C(id.c);cur.ph=cur.c?.phases.find(p=>p.id===id.ph);cur.r=cur.ph?.rounds.find(r=>r.id===id.r);
   if((!id.c||cur.c)&&(!id.ph||cur.ph)&&(!id.r||cur.r))return;while(stack.length)closeModal(true);toast('Os dados foram alterados em outra aba.')}
  render()});
-if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){navigator.serviceWorker.register('sw.js').catch(()=>{});navigator.serviceWorker.addEventListener('message',e=>{const u=e.data&&e.data.type==='abrir'&&String(e.data.url||'');if(u&&/^#\//.test(u)){while(stack.length)closeModal(true);location.hash=u}})}
 if(CLOUD)setDb({});else load();
-{const base=render;render=function(){base();try{document.body.classList.toggle('tvon',!!document.querySelector('.tv'));drawBracket();fitTelao()}catch(e){}}}
+{const base=render;render=function(){base();try{if(document.getElementById('pushSt'))pushPaint();document.body.classList.toggle('tvon',!!document.querySelector('.tv'));drawBracket();fitTelao()}catch(e){}}}
 window.addEventListener('resize',()=>{try{fitTelao();drawBracket()}catch(e){}});if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{try{drawBracket();fitTelao()}catch(e){}});
 render();
 </script>
