@@ -916,7 +916,7 @@ setInterval(async()=>{if(!CLOUD||document.hidden||ws.poll||loading||!loaded||me.
     const idle=!stack.length&&!typing();
     if((PL.ws_rev>ws.rev||(PL.cash_rev!=null&&PL.cash_rev>cx.rev&&!cx.busy&&!cx.err))&&!ws.busy&&!ws.dirty){if(idle){await loadCloud();render()}}
     else if(mergeResults(PL.results||[])){ws.stale=true;if(elimSyncAll()&&canEdit())ws.needSync=Date.now()+Math.random()*4000}
-    if(liveSet(PL.live))ws.stale=true;mkRemote();
+    if(liveSet(PL.live))ws.stale=true;mkRemote();notifSweep();
     if(ws.needSync&&Date.now()>ws.needSync&&!ws.busy&&!ws.dirty){ws.needSync=0;save()}
     if(ws.stale&&idle){ws.stale=false;render();if(cur.c&&cur.ph&&/^#\/c\/[^/]+\/classificacao/.test(location.hash)&&db.champs.includes(cur.c))maybeAutoFinalize(cur.c,cur.ph)}}}
   else if(loaded.startsWith('p:')&&visitor){const key=loaded,j=await rpc('gc_get_portal',{p_token:key.slice(2)},true);if(m0===mut&&loaded===key&&JSON.stringify(j)!==ptSig){ptSig=JSON.stringify(j);portalDb(j);if(!stack.length)render()}}
@@ -2733,7 +2733,7 @@ setInterval(()=>{if(/\/telao$/.test(location.hash)&&document.querySelector('.tv'
    No fim: organizador → o resultado vale direto; link → vale como o informe desta dupla (a outra confirma). */
 const MKK=id=>'gc_mk:'+id;
 const mkLocal=id=>{try{const o=JSON.parse(localStorage.getItem(MKK(id)));return o&&o.st&&Array.isArray(o.st.s)?o:null}catch(e){return null}};
-function mkKeep(){if(!mk)return;try{if(mk.dirty&&!mk.done)localStorage.setItem(MKK(mk.id),JSON.stringify({st:mk.st,rev:mk.rev,at:Date.now()}));else localStorage.removeItem(MKK(mk.id))}catch(e){}}
+function mkKeep(){if(!mk)return;try{if(mk.dirty&&!mk.done)localStorage.setItem(MKK(mk.id),JSON.stringify({st:mk.st,rev:mk.rev,at:Date.now(),via:visitor?'link':'admin',tok:visitor?lkTok():''}));else localStorage.removeItem(MKK(mk.id))}catch(e){}}
 function mkAdminOK(x){const{c,ph,m}=x;return!visitor&&canScore()&&!!m.a&&!!m.b&&!m.pending&&mStatus(m)!=='done'&&!phaseLock(c,ph)}
 // no link o marcador sempre aparece (estrutura pronta); só funciona com a opção "Marcador no link" ligada pelo organizador
 function mkLinkSeen(m){return!!visitor&&CLOUD&&!!cur.c&&!!lkTok()&&!m.lq&&!/\/telao$/.test(location.hash)}
@@ -2820,7 +2820,24 @@ async function mkWake(on){const me=mk;if(!me)return;try{if(on){if(!me.wl&&naviga
 function mkTouch(){if(!mk)return;clearTimeout(mk.idle);mkWake(true);mk.idle=setTimeout(()=>mkWake(false),5*60*1000)}
 document.addEventListener('visibilitychange',()=>{if(mk&&document.visibilityState==='visible')mkTouch()});
 document.addEventListener('pointerdown',()=>{if(mk)mkTouch()},true);
-setInterval(()=>{if(mk&&mk.dirty&&!mk.busy&&CLOUD&&!document.hidden)mkSend()},5000);
+setInterval(()=>{if(mk&&mk.dirty&&!mk.busy&&CLOUD&&!document.hidden)mkSend();mkFlushBg()},4000);
+// Marcação feita sem internet e marcador já FECHADO: envia sozinha quando a internet volta (com qualquer tela do app aberta).
+// Se outro celular marcou o mesmo confronto nesse meio-tempo, não sobrescreve: espera abrir o marcador, que pergunta qual vale.
+const mkBg={busy:false,skip:new Set()};
+async function mkFlushBg(){if(!CLOUD||document.hidden||mkBg.busy||!loaded)return;let keys=[];try{keys=Object.keys(localStorage).filter(k=>k.startsWith('gc_mk:'))}catch(e){return}if(!keys.length)return;mkBg.busy=true;
+ try{for(const k of keys){const id=k.slice(6);if(mk&&mk.id===id)continue;const o=mkLocal(id);if(!o||!o.via)continue;
+   if(visitor?(o.via!=='link'||o.tok!==lkTok()):(o.via!=='admin'||loaded!=='admin'))continue;if(mkBg.skip.has(id+':'+o.rev))continue;
+   const x=findMatch(id),drop=()=>{try{localStorage.removeItem(k)}catch(e){}};if(!x||mStatus(x.m)==='done'||x.m.pending){drop();continue}
+   const send=rev=>visitor?rpc('gc_live_save_link',{p_token:o.tok,p_match_id:id,p_data:o.st,p_expected_rev:rev,p_device:devTok()},true):rpc('gc_live_save_admin',{p_match_id:id,p_data:o.st,p_expected_rev:rev});
+   let r;try{r=await send(o.rev);if(!r.ok&&!r.data)r=await send(r.rev)}catch(e){if(!e.status)break;drop();continue}
+   if(r.ok){drop();LIVE.set(id,{d:o.st,rev:r.rev});if(!stack.length)render()}else mkBg.skip.add(id+':'+o.rev)}}
+ finally{mkBg.busy=false}}
+// Notificações do master: ao abrir o app, some da barra o aviso de confronto que já foi resolvido (e os "✓ Resolvido" já vistos)
+async function notifSweep(){if(!CLOUD||loaded!=='admin'||!isMaster()||document.hidden||!('serviceWorker' in navigator))return;
+ try{const reg=await navigator.serviceWorker.getRegistration();if(!reg||!reg.getNotifications)return;
+  for(const n of await reg.getNotifications()){const t=/^(wait|div|ok)-(.+)$/.exec(n.tag||'');if(!t)continue;const x=findMatch(t[2]),m=x&&x.m,cl=m&&m.claims,both=!!(cl&&cl.A&&cl.B),gone=!m||mStatus(m)==='done'||!!m.pending;
+   if(t[1]==='ok'||(t[1]==='wait'?gone||both:gone||!both))n.close()}}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(notifSweep,800)});   // sem internet, testa de novo a cada 4 s (igual ao resto do app)
 const BRLOCK=new Set(['addRound','addMatch','rDel','mDel']);
 const PHLOCK=new Set(['brReset','addRound','addMatch','gen','cDuplas','cGrupos','cCrit','rDel','rReord','mDel']);
 function run(name,d,el,e){if(visitor){if(!VIS.has(name))return}
@@ -2868,4 +2885,3 @@ render();
 </script>
 </body>
 </html>
-
