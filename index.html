@@ -550,7 +550,8 @@ table.rk tr.qt .posb{background:#DBEAFE;color:#1E3A8A;box-shadow:inset 0 0 0 1.5
 .mkib:disabled{opacity:.35}.mkib svg{width:20px;height:20px}
 .mkhd{flex:1;min-width:0;text-align:center}.mkhd b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mkhd small{display:block;font-size:12px;opacity:.8}
 .mkdev{display:inline-block;margin-top:3px;font-size:10.5px;font-weight:700;letter-spacing:.3px;background:#FFD54A;color:#3B2C00;border-radius:999px;padding:1px 8px}
-.mks{display:block;text-align:center;font-size:11.5px;font-weight:600;opacity:.75;min-height:16px}.mks.off{color:#FFD54A;opacity:1}.mks.oth{color:#3B2C00;background:#FFD54A;opacity:1;font-weight:800;border-radius:999px;margin:0 auto;width:max-content;max-width:94%;padding:0 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mks{display:block;text-align:center;font-size:11.5px;font-weight:600;opacity:.75;min-height:16px}.mks.off{color:#FFD54A;opacity:1}.mks.lock{display:block;border:0;font:inherit;font-size:11.5px;line-height:16px;cursor:pointer;color:#3B2C00;background:#FFD54A;opacity:1;font-weight:800;border-radius:999px;margin:0 auto;width:max-content;max-width:94%;padding:0 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mkts.lkd .mkplus,.mkts.lkd .mkminus,.mkts.lkd~.mkf .mktr{opacity:.4}
+.mks.oth{color:#3B2C00;background:#FFD54A;opacity:1;font-weight:800;border-radius:999px;margin:0 auto;width:max-content;max-width:94%;padding:0 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mkts{flex:1;display:grid;grid-template-columns:1fr 1fr;align-items:start;align-content:center;padding:6px 6px 0;min-height:0}
 .mkt{display:flex;flex-direction:column;align-items:center;gap:6px;padding:0 6px;min-width:0}
 .mkn{font-weight:700;font-size:15px;text-align:center;line-height:1.2;min-height:38px;display:flex;align-items:center;overflow-wrap:anywhere}
@@ -944,8 +945,14 @@ const BOT={1:'Partida única',3:'Melhor de 3 partidas'};
 const LIVE=new Map();let mk=null;
 const MKOTH=45000;   // aviso "outro celular está marcando": some 45 s depois da última marcação do outro
 function liveSet(rows){let ch=false;const seen=new Set();
- for(const r of arr(rows)){if(!r||!r.match_id||!r.data)continue;seen.add(r.match_id);const o=LIVE.get(r.match_id);if(!o||o.rev!==r.rev){const t=Date.parse(r.at||''),chg=o?(r.rev>o.rev?Date.now():o.chg||0):(t&&Math.abs(Date.now()-t)<MKOTH?Date.now()-Math.max(0,Date.now()-t):0);LIVE.set(r.match_id,{d:r.data,rev:r.rev,chg});ch=true}}
+ for(const r of arr(rows)){if(!r||!r.match_id||!r.data)continue;seen.add(r.match_id);const o=LIVE.get(r.match_id);const hs=h=>Object.entries(h||{}).map(([k,v])=>k+':'+v.k).sort().join(',');if(o&&o.rev===r.rev&&hs(o.h)!==hs(r.h)){LIVE.set(r.match_id,{...o,h:r.h||{},ht:Date.now()});ch=true}
+  if(!o||o.rev!==r.rev){const t=Date.parse(r.at||''),chg=o?(r.rev>o.rev?Date.now():o.chg||0):(t&&Math.abs(Date.now()-t)<MKOTH?Date.now()-Math.max(0,Date.now()-t):0);LIVE.set(r.match_id,{d:r.data,rev:r.rev,chg,h:r.h||{},ht:Date.now()});ch=true}}
  for(const k of [...LIVE.keys()])if(!seen.has(k)){LIVE.delete(k);ch=true}return ch}
+// gravação feita por ESTE aparelho: mantém o resto e, pelo link, registra este celular como quem marca pela dupla
+function liveOwn(id,d,rev,mine){const o=LIVE.get(id)||{},now=Date.now(),h={};for(const[k,v]of Object.entries(o.h||{}))h[k]={...v,age:(v.age||0)+(now-(o.ht||now))/1000};
+ if(mine&&visitor&&lkLink&&lkLink.hk){const x=findMatch(id),sd=x&&lkSide(x.m);if(sd)h[sd]={k:lkLink.hk,n:(P((lkMe()||{}).player)||{}).name||'',age:0}}
+ if(mine&&!visitor&&d)h.M={k:'org',n:'Organizador',age:0};   // o organizador marcando trava as duplas
+ LIVE.set(id,{d,rev,chg:o.chg||0,h,ht:now})}
 const lvEnd=L=>L.p[0]===12||L.p[1]===12;
 const lvWins=L=>{let a=0,b=0;for(const g of L.s)g[0]>g[1]?a++:b++;if(L.p[0]===12)a++;else if(L.p[1]===12)b++;return[a,b]};
 const lvDecided=(m,L)=>{const[a,b]=lvWins(L),n=need(m);return a>=n||b>=n};
@@ -1590,7 +1597,7 @@ function helpModal(){const kind=visitor?'vis':'adm',c=cur.c,team=!!(c&&c.teamMod
 
 /* ===================== Ações ===================== */
 const A={},F={};
-const MKA=['mkClear','mFix','mkOpen','mkAdd','mkSub','mkTruco','mkTrucoX','mkNext','mkUndo','mkHide','mLinkMenu'];
+const MKA=['mkLockInfo','mkClear','mFix','mkOpen','mkAdd','mkSub','mkTruco','mkTrucoX','mkNext','mkUndo','mkHide','mLinkMenu'];
 const VIS=new Set([...MKA,'pinNew','help','helpTab','bindQ','bindAll','bindPick','bindYes','bindWrong','bindWatch','bindBack','byPick','lqSync','lqConf','lqDismiss','pvTab','rkSet','rkMode','rkQ','rkIna','pwEye','tvOpen','tvExit','tvNext','tvPause','tGames','clsView','retry','closeM','vTab','vMode','mOpen','rkCell','rkTot','selPhase','selRound']);
 A.closeM=()=>closeModal();
 A.pushOn=async(d,el)=>{if(!isMaster())return;if(!pushOK())return alertBox('Notificações','Este navegador não recebe notificações.'+(isIOS()?' No iPhone, instale o app e abra pelo ícone.':''));el&&(el.disabled=true);
@@ -2423,12 +2430,15 @@ F.tieSave=async f=>{const c=cur.c,ph=cur.ph,type=f.elements.type.value,key=f.ele
 
 /* ----- partida / placar ----- */
 A.mMenu=d=>{const x=findMatch(d.id);if(!x)return toast('Este confronto não existe mais.','err');const mko=mkAdminOK(x),lvx=CLOUD&&LIVE.has(d.id)&&mStatus(x.m)!=='done';if(!canEdit()&&!mko&&!lvx)return A.mOpen(d);
- modal('<div style="display:flex;flex-direction:column;gap:6px">'+(mko?'<button data-a="mkOpen" data-id="'+d.id+'" data-close="1"><span class="mkico">♣</span><span>Marcador</span></button>':'')+'<button data-a="mOpen" data-id="'+d.id+'" data-close="1">'+I.edit+'Editar resultado</button>'+(lvx?'<button data-a="mkClear" data-id="'+d.id+'" data-close="1"><span class="mkico">♣</span>Apagar placar do marcador</button>':'')+(canEdit()?'<button data-a="mDel" data-id="'+d.id+'" data-close="1">'+I.trash+'Excluir confronto</button>':'')+'</div>',{cls:'menu'})};
+ modal('<div style="display:flex;flex-direction:column;gap:6px">'+(mko?'<button data-a="mkOpen" data-id="'+d.id+'" data-close="1"><span class="mkico">♣</span><span>Marcador</span></button>':'')+'<button data-a="mOpen" data-id="'+d.id+'" data-close="1">'+I.edit+'Editar resultado</button>'+(lvx&&(LIVE.get(d.id).h||{}).M?'<button data-a="mkRelease" data-id="'+d.id+'" data-close="1"><span class="mkico">🔓</span>Liberar o marcador para as duplas</button>':'')+(lvx?'<button data-a="mkClear" data-id="'+d.id+'" data-close="1"><span class="mkico">♣</span>Apagar placar do marcador</button>':'')+(canEdit()?'<button data-a="mDel" data-id="'+d.id+'" data-close="1">'+I.trash+'Excluir confronto</button>':'')+'</div>',{cls:'menu'})};
 // apaga o placar ao vivo (marcador) de um confronto — ex.: marcação abandonada ou informe excluído
 A.mkClear=async d=>{const x=findMatch(d.id),S=LIVE.get(d.id);if(!x||!S)return render();
  if(!await confirmBox({title:'Apagar placar do marcador',msg:'O placar marcado neste confronto (<b>'+esc(lvTxt(S.d))+'</b>) será apagado. Ele ainda não é resultado: nada na classificação oficial muda. Quem estiver com o marcador aberto recomeça do zero.',ok:'Apagar',danger:true}))return;
  try{const r=await rpc('gc_live_save_admin',{p_match_id:d.id,p_data:null,p_expected_rev:S.rev});if(!r.ok&&r.rev!=null)await rpc('gc_live_save_admin',{p_match_id:d.id,p_data:null,p_expected_rev:r.rev})}catch(e){return toast(errTxt(e),'err')}
  LIVE.delete(d.id);try{localStorage.removeItem(MKK(d.id))}catch(e){}render();toast('Placar do marcador apagado.')};
+// libera o marcador para as duplas (o organizador marcou este confronto; o placar marcado continua)
+A.mkRelease=async d=>{try{await rpc('gc_live_release_admin',{p_match_id:d.id})}catch(e){return toast(errTxt(e),'err')}
+ const S=LIVE.get(d.id);if(S&&S.h){const h={...S.h};delete h.M;LIVE.set(d.id,{...S,h})}render();toast('Marcador liberado: as duplas podem marcar este jogo.')};
 A.mLinkMenu=d=>{const x=findMatch(d.id);if(!x)return;const on=mkLinkOK(x.m);
  modal('<div style="display:flex;flex-direction:column;gap:6px">'+(on?'<button data-a="mkOpen" data-id="'+d.id+'" data-close="1"><span class="mkico">♣</span><span>Marcador</span></button>':'')+'<button data-a="mOpen" data-id="'+d.id+'" data-close="1">'+I.edit+'Informar placar</button></div>',{cls:'menu'})};
 // Confirmação pelas duas duplas: uma informou → aguarda a outra; as duas informaram valores diferentes → divergência.
@@ -2691,7 +2701,7 @@ A.jExpGo=d=>{const c=cur.c,ph=cur.ph,r=cur.r,all=!!document.querySelector('.ov:l
 
 /* ===================== Eventos ===================== */
 const READ=new Set([...VIS,'nav','sair','sair2','openC','rkSet','rkMode','rkIna','rkQ','pSort','crInfo','cxScope','offSync','confOpen','confKeep','cExp','jExp','cExpGo','jExpGo','jExpPick']);
-const SCORE=new Set([...MKA,'mMenu','mState','mAuto','mGame','confMine']),MASTER=new Set(['lkClaimDel','pushWait','pushOn','pushOff','pushTest','instGo','instApp','lkPinReset','rkTie','rkTieDel','lkUnbind','lkMove','lkAllow','cpUse','cpTab','lkRefresh','mbEdit','mbDel','cOpt','cDel','cfgPlayers','cpAll','cpSel','cpDel','cfgRank','wipe','bkImp','bkExp']),CASH=new Set(['cxAdd','cxEdit','cxDel']),MASTERF=new Set(['rkTieSave','lkMoveF','uSave','cSave','tieSave','mbSave']);
+const SCORE=new Set([...MKA,'mkRelease','mMenu','mState','mAuto','mGame','confMine']),MASTER=new Set(['lkClaimDel','pushWait','pushOn','pushOff','pushTest','instGo','instApp','lkPinReset','rkTie','rkTieDel','lkUnbind','lkMove','lkAllow','cpUse','cpTab','lkRefresh','mbEdit','mbDel','cOpt','cDel','cfgPlayers','cpAll','cpSel','cpDel','cfgRank','wipe','bkImp','bkExp']),CASH=new Set(['cxAdd','cxEdit','cxDel']),MASTERF=new Set(['rkTieSave','lkMoveF','uSave','cSave','tieSave','mbSave']);
 const DENY='Seu perfil não permite esta ação.';
 A.offSync=()=>trySync(true);
 // Conflitos de placar (lançado offline × o que já estava online): as duas versões ficam guardadas até alguém autorizado decidir.
@@ -2755,13 +2765,13 @@ async function mkOpen0(d){
  const el=modal('<div class="mkwrap"></div>',{cls:'mk',mk:true,done:mkGone});el.parentElement.classList.add('mkov');
  mkPaint();mkTouch();if(mk.dirty)mkSend()}
 function mkGone(){const me=mk;if(!me)return;clearTimeout(me.idle);clearTimeout(me.othT);clearTimeout(me.bgT);try{me.wl&&me.wl.release()}catch(e){}mkKeep();mk=null;setTimeout(()=>{if(!stack.length)render()},0)}
-function mkPaint(){if(!mk)return;const o=stack.find(z=>z.opt.mk);if(!o)return;const w=o.ov.querySelector('.mkwrap');if(!w)return;
+function mkPaint(){if(!mk)return;{const L=mkLock(),n=L?(L.n||'Outro celular'):'';if(n&&n!==mk.lockWas&&!mk.wait&&!mk.done)toast('🔒 '+n+' está marcando este jogo'+(L.master?'':' pela sua dupla')+'. Este celular só acompanha o placar.');mk.lockWas=n}const o=stack.find(z=>z.opt.mk);if(!o)return;const w=o.ov.querySelector('.mkwrap');if(!w)return;
  const keep=w.querySelector('.mkpan select,.mkpan input'),sel=keep?{by:(w.querySelector('[name=by]')||{}).value,byn:(w.querySelector('[name=byn]')||{}).value}:null;
  w.innerHTML=mkHTML();if(sel){const b=w.querySelector('[name=by]'),n=w.querySelector('[name=byn]');if(b&&sel.by!=null){b.value=sel.by;const o2=w.querySelector('.byo');if(o2)o2.hidden=b.value!=='o'}if(n&&sel.byn!=null)n.value=sel.byn}}
 function mkHTML(){const x=findMatch(mk.id);if(!x)return'<div class="mkdim"><div class="mkpan"><h3>Confronto removido</h3><p>Este confronto não existe mais.</p><button class="pill" data-a="closeM">Fechar</button></div></div>';
  const{m,c,r}=x,L=mk.st,[wa,wb]=lvWins(L),dec=wa>=need(m)||wb>=need(m),end=lvEnd(L),onze=!end&&(L.p[0]===11||L.p[1]===11),one=m.bo===1,val=onze?1:L.t;
  const NA=esc(dl(T(m.a))),NB=esc(dl(T(m.b)));
- const sync=!CLOUD?'':mkOthOn()?'<span class="mks oth">⚠ Outro celular está marcando este jogo</span>':mk.off?'<span class="mks off">Sem internet · marcando neste celular</span>':mk.dirty||mk.busy?'<span class="mks">enviando…</span>':'<span class="mks">sincronizado</span>';
+ const lkH=mkLock();const sync=!CLOUD?'':lkH?'<button type="button" class="mks lock" data-a="mkLockInfo">🔒 '+esc(lkH.n||'Outro celular')+' está marcando este jogo</button>':mkOthOn()?'<span class="mks oth">⚠ Outro celular está marcando este jogo</span>':mk.off?'<span class="mks off">Sem internet · marcando neste celular</span>':mk.dirty||mk.busy?'<span class="mks">enviando…</span>':'<span class="mks">sincronizado</span>';
  const team=(i,nmx)=>'<div class="mkt"><div class="mkn">'+nmx+'</div><div class="mkp">'+L.p[i]+'</div><button class="mkminus" data-a="mkSub" data-s="'+i+'" '+(L.p[i]?'':'disabled')+' aria-label="Tirar 1 ponto de '+nmx+'">−</button>'+
   '<button class="mkplus'+(val>1?' hot':'')+'" data-a="mkAdd" data-s="'+i+'" '+(end?'disabled':'')+' aria-label="Mão para '+nmx+': mais '+val+'"><span class="s1">♣</span><big>+'+val+'</big><em>'+(onze?'mão de onze':TRN[val][2])+'</em><span class="s2">♣</span></button></div>';
  const tr=onze?'<div class="mktr off"><div style="flex:1"><b>MÃO DE ONZE</b><small>esta mão vale 1 ponto</small></div></div>'
@@ -2776,16 +2786,28 @@ function mkHTML(){const x=findMatch(mk.id);if(!x)return'<div class="mkdim"><div 
    '<p class="err" role="alert"></p><button class="pill" type="submit">'+(visitor?'Confirmar placar':'Salvar resultado')+'</button><button type="button" class="pill ghost" data-a="mkHide">Voltar e corrigir a marcação</button></form>'}
  else if(end&&!mk.hide){const n=L.s.length+1;pan='<h3>Partida '+n+' encerrada</h3><p>'+(L.p[0]===12?NA:NB)+' venceu a partida '+n+'.</p><div class="mkfin"><span>'+NA+'</span>'+L.p[0]+' × '+L.p[1]+'<span>'+NB+'</span></div><p class="mkgl">Disputa: '+wa+' × '+wb+'</p><button class="pill" data-a="mkNext">Começar a Partida '+(n+1)+'</button><button class="pill ghost" data-a="mkHide">Voltar e corrigir a marcação</button>'}
  return'<div class="mkh"><button class="mkib" data-a="closeM" aria-label="Sair do marcador">'+I.back+'</button><div class="mkhd"><b>'+esc(c.name)+'</b><small>'+esc(r.title)+' · '+(one?'Partida única':'Melhor de 3 · Partida '+Math.min(3,L.s.length+1))+'</small></div><button class="mkib" data-a="mkUndo" '+(mk.undo.length&&!mk.wait&&!mk.done?'':'disabled')+' aria-label="Desfazer a última marcação">↶</button></div>'+sync+
-  '<div class="mkts">'+team(0,NA)+team(1,NB)+'</div><div class="mkf">'+tr+(one?'':'<div class="mkb"><small>PARTIDAS</small><b>'+wa+' × '+wb+'</b></div>')+'</div>'+(pan?'<div class="mkdim"><div class="mkpan">'+pan+'</div></div>':'')}
+  '<div class="mkts'+(lkH?' lkd':'')+'">'+team(0,NA)+team(1,NB)+'</div><div class="mkf">'+tr+(one?'':'<div class="mkb"><small>PARTIDAS</small><b>'+wa+' × '+wb+'</b></div>')+'</div>'+(pan?'<div class="mkdim"><div class="mkpan">'+pan+'</div></div>':'')}
 // cada marcação: guarda o estado anterior (para desfazer), grava neste aparelho e envia
-function mkDo(fn){if(!mk||mk.wait||mk.done||mk.div)return;const before=JSON.stringify(mk.st),st=JSON.parse(before);fn(st);if(JSON.stringify(st)===before)return;mk.undo.push(before);if(mk.undo.length>80)mk.undo.shift();mk.st=st;mk.hide=false;mkChanged()}
+// Trava por dupla: enquanto um celular da dupla marca (última marcação há menos de 2 min), o parceiro só acompanha
+// (e confirma o placar no fim). Depois de 2 min sem marcação, libera sozinho. A outra dupla e o master não são travados.
+const MKHOLD=120;
+function mkLock(){if(!mk||!CLOUD||!visitor)return null;const x=findMatch(mk.id),S=LIVE.get(mk.id);if(!x||!S||!S.h)return null;
+ if(S.h.M)return{...S.h.M,s:0,master:true};   // o organizador está marcando: trava as duas duplas, sem prazo
+ const age=h=>(h.age||0)+(Date.now()-(S.ht||Date.now()))/1000,act=h=>h&&age(h)<MKHOLD?{...h,s:Math.max(0,Math.round(age(h)))}:null;
+ if(!(x.c.teamMode||x.c.confirmBoth))return null;const sd=lkSide(x.m),h=sd&&S.h[sd];if(!h||(lkLink&&h.k===lkLink.hk))return null;return act(h)}
+async function mkLockInfo(){const me=mk,h=mkLock();if(!me||!h||me.asking)return;me.asking=true;const n=esc(h.n||'Outro celular'),r=Math.max(1,MKHOLD-h.s);
+ if(h.master){await confirmBox({title:'Marcação travada',msg:'<b>'+n+'</b> está marcando este jogo.<br><br>Enquanto o organizador marca, as duplas só acompanham o placar ao vivo e, no fim, confirmam o placar.',alertOnly:true});me.asking=false;return}
+ await confirmBox({title:'Marcação travada',msg:'<b>'+n+'</b> está marcando este jogo pela sua dupla (última marcação há '+h.s+' s).<br><br>Para não contar ponto duas vezes, só um celular de cada dupla marca. Este celular acompanha o placar ao vivo e, no fim, pode confirmar o placar.<br><br>Se o celular de <b>'+n+'</b> parar de marcar, este libera sozinho em até '+(r>=60?Math.ceil(r/60)+' min':r+' s')+'.',alertOnly:true});
+ me.asking=false}
+A.mkLockInfo=()=>mkLockInfo();
+function mkDo(fn){if(!mk||mk.wait||mk.done||mk.div)return;if(mkLock())return mkLockInfo();const before=JSON.stringify(mk.st),st=JSON.parse(before);fn(st);if(JSON.stringify(st)===before)return;mk.undo.push(before);if(mk.undo.length>80)mk.undo.shift();mk.st=st;mk.hide=false;mkChanged()}
 function mkChanged(){mk.ver++;mk.dirty=true;mkKeep();mkTouch();mkPaint();clearTimeout(mk.bgT);mk.bgT=setTimeout(()=>{if(mk&&!typing())render()},350);mkSend()}
 A.mkAdd=d=>mkDo(L=>{const i=+d.s;if(lvEnd(L))return;const v=L.p[0]===11||L.p[1]===11?1:L.t;L.p[i]=Math.min(12,L.p[i]+v);L.t=1});
 A.mkSub=d=>mkDo(L=>{const i=+d.s;if(L.p[i]>0)L.p[i]--;L.t=1});
 A.mkTruco=()=>mkDo(L=>{const nx={1:3,3:6,6:9,9:12}[L.t];if(nx&&!lvEnd(L)&&L.p[0]!==11&&L.p[1]!==11)L.t=nx});
 A.mkTrucoX=()=>mkDo(L=>{L.t=1});
 A.mkNext=()=>{const x=mk&&findMatch(mk.id);if(!x||lvDecided(x.m,mk.st))return;mkDo(L=>{if(lvEnd(L)){L.s.push([L.p[0],L.p[1]]);L.p=[0,0];L.t=1}})};
-A.mkUndo=()=>{if(!mk||!mk.undo.length||mk.wait||mk.done)return;mk.st=JSON.parse(mk.undo.pop());mk.hide=false;mkChanged()};
+A.mkUndo=()=>{if(!mk||!mk.undo.length||mk.wait||mk.done)return;if(mkLock())return mkLockInfo();mk.st=JSON.parse(mk.undo.pop());mk.hide=false;mkChanged()};
 A.mkHide=()=>{if(mk){mk.hide=true;mkPaint()}};
 // envio ao banco: só o estado mais recente importa; com versão velha, o servidor devolve o placar dele
 async function mkSend(){const me=mk;if(!me||!me.dirty||me.asking)return;
@@ -2794,23 +2816,28 @@ async function mkSend(){const me=mk;if(!me||!me.dirty||me.asking)return;
  try{res=visitor?await rpc('gc_live_save_link',{p_token:lkTok(),p_match_id:me.id,p_data:data,p_expected_rev:me.rev,p_device:devTok()},true):await rpc('gc_live_save_admin',{p_match_id:me.id,p_data:data,p_expected_rev:me.rev})}
  catch(e){me.busy=false;if(mk!==me)return;if(!e.status){me.lost=[...(me.lost||[]),JSON.stringify(data)].slice(-6);if(!me.off){me.off=true;me.offSince=Date.now();mkPaint()}return}me.dirty=false;mkKeep();mkPaint();return toast(errTxt(e),'err')}
  me.busy=false;if(mk!==me)return;
- if(res.ok){me.lost=null;me.rev=res.rev;LIVE.set(me.id,{d:data,rev:res.rev});me.off=false;if(me.ver===ver)me.dirty=false;mkKeep();mkPaint();if(me.dirty)mkSend();return}
+ // outro celular DA MESMA DUPLA está marcando: esta marcação não vale; mostra o placar do banco e trava
+ if(res.reason==='bloqueado'){const x=findMatch(me.id),sd=x&&lkSide(x.m),o=LIVE.get(me.id)||{},now=Date.now(),h={};for(const[k,v]of Object.entries(o.h||{}))h[k]={...v,age:(v.age||0)+(now-(o.ht||now))/1000};
+  const hk=res.master?'M':sd;if(hk)h[hk]={k:'?',n:res.holder||'',age:+res.age||0};const d=res.data||o.d||(x?mkNew(x.m):{s:[],p:[0,0],t:1});LIVE.set(me.id,{d,rev:res.rev,chg:o.chg||0,h,ht:now});
+  me.st=JSON.parse(JSON.stringify(d));me.rev=res.rev;me.undo=[];me.dirty=false;me.off=false;me.lost=null;mkKeep();mkPaint();render();
+  return toast((res.holder||'Outro celular')+' está marcando este jogo'+(res.master?'':' pela sua dupla')+'. Esta marcação não foi registrada.','err')}
+ if(res.ok){me.lost=null;me.rev=res.rev;liveOwn(me.id,data,res.rev,true);me.off=false;if(me.ver===ver)me.dirty=false;mkKeep();mkPaint();if(me.dirty)mkSend();return}
  // a marcação deste celular CHEGOU ao banco, mas a resposta se perdeu na rede: é a nossa, não de outro celular
- if(res.data&&me.lost&&me.lost.includes(JSON.stringify(res.data))){me.lost=null;me.rev=res.rev;me.off=false;LIVE.set(me.id,{d:res.data,rev:res.rev});if(JSON.stringify(me.st)===JSON.stringify(res.data))me.dirty=false;mkKeep();mkPaint();if(me.dirty)mkSend();return}
+ if(res.data&&me.lost&&me.lost.includes(JSON.stringify(res.data))){me.lost=null;me.rev=res.rev;me.off=false;liveOwn(me.id,res.data,res.rev,true);if(JSON.stringify(me.st)===JSON.stringify(res.data))me.dirty=false;mkKeep();mkPaint();if(me.dirty)mkSend();return}
  me.lost=null;if(res.data&&JSON.stringify(res.data)!==JSON.stringify(data))mkOther(me,true);
- if(!res.data||JSON.stringify(res.data)===JSON.stringify(data)){me.rev=res.rev;if(!res.data)return mkSend();LIVE.set(me.id,{d:data,rev:res.rev});me.off=false;if(me.ver===ver)me.dirty=false;mkKeep();mkPaint();if(me.dirty)mkSend();return}
+ if(!res.data||JSON.stringify(res.data)===JSON.stringify(data)){me.rev=res.rev;if(!res.data)return mkSend();liveOwn(me.id,data,res.rev,false);me.off=false;if(me.ver===ver)me.dirty=false;mkKeep();mkPaint();if(me.dirty)mkSend();return}
  // sem internet e os dois celulares marcaram: pergunta (uma vez só). Se o outro já terminou a partida (12), este marcava em cima de placar velho: adota o do outro.
  if(me.off&&!lvEnd(res.data)){if(me.asking)return;me.asking=true;const keep=await confirmBox({title:'Placar marcado em outro celular',msg:'Enquanto este celular estava sem internet, este confronto também foi marcado em outro celular.<br><br>Outro celular: <b>'+esc(lvTxt(res.data))+'</b><br>Este celular: <b>'+esc(lvTxt(me.st))+'</b><br><br>Qual deve continuar valendo no marcador?',ok:'Usar o deste celular',cancel:'Usar o do outro celular'});
   me.asking=false;if(mk!==me)return;me.rev=res.rev;me.off=false;if(keep){me.dirty=true;return mkSend()}}
  else{me.off=false;toast('O outro celular marcou ao mesmo tempo. O placar foi atualizado: confira e marque de novo, se precisar.','err')}
- me.st=JSON.parse(JSON.stringify(res.data));me.rev=res.rev;me.undo=[];me.dirty=false;me.hide=false;LIVE.set(me.id,{d:res.data,rev:res.rev});mkKeep();mkPaint();render()}
+ me.st=JSON.parse(JSON.stringify(res.data));me.rev=res.rev;me.undo=[];me.dirty=false;me.hide=false;liveOwn(me.id,res.data,res.rev,false);mkKeep();mkPaint();render()}
 // o que chegou do banco (outro celular marcou, ou o resultado passou a valer)
 function mkRemote(){if(!mk)return;const x=findMatch(mk.id);if(!x)return mkPaint();
  if(!mk.done&&(mStatus(x.m)==='done'||x.m.pending)){mk.done=x.m.pending?'pend':'done';mk.dirty=false;mkKeep();return mkPaint()}
  if(mk.dirty||mk.busy||mk.wait||mk.div)return;const S=LIVE.get(mk.id);if(S&&S.rev>mk.rev){mk.st=JSON.parse(JSON.stringify(S.d));mk.rev=S.rev;mk.undo=[];mk.hide=false;mkOther(mk);mkPaint()}}
 // Outro celular marcando o MESMO jogo: aviso (as duas duplas marcando a mesma mão contariam o ponto duas vezes)
 function mkOthOn(){return!!mk&&!!mk.oth&&Date.now()-mk.oth<MKOTH&&!mk.wait&&!mk.done&&!mk.div}
-function mkOther(me,quiet){if(!me)return;const fresh=!me.oth||Date.now()-me.oth>=MKOTH;me.oth=Date.now();clearTimeout(me.othT);me.othT=setTimeout(()=>{if(mk===me)mkPaint()},MKOTH+100);if(fresh&&!quiet&&mk===me)toast('Outro celular está marcando este jogo. Para não contar a mesma mão duas vezes, só um celular deve marcar.','err')}
+function mkOther(me,quiet){if(!me)return;const fresh=!me.oth||Date.now()-me.oth>=MKOTH;me.oth=Date.now();clearTimeout(me.othT);me.othT=setTimeout(()=>{if(mk===me)mkPaint()},MKOTH+100);if(fresh&&!quiet&&mk===me&&!mkLock())toast('Outro celular está marcando este jogo. Para não contar a mesma mão duas vezes, só um celular deve marcar.','err')}
 // fim do jogo: organizador grava o resultado; pelo link, vale como o informe desta dupla
 F.mkFinF=async f=>{if(!mk)return;const x=findMatch(mk.id);if(!x)return;const{m,c,r}=x,L=mk.st;if(!lvDecided(m,L))return;const sets=lvSets(L),btn=f.querySelector('button[type=submit]');if(btn&&btn.disabled)return;
  if(!visitor){const lk0=phaseLock(c,x.ph);if(lk0)return setErr(f,lk0[0]+': '+lk0[1]);await commitScore(f,x,sets,'done',btn);if(mk&&mStatus(m)==='done'){mk.done='done';mkKeep()}return}
@@ -2832,7 +2859,7 @@ async function mkWake(on){const me=mk;if(!me)return;try{if(on){if(!me.wl&&naviga
 function mkTouch(){if(!mk)return;clearTimeout(mk.idle);mkWake(true);mk.idle=setTimeout(()=>mkWake(false),5*60*1000)}
 document.addEventListener('visibilitychange',()=>{if(mk&&document.visibilityState==='visible')mkTouch()});
 document.addEventListener('pointerdown',()=>{if(mk)mkTouch()},true);
-setInterval(()=>{if(mk&&mk.dirty&&!mk.busy&&!mk.asking&&CLOUD&&!document.hidden)mkSend();if(mk){const v=mkOthOn();if(v!==!!mk.othV){mk.othV=v;mkPaint()}}mkFlushBg()},4000);
+setInterval(()=>{if(mk&&mk.dirty&&!mk.busy&&!mk.asking&&CLOUD&&!document.hidden)mkSend();if(mk){const v=mkOthOn(),w=!!mkLock();if(v!==!!mk.othV||w!==!!mk.lockV){mk.othV=v;mk.lockV=w;mkPaint()}}mkFlushBg()},4000);
 // Marcação feita sem internet e marcador já FECHADO: envia sozinha quando a internet volta (com qualquer tela do app aberta).
 // Se outro celular marcou o mesmo confronto nesse meio-tempo, não sobrescreve: espera abrir o marcador, que pergunta qual vale.
 const mkBg={busy:false,skip:new Set()};
@@ -2842,7 +2869,8 @@ async function mkFlushBg(){if(!CLOUD||document.hidden||mkBg.busy||!loaded)return
    const x=findMatch(id),drop=()=>{try{localStorage.removeItem(k)}catch(e){}};if(!x||mStatus(x.m)==='done'||x.m.pending){drop();continue}
    const send=rev=>visitor?rpc('gc_live_save_link',{p_token:o.tok,p_match_id:id,p_data:o.st,p_expected_rev:rev,p_device:devTok()},true):rpc('gc_live_save_admin',{p_match_id:id,p_data:o.st,p_expected_rev:rev});
    let r;try{r=await send(o.rev);if(!r.ok&&!r.data)r=await send(r.rev);if(!r.ok&&r.data&&JSON.stringify(r.data)===JSON.stringify(o.st))r={ok:true,rev:r.rev}}catch(e){if(!e.status)break;drop();continue}
-   if(r.ok){drop();LIVE.set(id,{d:o.st,rev:r.rev});if(!stack.length)render()}else mkBg.skip.add(id+':'+o.rev)}}
+   if(r&&r.reason==='bloqueado'){drop();continue}
+   if(r.ok){drop();liveOwn(id,o.st,r.rev,true);if(!stack.length)render()}else mkBg.skip.add(id+':'+o.rev)}}
  finally{mkBg.busy=false}}
 // Notificações do master: ao abrir o app, some da barra o aviso de confronto que já foi resolvido (e os "✓ Resolvido" já vistos)
 async function notifSweep(){if(!CLOUD||loaded!=='admin'||!isMaster()||document.hidden||!('serviceWorker' in navigator))return;
