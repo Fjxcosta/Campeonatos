@@ -85,6 +85,16 @@ select,.inp{height:40px;border:1px solid #C9D3CD;border-radius:10px;padding:0 10
 .crumb a:hover{text-decoration:underline}
 .crumb .sp{flex:1}
 .kpis{display:flex;gap:14px;flex-wrap:wrap;margin:14px 0 24px}
+.dhead{display:flex;align-items:center;gap:12px;margin-bottom:12px}.dhead img{width:44px;height:44px;border-radius:11px;box-shadow:0 2px 6px rgba(0,0,0,.2)}.dhead small{display:block;color:var(--t2);font-size:13px}
+.dkpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.dk{background:#fff;border:1px solid #DCE7E0;border-radius:16px;padding:14px 16px}.dk small{display:block;font-size:12px;font-weight:800;letter-spacing:.6px;color:#5B6B62}.dk b{display:block;font-size:32px;font-weight:900;color:#163F2E;line-height:1.1;margin-top:4px}.dk span{font-size:12.5px;color:#5B6B62}
+.dk.g b{color:#1F7A4D}.dk.y b{color:#9A6B00}.dk.r b{color:#B3261E}
+.dgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:16px 0 24px}
+.dbox{background:#F7FAF8;border:1px solid #DCE7E0;border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:8px;min-width:0}.dbox h2{margin:0 0 4px;font-size:15px}
+.drow{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #E3EAE6;border-radius:12px;background:#fff}.dtx{flex:1;min-width:0;font-size:13.5px}.dtx small{display:block;font-size:12px;color:#5B6B62}
+.dtag{font-size:11px;font-weight:800;padding:3px 8px;border-radius:999px;white-space:nowrap}.dtag.bad{background:#FBE3DF;color:#A3291D}.dtag.warn{background:#FFF4D6;color:#7A5A00}.dtag.ok{background:#E4F5EA;color:#15703F}.dtag.neu{background:#ECEFED;color:#4A5A50}
+.dbar>div{display:flex;justify-content:space-between;gap:8px;font-size:13px;font-weight:700}.dbar i{display:block;height:10px;border-radius:9px;background:#E8EFEA;margin-top:5px;overflow:hidden}.dbar i b{display:block;height:100%;background:linear-gradient(90deg,#FFD54A,#F5B400)}
+@media(max-width:600px){.dgrid{grid-template-columns:1fr}}
 .kpi{border:1px solid var(--line);border-radius:14px;padding:12px 18px;min-width:180px;background:#fff}
 .kpi small{display:flex;gap:6px;align-items:center;font-size:11px;letter-spacing:.08em;color:var(--t2);font-weight:600}
 .kpi small .ic{width:14px;height:14px;color:var(--g1)}
@@ -1209,7 +1219,7 @@ function download(blob,name){const a=document.createElement('a');a.href=URL.crea
 /* ===================== Acesso ===================== */
 const authed=()=>!CLOUD||!!sess;
 const LOGO='<img class="nlogo" src="icon-192.png" alt="">';
-const vLogin=()=>`<header class="top">${I.trophy}<span>Gerenciamento de Campeonatos</span></header><div class="wrap"><form class="modal" data-f="login" style="margin-top:6vh;box-shadow:0 8px 30px #16473420">
+const vLogin=()=>`<header class="top">${LOGO}<span class="nname">Nossa Liga</span></header><div class="wrap"><form class="modal" data-f="login" style="margin-top:6vh;box-shadow:0 8px 30px #16473420">
  <img class="lglogo" src="icon-192.png" alt="Nossa Liga" width="96" height="96"><div class="lgname">Nossa Liga</div><h3 style="margin:10px 0 2px;font-size:22px;text-align:center">Entrar</h3><p class="muted" style="margin:0 0 8px;text-align:center">Informe usuário e senha para acessar o sistema.</p>
  <label class="field"><span>Usuário ou e-mail</span><input class="inp" name="u" autocomplete="username" autocapitalize="none" autofocus></label>
  <label class="field"><span>Senha</span>${pwInp('p','current-password')}</label>
@@ -1370,9 +1380,27 @@ function vCaixa(){const k=db.caixa,sc=ui.cxScope&&(ui.cxScope==='all'||C(ui.cxSc
 function periodLabel(c){const MS=['jan.','fev.','mar.','abr.','mai.','jun.','jul.','ago.','set.','out.','nov.','dez.'],pt=d=>{const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(d||'');return m?{y:m[1],t:+m[3]+' '+MS[+m[2]-1]}:null},A=pt(c.startDate),B=pt(c.endDate),full=x=>x.t+' '+x.y;
  if(!A&&!B)return'Não informado';if(!A||!B)return full(A||B);if(c.startDate===c.endDate)return full(A);return(A.y===B.y?A.t:full(A))+' – '+full(B)}
 const firstInitial=n=>{const w=clean(n).split(' ')[0]||'';return Array.from(w)[0]?.toLocaleUpperCase('pt-BR')||'—'};
+// Painel do torneio (tela Início): números do dia, o que precisa de atenção, ao vivo, andamento e próximos jogos. Só consulta.
+function dashHTML(c){const all=c.phases.flatMap(ph=>ph.rounds.flatMap(r=>r.matches.map(m=>({m,r,ph})))).filter(x=>x.m.a&&x.m.b);
+ const ph=c.phases.find(p=>p.status!=='done'&&phMatches(p).some(m=>m.a&&m.b))||c.phases.find(p=>phMatches(p).some(m=>m.a&&m.b))||c.phases[0];
+ const ms=ph?phMatches(ph).filter(m=>m.a&&m.b):[],dn=ms.filter(m=>mStatus(m)==='done').length,open=x=>mStatus(x.m)!=='done'&&!x.m.pending;
+ const live=all.filter(x=>open(x)&&liveOf(x.m)),ncl=x=>x.m.claims?Object.keys(x.m.claims).filter(k=>x.m.claims[k]).length:0;
+ const wait=all.filter(x=>open(x)&&ncl(x)===1),div=all.filter(x=>open(x)&&ncl(x)===2),appr=all.filter(x=>mStatus(x.m)!=='done'&&x.m.pending);
+ const nm=id=>id&&T(id)?esc(dl(T(id))):'A definir';
+ const kpi=(n,l,sub,k)=>'<div class="dk '+k+'"><small>'+l+'</small><b>'+n+'</b><span>'+sub+'</span></div>';
+ const row=(x,tag,cls,extra)=>'<div class="drow"><span class="dtag '+cls+'">'+tag+'</span><div class="dtx"><b>'+nm(x.m.a)+'</b> × <b>'+nm(x.m.b)+'</b><small>'+esc(x.ph.name)+' · '+esc(x.r.title)+(extra?' · '+extra:'')+'</small></div><button class="pill sm ghost" data-a="mMenu" data-id="'+x.m.id+'">Abrir</button></div>';
+ const att=[...div.map(x=>row(x,'Divergente','bad','placares diferentes')),...appr.map(x=>row(x,'Aprovar','warn','aguarda sua aprovação')),...wait.map(x=>row(x,'Aguardando','warn','falta a outra dupla'))];
+ const nr=ph&&ph.rounds.find(r=>r.matches.some(m=>m.a&&m.b&&mStatus(m)!=='done')),nxt=nr?nr.matches.filter(m=>m.a&&m.b&&mStatus(m)!=='done'&&!liveOf(m)&&!m.pending&&!(m.claims&&Object.keys(m.claims).length)).slice(0,4):[];
+ const bars=c.phases.map(p=>{const q=phMatches(p).filter(m=>m.a&&m.b),d=q.filter(m=>mStatus(m)==='done').length,t=q.length;return'<div class="dbar"><div><span>'+esc(p.name)+' · '+TYPE[p.type]+'</span><span>'+(t?d+' de '+t:'aguardando a fase anterior')+'</span></div><i><b style="width:'+(t?Math.round(d/t*100):0)+'%"></b></i></div>'}).join('');
+ return'<div class="dkpis">'+kpi(ms.length?dn+'/'+ms.length:'—','JOGOS DA FASE',ms.length?Math.round(dn/ms.length*100)+'% concluído':'sem jogos gerados','')+kpi(live.length,'AO VIVO AGORA','no marcador','g')+kpi(wait.length+appr.length,'AGUARDANDO',appr.length?'confirmação ou aprovação':'a outra dupla confirmar','y')+kpi(div.length,'DIVERGÊNCIAS',div.length?'precisam de você':'nenhuma','r')+'</div>'+
+  '<div class="dgrid"><section class="dbox"><h2>⚠ Precisa da sua atenção</h2>'+(att.join('')||'<p class="muted">Nada pendente.</p>')+'</section>'+
+  '<section class="dbox"><h2>♣ Ao vivo agora</h2>'+(live.map(x=>{const L=liveOf(x.m);return row(x,x.m.bo===1?L.p[0]+' × '+L.p[1]:lvWins(L).join(' × '),'ok','no marcador')}).join('')||'<p class="muted">Nenhum jogo sendo marcado.</p>')+'</section>'+
+  '<section class="dbox"><h2>Andamento por fase</h2>'+bars+'</section>'+
+  '<section class="dbox"><h2>Próximos jogos'+(nr?' · '+esc(nr.title):'')+'</h2>'+(nxt.map(m=>row({m,r:nr,ph},'A jogar','neu')).join('')||'<p class="muted">Nenhum jogo a iniciar.</p>')+'</section></div>'}
 function vHome(c){const sk=statusKey(c),teams=[...new Set(champTeams(c))].map(T).filter(t=>t&&t.players.length===2).sort((a,b)=>cmpN(dl(a),dl(b)));
- return`<div style="display:flex;gap:12px;align-items:center"><span class="trophy">${I.trophy}</span><h1 style="margin:0">${esc(c.name)}</h1></div>
- <div class="kpis"><div class="kpi"><small>${I.cal}PERÍODO</small><b>${esc(periodLabel(c))}</b></div><div class="kpi"><small>STATUS</small><b class="status-line"><i class="status-dot ${sk}" aria-hidden="true"></i>${esc(champStatus(c))}</b></div><div class="kpi"><small>${I.user}ORGANIZADOR</small><b>${esc(c.organizer||db.user.name||'Não informado')}</b></div>${c.result?.champion&&T(c.result.champion)?`<div class="kpi"><small>DUPLA CAMPEÃ</small><b>${esc(dl(T(c.result.champion)))}</b></div>`:''}</div>
+ return`<div class="dhead"><img src="icon-192.png" alt=""><div><h1 style="margin:0">${esc(c.name)}</h1><small>${sk==='done'?'Campeonato encerrado':'Painel do torneio · atualiza sozinho'}</small></div></div>
+ ${sk!=='prep'?dashHTML(c):''}
+ ${sk==='live'?'':`<div class="kpis"><div class="kpi"><small>${I.cal}PERÍODO</small><b>${esc(periodLabel(c))}</b></div><div class="kpi"><small>STATUS</small><b class="status-line"><i class="status-dot ${sk}" aria-hidden="true"></i>${esc(champStatus(c))}</b></div><div class="kpi"><small>${I.user}ORGANIZADOR</small><b>${esc(c.organizer||db.user.name||'Não informado')}</b></div>${c.result?.champion&&T(c.result.champion)?`<div class="kpi"><small>DUPLA CAMPEÃ</small><b>${esc(dl(T(c.result.champion)))}</b></div>`:''}</div>`}
  <section><h2>EQUIPES <small class="muted" style="font-weight:400">(${teams.length} duplas)</small></h2>
  ${teams.length?`<div class="team-grid">${teams.map(t=>`<div class="team-item"><div class="team-avatar" aria-label="Iniciais de ${esc(dl(t))}">${esc(firstInitial(P(t.players[0])?.name))}/${esc(firstInitial(P(t.players[1])?.name))}</div><div class="team-name">${esc(dl(t))}</div></div>`).join('')}</div>`:'<p class="empty">Nenhuma equipe inscrita neste campeonato.</p>'}</section>`}
 function getPhase(c){return c.phases.find(p=>p.id===ui.phase[c.id])||c.phases[0]}
@@ -2805,15 +2833,16 @@ A.confMine=async(d,el)=>{const i=+d.k,z=offConf[i],x=z&&findMatch(z.id),f=el.clo
 F.confNoop=()=>{};
 A.pwEye=(d,el)=>{const i=el.parentElement.querySelector('input');if(!i)return;const show=i.type==='password';i.type=show?'text':'password';el.innerHTML=show?I.eye:I.eyeOff;el.setAttribute('aria-pressed',String(show));el.setAttribute('aria-label',show?'Ocultar senha':'Mostrar senha')};
 // Primeiro acesso: enquanto a senha pessoal não for criada, o banco não entrega nenhum dado e esta é a única tela.
-const vFirst=()=>`<header class="top">${I.trophy}<span>Gerenciamento de Campeonatos</span></header><div class="wrap"><form class="modal" data-f="firstPw" style="margin-top:6vh;box-shadow:0 8px 30px #16473420"><h3 style="margin:0 0 6px">Criação de nova senha — Primeiro acesso</h3><p class="muted" style="margin:0 0 10px">Olá, ${esc(me.name||me.username||'')}. Antes de usar o sistema, crie a sua senha pessoal. A senha provisória deixa de valer.</p><label class="field"><span>Nova senha (mínimo 6 caracteres)</span>${pwInp('n','new-password','autofocus')}</label><label class="field"><span>Confirmar nova senha</span>${pwInp('c','new-password')}</label><p class="err" role="alert"></p><div class="acts"><button type="button" class="pill ghost" data-a="sair2">Sair</button><button class="pill">Salvar nova senha</button></div></form></div>`;
+const vFirst=()=>`<header class="top">${LOGO}<span class="nname">Nossa Liga</span></header><div class="wrap"><form class="modal" data-f="firstPw" style="margin-top:6vh;box-shadow:0 8px 30px #16473420"><h3 style="margin:0 0 6px">Criação de nova senha — Primeiro acesso</h3><p class="muted" style="margin:0 0 10px">Olá, ${esc(me.name||me.username||'')}. Antes de usar o sistema, crie a sua senha pessoal. A senha provisória deixa de valer.</p><label class="field"><span>Nova senha (mínimo 6 caracteres)</span>${pwInp('n','new-password','autofocus')}</label><label class="field"><span>Confirmar nova senha</span>${pwInp('c','new-password')}</label><p class="err" role="alert"></p><div class="acts"><button type="button" class="pill ghost" data-a="sair2">Sair</button><button class="pill">Salvar nova senha</button></div></form></div>`;
 F.firstPw=async f=>{const b=f.querySelector('.acts .pill:not(.ghost)');if(b.disabled)return;if(f.n.value.length<6)return setErr(f,'A nova senha precisa ter pelo menos 6 caracteres.');if(f.n.value!==f.c.value)return setErr(f,'As duas senhas não são iguais. Digite de novo.');b.disabled=true;
  try{const r=await rpc('gc_change_password',{p_old:null,p_new:f.n.value});if(!r||!r.ok){b.disabled=false;return setErr(f,'Não foi possível salvar a nova senha. Saia e entre de novo.')}me.must_change=false;pendingPw=f.n.value;loaded=null;render();toast('Senha criada. O acesso está liberado.')}
  catch(e){b.disabled=false;setErr(f,errTxt(e))}};
 /* ----- modo telão: tela cheia, só leitura, alterna sozinho entre classificação, jogos e chaveamento ----- */
+const tvWide=()=>innerWidth/Math.max(1,innerHeight)>=1.5;   // TV larga (16:9): 3 grupos lado a lado; quadrada (4:3): 2 + 1
 function vTelao(c,ro){cur.c=c;const ph=c.phases.find(p=>p.status!=='done'&&p.teamIds.length)||c.phases[c.phases.length-1];cur.ph=ph;const S=[];
  if(statusKey(c)==='done'&&c.result&&T(c.result.champion)){const R=c.result;S.push(['Classificação final','<div class="tv-pod">'+[['1º',R.champion],['2º',R.vice],['3º',R.third],['4º',R.fourth]].filter(x=>x[1]&&T(x[1])).map(([p,id],i)=>'<div class="tv-pl'+(i?'':' first')+'"><span class="posb">'+p+'</span><b>'+esc(dl(T(id)))+'</b>'+(i?'':I.trophy)+'</div>').join('')+'</div>'])}
  if(ph.type==='elim'){if(ph.rounds.length)S.push(['Chaveamento',bracketHTML(ph,ro)])}
- else if(ph.teamIds.length){const old=ui.cls;ui.cls=ph.groups.length?'g':'all';const n=standData(ph,!ph.groups.length).length;for(let i=0;i<n;i+=4){const k=Math.min(4,n-i);S.push(['Classificação'+(n>4?' ('+(i/4+1)+'/'+Math.ceil(n/4)+')':''),'<div class="tv-grid tv-cls'+(k===3?' g3':k%2&&k>1?' odd':'')+'">'+standHTML(ph,[i,i+1,i+2,i+3])+'</div>'])}ui.cls=old}
+ else if(ph.teamIds.length){const old=ui.cls;ui.cls=ph.groups.length?'g':'all';const n=standData(ph,!ph.groups.length).length;for(let i=0;i<n;i+=4){const k=Math.min(4,n-i);S.push(['Classificação'+(n>4?' ('+(i/4+1)+'/'+Math.ceil(n/4)+')':''),'<div class="tv-grid tv-cls'+(k===3&&tvWide()?' g3':k%2&&k>1?' odd':'')+'">'+standHTML(ph,[i,i+1,i+2,i+3])+'</div>'])}ui.cls=old}
  const rs=ro?ph.rounds.filter(r=>!r.hidden):ph.rounds,rd=rs.find(r=>r.matches.some(m=>m.a&&m.b&&mStatus(m)!=='done'))||rs[rs.length-1];
  if(rd&&rd.matches.length)for(let i=0;i<rd.matches.length;i+=8)S.push(['Jogos — '+rd.title+(rd.matches.length>8?' ('+(i/8+1)+'/'+Math.ceil(rd.matches.length/8)+')':''),'<div class="tv-grid">'+rd.matches.slice(i,i+8).map(m=>matchCard(m,rd,true)).join('')+'</div>']);
  if(!S.length)S.push(['Aguardando','<p class="empty" style="font-size:22px">O campeonato ainda não tem jogos para exibir.</p>']);
@@ -2996,7 +3025,7 @@ window.addEventListener('storage',e=>{if(CLOUD||e.key!==KEY)return;const id={c:c
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){navigator.serviceWorker.register('sw.js').catch(()=>{});navigator.serviceWorker.addEventListener('message',e=>{const u=e.data&&e.data.type==='abrir'&&String(e.data.url||'');if(u&&/^#\//.test(u)){while(stack.length)closeModal(true);location.hash=u}})}
 if(CLOUD)setDb({});else load();
 {const base=render;render=function(){base();try{if(document.getElementById('pushSt'))pushPaint();document.body.classList.toggle('tvon',!!document.querySelector('.tv'));drawBracket();fitTelao()}catch(e){}}}
-window.addEventListener('resize',()=>{try{fitTelao();drawBracket()}catch(e){}});if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{try{drawBracket();fitTelao()}catch(e){}});
+window.addEventListener('resize',()=>{try{const g=document.querySelector('.tv-cls');if(g&&g.querySelectorAll(':scope>.gcard').length===3&&g.classList.contains('g3')!==tvWide())render();fitTelao();drawBracket()}catch(e){}});if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{try{drawBracket();fitTelao()}catch(e){}});
 /* ----- aviso de nova versão: compara o arquivo publicado com o que está rodando ----- */
 const upd={base:null,hideUntil:0,on:false};
 async function updHash(){const r=await fetch(location.pathname.replace(/[^/]*$/,'')+'index.html?v='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('http');const t=await r.text();
