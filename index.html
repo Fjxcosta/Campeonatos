@@ -541,6 +541,7 @@ table.rk tr.qt .posb{background:#DBEAFE;color:#1E3A8A;box-shadow:inset 0 0 0 1.5
 .pill:disabled{cursor:not-allowed}
 .sbox.pend{border-style:dashed;border-color:#C9A227;color:#5C4300}
 .mkico{display:inline-grid;place-items:center;width:20px;font-size:18px}
+.lglogo{width:96px;height:96px;display:block;margin:0 auto;border-radius:22px;box-shadow:0 6px 18px rgba(0,0,0,.18)}.lgname{text-align:center;font-weight:900;font-size:20px;color:#164734;margin-top:10px}
 .ov.mkov{padding:0;place-items:stretch;background:#0b1f17}
 .modal.mk{max-width:none;max-height:none;height:100%;min-height:100dvh;border-radius:0;padding:0;position:relative;overflow:hidden;color:#fff;display:flex;flex-direction:column;
  background:radial-gradient(120% 80% at 50% 30%,#1f6b4b 0%,#14513a 45%,#0e3d2b 100%);user-select:none;-webkit-user-select:none;touch-action:manipulation}
@@ -571,6 +572,34 @@ table.rk tr.qt .posb{background:#DBEAFE;color:#1E3A8A;box-shadow:inset 0 0 0 1.5
 .mktr:disabled{opacity:.6}
 .mkcan{align-self:center;font-size:12.5px;font-weight:600;text-decoration:underline;opacity:.85;padding:2px 8px}
 .mkb{text-align:center}.mkb small{display:block;font-weight:700;font-size:11px;opacity:.75;letter-spacing:1px}.mkb b{font-weight:900;font-size:24px}
+/* ----- marcador: estilo "Feltro e ouro" (luzes douradas até 12); no computador, numa coluna no meio ----- */
+.modal.mk{background:#0b3a28}
+.mkwrap{position:relative;flex:1;min-height:0;width:100%;max-width:560px;margin:0 auto;display:flex;flex-direction:column;overflow:hidden;
+ background:repeating-linear-gradient(45deg,rgba(255,255,255,.025) 0 2px,transparent 2px 6px),radial-gradient(ellipse at 50% 30%,#23805a 0%,#145c3f 55%,#0b3a28 100%)}
+.mkwrap:before{content:"♣";position:absolute;left:50%;top:48%;transform:translate(-50%,-50%);font-size:320px;line-height:1;opacity:.035;pointer-events:none}
+.mkwrap>*{position:relative}
+.mkts{gap:12px;padding:10px 14px 0;align-content:center;flex:none;margin-top:auto}
+.mkt{gap:12px;padding:0}
+.mkbx{width:100%;background:rgba(0,0,0,.22);border:1.5px solid rgba(255,255,255,.14);border-radius:20px;padding:10px 8px 12px;display:flex;flex-direction:column;align-items:center;gap:4px}
+.mkbx.lead{border-color:#FFD54A;box-shadow:0 0 0 3px rgba(255,213,74,.18)}
+.mkn{font-weight:800;font-size:14px;min-height:34px}
+.mkp{font-size:clamp(58px,17vw,92px);letter-spacing:-2px;margin:2px 0}
+.mkseg{display:grid;grid-template-columns:repeat(12,1fr);gap:2px;width:100%;padding:0 2px;margin-top:4px}
+.mkseg i{height:10px;border-radius:2px;background:rgba(0,0,0,.35)}.mkseg i.on{background:#FFD54A;box-shadow:0 0 6px rgba(255,213,74,.7)}
+.mkfal{font-size:11.5px;font-weight:700;opacity:.85;min-height:15px}
+.mkminus{width:40px;height:40px;font-size:22px;margin-top:4px;background:transparent;border-color:rgba(255,255,255,.3)}
+.mkplus{margin-top:0;width:100%;height:min(38vw,150px);border-radius:24px}
+.mkf{padding:14px 14px calc(14px + env(safe-area-inset-bottom));margin-bottom:auto}
+.mktr{min-height:58px;border-radius:18px;justify-content:center;gap:12px;padding:0 14px;border:0;background:linear-gradient(180deg,#FFE27A,#F5B400);color:#3B2C00!important;box-shadow:0 5px 0 #a87a00,0 10px 18px rgba(0,0,0,.3)}
+.mktr:active{transform:translateY(3px);box-shadow:0 2px 0 #a87a00}
+.mktr b{font-size:22px;letter-spacing:1px}.mktr small{display:none}
+.mktr .stp{display:flex;gap:4px}.mktr .stp span{font-size:11px;font-weight:800;padding:2px 6px;border-radius:7px;background:rgba(59,44,0,.12)}.mktr .stp span.on{background:#3B2C00;color:#FFD54A}
+.mktr.on{background:linear-gradient(180deg,#FFD54A,#E9A400)}
+.mktr.off{background:rgba(255,213,74,.18);color:#FFE9A6!important;box-shadow:none;border:1.5px solid rgba(255,213,74,.45)}.mktr.off small{display:block}
+.mktr:disabled{opacity:.5}
+.mkb{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:6px}.mkb small{margin:0 6px;font-size:11px}
+.mkdot{width:11px;height:11px;border-radius:50%;border:2px solid rgba(255,255,255,.6)}.mkdot.on{background:#FFD54A;border-color:#FFD54A}
+
 .mkdim{position:absolute;inset:0;background:rgba(0,0,0,.55);display:grid;place-items:center;padding:16px;z-index:2}
 .mkpan{width:100%;max-width:420px;background:#fff;color:#20302A;border-radius:22px;padding:20px;box-shadow:0 20px 40px rgba(0,0,0,.4)}
 .mkpan h3{margin:0 0 4px;font-size:20px}.mkpan p{margin:0 0 10px;color:#4A5A50}
@@ -1125,7 +1154,7 @@ function download(blob,name){const a=document.createElement('a');a.href=URL.crea
 /* ===================== Acesso ===================== */
 const authed=()=>!CLOUD||!!sess;
 const vLogin=()=>`<header class="top">${I.trophy}<span>Gerenciamento de Campeonatos</span></header><div class="wrap"><form class="modal" data-f="login" style="margin-top:6vh;box-shadow:0 8px 30px #16473420">
- <span class="mico">${I.shield}</span><h3 style="margin:12px 0 2px;font-size:22px">Entrar</h3><p class="muted" style="margin:0 0 8px">Informe usuário e senha para acessar o sistema.</p>
+ <img class="lglogo" src="icon-192.png" alt="Nossa Liga" width="96" height="96"><div class="lgname">Nossa Liga</div><h3 style="margin:10px 0 2px;font-size:22px;text-align:center">Entrar</h3><p class="muted" style="margin:0 0 8px;text-align:center">Informe usuário e senha para acessar o sistema.</p>
  <label class="field"><span>Usuário ou e-mail</span><input class="inp" name="u" autocomplete="username" autocapitalize="none" autofocus></label>
  <label class="field"><span>Senha</span>${pwInp('p','current-password')}</label>
  <p class="err" role="alert"></p><div class="acts"><button class="pill big" style="width:100%">Entrar</button></div></form></div>`;
@@ -2772,10 +2801,11 @@ function mkHTML(){const x=findMatch(mk.id);if(!x)return'<div class="mkdim"><div 
  const{m,c,r}=x,L=mk.st,[wa,wb]=lvWins(L),dec=wa>=need(m)||wb>=need(m),end=lvEnd(L),onze=!end&&(L.p[0]===11||L.p[1]===11),one=m.bo===1,val=onze?1:L.t;
  const NA=esc(dl(T(m.a))),NB=esc(dl(T(m.b)));
  const lkH=mkLock();const sync=!CLOUD?'':lkH?'<button type="button" class="mks lock" data-a="mkLockInfo">🔒 '+esc(lkH.n||'Outro celular')+' está marcando este jogo</button>':mkOthOn()?'<span class="mks oth">⚠ Outro celular está marcando este jogo</span>':mk.off?'<span class="mks off">Sem internet · marcando neste celular</span>':mk.dirty||mk.busy?'<span class="mks">enviando…</span>':'<span class="mks">sincronizado</span>';
- const team=(i,nmx)=>'<div class="mkt"><div class="mkn">'+nmx+'</div><div class="mkp">'+L.p[i]+'</div><button class="mkminus" data-a="mkSub" data-s="'+i+'" '+(L.p[i]?'':'disabled')+' aria-label="Tirar 1 ponto de '+nmx+'">−</button>'+
+ const seg=n=>'<div class="mkseg" aria-hidden="true">'+Array.from({length:12},(_,k)=>'<i'+(k<n?' class="on"':'')+'></i>').join('')+'</div>',fal=n=>n>=12?'fechou a partida':'faltam '+(12-n);
+ const team=(i,nmx)=>'<div class="mkt"><div class="mkbx'+(L.p[i]>L.p[1-i]?' lead':'')+'"><div class="mkn">'+nmx+'</div><div class="mkp">'+L.p[i]+'</div>'+seg(L.p[i])+'<div class="mkfal">'+fal(L.p[i])+'</div><button class="mkminus" data-a="mkSub" data-s="'+i+'" '+(L.p[i]?'':'disabled')+' aria-label="Tirar 1 ponto de '+nmx+'">−</button></div>'+
   '<button class="mkplus'+(val>1?' hot':'')+'" data-a="mkAdd" data-s="'+i+'" '+(end?'disabled':'')+' aria-label="Mão para '+nmx+': mais '+val+'"><span class="s1">♣</span><big>+'+val+'</big><em>'+(onze?'mão de onze':TRN[val][2])+'</em><span class="s2">♣</span></button></div>';
  const tr=onze?'<div class="mktr off"><div style="flex:1"><b>MÃO DE ONZE</b><small>esta mão vale 1 ponto</small></div></div>'
-  :'<button class="mktr'+(L.t>1?' on':'')+'" data-a="mkTruco" '+(end||L.t===12?'disabled':'')+'><span>♣</span><div><b>'+TRN[L.t][0]+'</b><small>'+TRN[L.t][1]+'</small></div><span>♣</span></button>'+(L.t>1&&!end?'<button class="mkcan" data-a="mkTrucoX">cancelar aposta (volta a valer 1)</button>':'');
+  :'<button class="mktr'+(L.t>1?' on':'')+'" data-a="mkTruco" '+(end||L.t===12?'disabled':'')+' aria-label="'+TRN[L.t][0]+' '+TRN[L.t][1]+'"><b>'+TRN[L.t][0]+'</b><span class="stp">'+[3,6,9,12].map(v=>'<span'+(v===L.t?' class="on"':'')+'>'+v+'</span>').join('')+'</span></button>'+(L.t>1&&!end?'<button class="mkcan" data-a="mkTrucoX">cancelar aposta (volta a valer 1)</button>':'');
  let pan='';
  if(mk.done)pan='<h3>'+(mk.done==='pend'?'Placar enviado':'Resultado confirmado')+'</h3><p>'+(mk.done==='pend'?'O placar aguarda a aprovação do organizador.':'O placar deste confronto já vale.')+'</p><div class="mkfin"><span>'+NA+'</span>'+esc(setsTxt(m.pending?m.pending.sets:m.sets).replace(/-/g,' × ')||'')+'<span>'+NB+'</span></div><button class="pill" data-a="closeM">Fechar</button>';
  else if(mk.div)pan='<h3>Placar divergente</h3><p>A outra dupla informou um placar diferente deste. Os dois aparecem no confronto: conversem e lancem de novo pelo “Informar placar”. O placar vale assim que os dois forem iguais.</p><button class="pill" data-a="closeM">Fechar</button>';
@@ -2785,8 +2815,8 @@ function mkHTML(){const x=findMatch(mk.id);if(!x)return'<div class="mkdim"><div 
    (visitor?(tm?'<p class="note" style="margin:0">O placar vale quando a outra dupla também confirmar (pelo marcador ou pelo “Informar placar”).</p>':byField(m)):'')+
    '<p class="err" role="alert"></p><button class="pill" type="submit">'+(visitor?'Confirmar placar':'Salvar resultado')+'</button><button type="button" class="pill ghost" data-a="mkHide">Voltar e corrigir a marcação</button></form>'}
  else if(end&&!mk.hide){const n=L.s.length+1;pan='<h3>Partida '+n+' encerrada</h3><p>'+(L.p[0]===12?NA:NB)+' venceu a partida '+n+'.</p><div class="mkfin"><span>'+NA+'</span>'+L.p[0]+' × '+L.p[1]+'<span>'+NB+'</span></div><p class="mkgl">Disputa: '+wa+' × '+wb+'</p><button class="pill" data-a="mkNext">Começar a Partida '+(n+1)+'</button><button class="pill ghost" data-a="mkHide">Voltar e corrigir a marcação</button>'}
- return'<div class="mkh"><button class="mkib" data-a="closeM" aria-label="Sair do marcador">'+I.back+'</button><div class="mkhd"><b>'+esc(c.name)+'</b><small>'+esc(r.title)+' · '+(one?'Partida única':'Melhor de 3 · Partida '+Math.min(3,L.s.length+1))+'</small></div><button class="mkib" data-a="mkUndo" '+(mk.undo.length&&!mk.wait&&!mk.done?'':'disabled')+' aria-label="Desfazer a última marcação">↶</button></div>'+sync+
-  '<div class="mkts'+(lkH?' lkd':'')+'">'+team(0,NA)+team(1,NB)+'</div><div class="mkf">'+tr+(one?'':'<div class="mkb"><small>PARTIDAS</small><b>'+wa+' × '+wb+'</b></div>')+'</div>'+(pan?'<div class="mkdim"><div class="mkpan">'+pan+'</div></div>':'')}
+ return'<div class="mkh"><button class="mkib" data-a="closeM" aria-label="Sair do marcador">'+I.back+'</button><div class="mkhd"><b>'+esc(c.name)+'</b><small>'+esc(r.title)+' · '+(one?'Partida única':'Melhor de 3 · Partida '+Math.min(3,L.s.length+1))+'</small></div><button class="mkib" data-a="mkUndo" '+(mk.undo.length&&!mk.wait&&!mk.done?'':'disabled')+' aria-label="Desfazer a última marcação">↶</button></div>'+sync+(one?'':'<div class="mkb" role="img" aria-label="Partidas '+wa+' × '+wb+'">'+'<i class="mkdot'+(wa>0?' on':'')+'"></i><i class="mkdot'+(wa>1?' on':'')+'"></i><small>PARTIDAS</small><i class="mkdot'+(wb>0?' on':'')+'"></i><i class="mkdot'+(wb>1?' on':'')+'"></i></div>')+
+  '<div class="mkts'+(lkH?' lkd':'')+'">'+team(0,NA)+team(1,NB)+'</div><div class="mkf">'+tr+'</div>'+(pan?'<div class="mkdim"><div class="mkpan">'+pan+'</div></div>':'')}
 // cada marcação: guarda o estado anterior (para desfazer), grava neste aparelho e envia
 // Trava por dupla: enquanto um celular da dupla marca (última marcação há menos de 2 min), o parceiro só acompanha
 // (e confirma o placar no fim). Depois de 2 min sem marcação, libera sozinho. A outra dupla e o master não são travados.
