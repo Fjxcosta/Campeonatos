@@ -973,9 +973,14 @@ const BOT={1:'Partida única',3:'Melhor de 3 partidas'};
    Nunca é resultado oficial: só a classificação exibida usa o ao vivo; finalizar fase, mata-mata e Ranking Geral usam só resultados gravados. */
 const LIVE=new Map();let mk=null;
 const MKOTH=45000;   // aviso "outro celular está marcando": some 45 s depois da última marcação do outro
+// placar visto pela 1ª vez (app recém-aberto): só conta como "outro celular marcando" se a última marcação, há pouco,
+// foi de OUTRO aparelho. Se foi este celular (ou, para o master, o próprio organizador), não avisa.
+function liveFirstOther(r){const t=Date.parse(r.at||'');if(!t||Math.abs(Date.now()-t)>=MKOTH)return 0;let last=null;
+ for(const v of Object.values(r.h||{}))if(v&&(!last||(v.age||0)<(last.age||0)))last=v;if(!last)return 0;
+ const mine=visitor?!!(lkLink&&lkLink.hk&&last.k===lkLink.hk):last.k==='org';return mine?0:Math.min(Date.now(),t)}
 function liveSet(rows){let ch=false;const seen=new Set();
  for(const r of arr(rows)){if(!r||!r.match_id||!r.data)continue;seen.add(r.match_id);const o=LIVE.get(r.match_id);const hs=h=>Object.entries(h||{}).map(([k,v])=>k+':'+v.k).sort().join(',');if(o&&o.rev===r.rev&&hs(o.h)!==hs(r.h)){LIVE.set(r.match_id,{...o,h:r.h||{},ht:Date.now()});ch=true}
-  if(!o||o.rev!==r.rev){const t=Date.parse(r.at||''),chg=o?(r.rev>o.rev?Date.now():o.chg||0):(t&&Math.abs(Date.now()-t)<MKOTH?Date.now()-Math.max(0,Date.now()-t):0);LIVE.set(r.match_id,{d:r.data,rev:r.rev,chg,h:r.h||{},ht:Date.now()});ch=true}}
+  if(!o||o.rev!==r.rev){const chg=o?(r.rev>o.rev?Date.now():o.chg||0):liveFirstOther(r);LIVE.set(r.match_id,{d:r.data,rev:r.rev,chg,h:r.h||{},ht:Date.now()});ch=true}}
  for(const k of [...LIVE.keys()])if(!seen.has(k)){LIVE.delete(k);ch=true}return ch}
 // gravação feita por ESTE aparelho: mantém o resto e, pelo link, registra este celular como quem marca pela dupla
 function liveOwn(id,d,rev,mine){const o=LIVE.get(id)||{},now=Date.now(),h={};for(const[k,v]of Object.entries(o.h||{}))h[k]={...v,age:(v.age||0)+(now-(o.ht||now))/1000};
@@ -1716,7 +1721,8 @@ A.pinNew=()=>pinNew(false);
 F.pinNewF=async f=>{const a=(f.pin.value||'').trim(),b=(f.pin2.value||'').trim();if(!/^\d{4}$/.test(a))return setErr(f,'O PIN tem 4 números.');if(a!==b)return setErr(f,'Os dois PINs não são iguais.');
  const tok=lkTok();let r;try{r=await rpc('gc_link_pin_set',{p_token:tok,p_device:devTok(),p_pin:a},true)}catch(e){return setErr(f,e.status?errTxt(e):'Sem internet: para criar o PIN é preciso estar conectado.')}
  if(!r.ok)return setErr(f,r.reason==='pin_existe'?'Você já tem um PIN. Se esqueceu, peça ao organizador para zerar.':r.reason==='sem_vinculo'?'Este navegador não está vinculado.':'Não foi possível criar o PIN.');
- while(stack.length)closeModal(true);try{await loadShared(tok)}catch(e){}render();toast('PIN criado. Guarde: você vai usar se abrir o link em outro navegador.')};
+ if(lkLink&&lkLink.me)lkLink.me.pin=true;   // a faixa "Crie seu PIN" some na hora, sem esperar a próxima atualização
+ while(stack.length)closeModal(true);render();try{await loadShared(tok)}catch(e){}render();toast('PIN criado. Guarde: você vai usar se abrir o link em outro navegador.')};
 A.bindWrong=async d=>{const tok=lkTok();try{await rpc('gc_link_report',{p_token:tok,p_device:devTok(),p_player:d.id},true)}catch(e){}while(stack.length)closeModal(true);alertBox('Procure o organizador','Avise o organizador para corrigir o cadastro da sua dupla. Este celular <b>não</b> foi vinculado.')};
 A.bindWatch=()=>{const t=lkTok();ui.watchMem=t;try{localStorage.setItem('gc_watch:'+t,'1')}catch(e){}render()};
 A.bindBack=()=>{const t=lkTok();ui.watchMem=null;try{localStorage.removeItem('gc_watch:'+t)}catch(e){}render()};
