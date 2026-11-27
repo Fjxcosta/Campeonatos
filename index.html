@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--g1:#164734;--g2:#30634B;--g3:#2ECD71;--bg:#F3F5F4;--w:#FFFFFF;--t1:#25332B;--t2:#66756B;--err:#FF3B30;--sel:#E8F2EC;--line:#DDE4DF}
+:root{--g1:#164734;--g2:#30634B;--g3:#2ECD71;--bg:#F3F5F4;--w:#FFFFFF;--t1:#25332B;--t2:#5E6D63;--err:#FF3B30;--errt:#C62828;--sel:#E8F2EC;--line:#DDE4DF}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%}
 body{font-family:Inter,Roboto,system-ui,Arial,sans-serif;background:var(--bg);color:var(--t1);font-size:15px;line-height:1.4}
@@ -52,8 +52,8 @@ h2{font-size:17px;margin:0 0 10px}
 .pill.ghost{background:transparent;border:1px solid var(--line);color:var(--t1)}
 .pill.big{height:42px;padding:0 24px;letter-spacing:.03em}
 .total{font-size:14px;margin:8px 0 10px}
-.err{color:var(--err);font-size:13px;margin:6px 0 0;min-height:0}
-.warn{color:var(--err);font-size:12px;margin:auto 0 0;padding-top:16px}
+.err{color:var(--errt);font-size:13px;margin:6px 0 0;min-height:0}
+.warn{color:var(--errt);font-size:12px;margin:auto 0 0;padding-top:16px}
 .rows{list-style:none;margin:0;padding:0}
 .rows li{display:flex;align-items:center;gap:10px;padding:8px 8px;border-bottom:1px solid var(--line);flex-wrap:wrap}
 .rows li.sel{background:var(--sel)}
@@ -204,7 +204,7 @@ td.tot{background:#E3F5EA !important}
 .pk{border:1px solid #C9D3CD;border-radius:999px;padding:8px 14px;background:#fff;font-size:14px}
 .pk:hover{border-color:var(--g1)}
 .pk.on{background:var(--g1);color:#fff;border-color:var(--g1);font-weight:600}
-.neg{color:var(--err)}
+.neg{color:var(--errt)}
 td.q{box-shadow:inset 4px 0 0 var(--g3);font-weight:700}
 td.qt{box-shadow:inset 4px 0 0 #E0A800;font-weight:700}
 .tks{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:10px 0 4px}
@@ -216,7 +216,7 @@ td.qt{box-shadow:inset 4px 0 0 #E0A800;font-weight:700}
 .tg .tn{font-size:14px;overflow-wrap:anywhere;line-height:1.25}.tg .tn.r{text-align:right}.tg .tn.me{font-weight:700;color:var(--g1)}
 .tg .tsc{display:flex;gap:6px;align-items:center;color:var(--t2);font-weight:700}
 .tg .tf{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
-.tg.win .tres{color:#12683A}.tg.loss .tres{color:var(--err)}.tg.pend .tres{color:var(--t2)}
+.tg.win .tres{color:#12683A}.tg.loss .tres{color:var(--errt)}.tg.pend .tres{color:var(--t2)}
 .scrim{display:none}
 @media(max-width:1180px){.split{grid-template-columns:1fr}}
 @media(max-width:900px){
@@ -512,7 +512,7 @@ table.rk tr.qt .posb{background:#DBEAFE;color:#1E3A8A;box-shadow:inset 0 0 0 1.5
 .bindl{max-height:46vh;overflow:auto;margin:0 0 10px}.bindl li{padding:0;border:0}.bindp{width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:16px;font-weight:600;color:var(--t1);cursor:pointer}.bindp:hover{border-color:var(--g2)}.bindp:disabled{opacity:.55;cursor:not-allowed}.bindp small{font-weight:500;color:var(--t2)}
 .bindacts{display:flex;flex-direction:column;gap:8px}.bindacts .pill{width:100%}
 .lkme{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#E8F6EE;border:1px solid #BFE5CF;border-radius:12px;padding:8px 12px;font-size:14px}.lkme svg{width:18px;height:18px}.lkme .pill{margin-left:auto}
-.lkt td,.lkt th{white-space:nowrap}.lkact{display:flex;gap:6px;flex-wrap:wrap}.lkpa .pill.red,.lkact .pill.red{color:var(--err);border-color:#F2A9A4;background:#fff}
+.lkt td,.lkt th{white-space:nowrap}.lkact{display:flex;gap:6px;flex-wrap:wrap}.lkpa .pill.red,.lkact .pill.red{color:var(--errt);border-color:#F2A9A4;background:#fff}
 .cptabs{display:flex;flex-wrap:wrap;gap:6px;border:0!important;border-radius:0!important;margin:4px 0 10px;background:none!important}.cptabs button{border:1px solid var(--g1)!important;border-radius:999px!important}
 @media (max-width:640px){.lkt thead{display:none}.lkt,.lkt tbody,.lkt tr,.lkt td{display:block;width:auto}.lkt tr{padding:10px 12px;border-bottom:1px solid var(--line)}.lkt td{height:auto!important;min-height:0!important;line-height:1.4!important;border:0!important;padding:1px 0!important;white-space:normal!important;text-align:left!important;background:none!important}
  .lkt td[data-l]:not(:first-child)::before{content:attr(data-l) ': ';color:var(--t2);font-size:12px}.lkt td:nth-child(2){font-size:14px}.lkt .lkact{margin-top:6px}}.lkhist li{font-size:14px}
@@ -681,6 +681,12 @@ table.cls .posb.lead{background:linear-gradient(180deg,#FFE27A,#F5B400)!importan
 .mbwarn{background:#FFF4D6;border:1px solid #F0D58A;color:#5A4300;border-radius:12px;padding:10px 12px;font-size:13.5px;line-height:1.45;margin:2px 0 10px}
 /* painel no celular: etiqueta em cima dos nomes, botão à direita — os nomes usam a largura toda */
 @media(max-width:560px){.drow{display:grid;grid-template-columns:1fr auto;column-gap:10px;row-gap:4px}.drow .dtag{justify-self:start;grid-column:1;grid-row:1}.drow .dtx{grid-column:1;grid-row:2}.drow>button{grid-column:2;grid-row:1/3;align-self:center}}
+
+/* Usuários e permissões no celular: cada usuário vira um cartão (Perfil, Caixa e os botões sempre visíveis) */
+@media(max-width:600px){.utw{border:0;overflow:visible}.utbl thead{display:none}.utbl,.utbl tbody{display:block}.utbl tr{display:grid;grid-template-columns:1fr auto;gap:2px 10px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:#fff}.utbl td{border:0!important;padding:0!important;background:transparent!important;text-align:left!important;font-size:14px}.utbl td:nth-child(1){grid-column:1;font-weight:600}.utbl td:nth-child(2){grid-column:1;color:var(--t2);font-size:13px}.utbl td:nth-child(3){grid-column:1}.utbl td:nth-child(3)::before{content:'Perfil: ';color:var(--t2)}.utbl td:nth-child(4){grid-column:1;font-size:13px}.utbl td:nth-child(4)::before{content:'Caixa: ';color:var(--t2)}.utbl td:nth-child(5){grid-column:2;grid-row:1/5;align-self:center;display:flex;gap:4px}.utbl td:nth-child(5):empty{display:none}}
+
+/* área de toque confortável em telas de toque: caixinhas de seleção 28 px e botão do menu 44 px */
+@media(pointer:coarse){.rows input[type=checkbox],.slist input[type=checkbox]{width:28px!important;height:28px!important}.top .burger{padding:12px;margin:-6px}}
 </style>
 </head>
 <body>
@@ -1351,7 +1357,7 @@ function vRank(){const s=ui.rk;if(s.champ!=='all'&&!db.champs.some(c=>c.id===s.c
  <p class="note">${s.mode==='d'?`No Ranking Geral, cada partida vencida vale 3 pontos e a derrota vale 0, em pontos corridos e no mata-mata. Ao finalizar o campeonato, somam-se os bônus de colocação: 1º 15 · 2º 9 · 3º 6 · 4º 3. As ${db.settings.slots} melhores duplas ativas da temporada${db.settings.minP>0?`, entre as que atingem a participação mínima (${db.settings.minP}% das etapas encerradas, para cada jogador),`:''} aparecem com o quadrado da posição em verde (classificadas para a mesa final). Quadrado azul: empate na última vaga, decidido numa partida de desempate. As demais ficam em cinza.${db.settings.minP>0?' Quem está abaixo da participação mínima fica depois de quem atinge, mesmo com mais pontos.':''} Empate em pontos: vitórias → confronto direto → saldo de pontos → melhor colocação em etapa → participação.${rkWhy(s)} Clique em um valor para ver o detalhamento.`:'No ranking individual cada jogador recebe os 3 pontos por partida vencida e o bônus integral da colocação da sua dupla (sem dividir com o parceiro). Não inclui pontos transferidos.'+(db.settings.minP>0&&s.season!=='all'&&s.champ==='all'?' Quem está abaixo da participação mínima ('+db.settings.minP+'%) fica depois de quem atinge.':'')+' Clique em um nome ou valor para ver o detalhamento.'}</p>`}
 function usersHTML(){if(!CLOUD)return'<h2 style="margin-top:26px">Usuários e permissões</h2><p class="note">Disponível quando o sistema está ligado ao banco.</p>';
  return`<h2 style="margin-top:26px">Usuários e permissões</h2><p class="note">${isCreator()?'Cada pessoa entra com o nome de usuário e a senha que você definir aqui, sem precisar de e-mail. Você (Criador) continua entrando com o seu e-mail.':'Só o Criador do sistema inclui, altera ou remove usuários.'}</p>
- <div class="tw"><table><thead><tr><th class="l">Nome</th><th class="l">Usuário</th><th>Perfil</th><th>Caixa</th><th></th></tr></thead><tbody>
+ <div class="tw utw"><table class="utbl"><thead><tr><th class="l">Nome</th><th class="l">Usuário</th><th>Perfil</th><th>Caixa</th><th></th></tr></thead><tbody>
  <tr><td class="l">${esc(db.user.name)} ${isCreator()?'<span class="tag ok">você</span>':''}</td><td class="l">${isCreator()?esc(me.email||''):'—'}</td><td><b>Criador</b></td><td>Sim</td><td></td></tr>
  ${members.map(m=>`<tr><td class="l">${esc(m.name)}${m.must_change?' <span class="tag pend" title="Ainda não criou a senha pessoal">Aguardando 1º acesso</span>':''}</td><td class="l">${esc(m.username)}</td><td>${m.role==='master'?'<b>Master</b>':ROLE[m.role]}${m.username===me.username?' <span class="tag ok">você</span>':''}</td><td>${m.caixa?'Sim':'Não'}</td><td>${isCreator()?`<button class="ibtn" data-a="mbEdit" data-e="${esc(m.username)}" aria-label="Editar ${esc(m.name)}">${I.edit}</button><button class="ibtn" data-a="mbDel" data-e="${esc(m.username)}" aria-label="Remover ${esc(m.name)}">${I.trash}</button>`:''}</td></tr>`).join('')}</tbody></table></div>
  ${isCreator()?'<div class="acts" style="justify-content:flex-start"><button class="pill" data-a="mbEdit" data-e="">Adicionar usuário</button></div>':''}
@@ -2604,7 +2610,7 @@ function claimTag(m){const c=m.claims,ks=c?Object.keys(c).filter(k=>k==='A'||k==
 function byField(m){const x=findMatch(m.id);if(x&&tmOn(x.c)){const me=lkMe(),p=me&&P(me.player);return'<p class="note byme">Informando como <b>'+esc(p?p.name:'—')+'</b> ('+esc(me?dl(T(me.team)):'—')+'). O placar só vale quando a outra dupla informar o mesmo.</p>'}let last='';try{last=localStorage.getItem('gc_byn')||''}catch(e){}
  return'<label class="field byf"><span>Quem está informando o placar? <b class="neg">*</b></span><select class="inp" name="by" data-c="byPick"><option value="">Selecione…</option><option value="A">'+esc(dl(T(m.a)))+'</option><option value="B">'+esc(dl(T(m.b)))+'</option><option value="o">Outra pessoa</option></select></label><label class="field byo" hidden><span>Nome de quem está informando <b class="neg">*</b></span><input class="inp" name="byn" maxlength="40" autocomplete="name" value="'+esc(last)+'"></label>'}
 A.byPick=(d,el)=>{const w=el.form&&el.form.querySelector('.byo');if(!w)return;w.hidden=el.value!=='o';if(!w.hidden)w.querySelector('input').focus()};
-function resExtras(m){const cl=!visitor&&m.claims&&(m.claims.A||m.claims.B)?'<div class="box" style="margin:10px 0"><b>Informado pelas duplas (link):</b>'+['A','B'].map(k=>m.claims[k]?'<div>'+esc(dl(T(k==='A'?m.a:m.b)))+': <b>'+esc(setsTxt(m.claims[k].sets)||'—')+'</b>'+(CLOUD&&isMaster()&&m.claims[k].sets?' <button type="button" class="lnk" style="color:var(--err)" data-a="lkClaimDel" data-id="'+m.id+'" data-k="'+k+'">Excluir</button>':'')+'</div>':'<div class="muted">'+esc(dl(T(k==='A'?m.a:m.b)))+': ainda não informou</div>').join('')+'<small class="muted">Se você salvar um placar aqui, ele vale e os informes das duplas são descartados.</small></div>':'';const pending=!visitor&&m.pending?'<div class="box" style="margin:10px 0"><b>Resultado enviado pelo link:</b> '+esc(setsTxt(m.pending.sets))+(m.pending.by?' — informado por <b>'+esc(m.pending.by)+'</b>':'')+' <small class="muted">('+dt(m.pending.at)+')</small><div class="acts" style="margin-top:8px"><button type="button" class="pill ghost sm" data-a="mReject" data-id="'+m.id+'">Rejeitar</button><button type="button" class="pill sm" data-a="mApprove" data-id="'+m.id+'">Aprovar</button></div></div>':'';const hist=!visitor&&m.history?.length?'<details class="note"><summary>Histórico de alterações ('+m.history.length+')</summary>'+m.history.map(h=>'<div>'+dt(h.at)+' · '+esc(h.by||'organizador')+' · '+esc(setsTxt(h.sets)||'placar limpo')+'</div>').join('')+'</details>':'';return cl+pending+hist}
+function resExtras(m){const cl=!visitor&&m.claims&&(m.claims.A||m.claims.B)?'<div class="box" style="margin:10px 0"><b>Informado pelas duplas (link):</b>'+['A','B'].map(k=>m.claims[k]?'<div>'+esc(dl(T(k==='A'?m.a:m.b)))+': <b>'+esc(setsTxt(m.claims[k].sets)||'—')+'</b>'+(CLOUD&&isMaster()&&m.claims[k].sets?' <button type="button" class="lnk" style="color:var(--errt)" data-a="lkClaimDel" data-id="'+m.id+'" data-k="'+k+'">Excluir</button>':'')+'</div>':'<div class="muted">'+esc(dl(T(k==='A'?m.a:m.b)))+': ainda não informou</div>').join('')+'<small class="muted">Se você salvar um placar aqui, ele vale e os informes das duplas são descartados.</small></div>':'';const pending=!visitor&&m.pending?'<div class="box" style="margin:10px 0"><b>Resultado enviado pelo link:</b> '+esc(setsTxt(m.pending.sets))+(m.pending.by?' — informado por <b>'+esc(m.pending.by)+'</b>':'')+' <small class="muted">('+dt(m.pending.at)+')</small><div class="acts" style="margin-top:8px"><button type="button" class="pill ghost sm" data-a="mReject" data-id="'+m.id+'">Rejeitar</button><button type="button" class="pill sm" data-a="mApprove" data-id="'+m.id+'">Aprovar</button></div></div>':'';const hist=!visitor&&m.history?.length?'<details class="note"><summary>Histórico de alterações ('+m.history.length+')</summary>'+m.history.map(h=>'<div>'+dt(h.at)+' · '+esc(h.by||'organizador')+' · '+esc(setsTxt(h.sets)||'placar limpo')+'</div>').join('')+'</details>':'';return cl+pending+hist}
 // Grava um resultado já validado (usado pela partida única e por cada partida do Melhor de 3): confere o chaveamento, salva, sincroniza.
 async function commitScore(f,x,sets,state,btn){const{m,ph,r,c}=x;
  const a=m.a,b=m.b;if(!a||!b)return setErr(f,'Defina as duas duplas do confronto antes de informar o placar.');
@@ -2729,7 +2735,7 @@ function renderDoc(doc,page){const F='20px Inter,Roboto,Arial,sans-serif',FB='60
   x.fillStyle='#164734';x.fillRect(0,0,LW,96);x.fillStyle='#fff';x.textBaseline='middle';x.font='700 28px Inter,Roboto,Arial,sans-serif';x.fillText(doc.title,M,38);
   x.font='16px Inter,Roboto,Arial,sans-serif';x.fillText(doc.sub+(pages.length>1?`  ·  Página ${pi+1}/${pages.length}`:''),M,72);
   items.forEach(it=>{const s=it.s;if(it.k==='t'){x.fillStyle='#25332B';x.font='700 22px Inter,Roboto,Arial,sans-serif';x.textAlign='left';x.fillText(s.title,M,it.y+24)}
-   if(it.k==='e'){x.fillStyle='#66756B';x.font=F;x.textAlign='left';x.fillText('Sem registros.',M+pad,it.y+rh/2)}
+   if(it.k==='e'){x.fillStyle='#5E6D63';x.font=F;x.textAlign='left';x.fillText('Sem registros.',M+pad,it.y+rh/2)}
    if(it.k==='h'||it.k==='r'){x.fillStyle=it.k==='h'?'#164734':it.i%2?'#F3F5F4':'#fff';x.fillRect(M,it.y,s.tw,rh);let cx=M;
     (it.k==='h'?s.head:it.r).forEach((t,i)=>{const al=s.align[i]||'c',bold=it.k==='h'||i===s.bold;x.font=bold?FB:F;x.fillStyle=it.k==='h'?'#fff':'#25332B';x.textAlign=al==='l'?'left':'center';
      x.fillText(String(t),al==='l'?cx+pad:cx+s.w[i]/2,it.y+rh/2);cx+=s.w[i]});
@@ -2772,7 +2778,7 @@ function xDeliver(cvs,name,fmtK){try{if(!cvs.length)return toast('Não há conte
 /* --- Jogos: cartaz vertical de 1080px; uma rodada nunca é dividida entre páginas/imagens --- */
 function jgRound(x,ph,r,y,multi){const W=1080,M=48,CW=W-2*M,cx=W/2;
  x.font='700 30px '+XF;const tw=Math.max(260,x.measureText(r.title).width+72);x.fillStyle='#DDF5E3';xRR(x,cx-tw/2,y,tw,58,29);x.fill();x.fillStyle='#164734';x.textAlign='center';x.fillText(r.title,cx,y+30);y+=58;
- const dts=xDate(r.date);if(dts){x.font='500 22px '+XF;x.fillStyle='#66756B';x.fillText(dts,cx,y+24);y+=40}y+=18;
+ const dts=xDate(r.date);if(dts){x.font='500 22px '+XF;x.fillStyle='#5E6D63';x.fillText(dts,cx,y+24);y+=40}y+=18;
  for(const m of r.matches){const bo3=m.bo!==1,st=mStatus(m),sets=(m.sets||[]).filter(Boolean),[wa,wb]=setsWon(m),w=winner(m);
   x.font='600 25px '+XF;const NW=268,la=xWrap(x,xName(m.a),NW),lb=xWrap(x,xName(m.b),NW),nl=Math.max(la.length,lb.length),top=m.third?30:0,body=Math.max(96,nl*31+30),extra=(bo3&&sets.length?36:0)+(st!=='done'?28:0),H=top+body+extra,mid=y+top+body/2;
   x.fillStyle='#fff';xRR(x,M,y,CW,H,18);x.fill();x.strokeStyle='#DDE4DF';x.lineWidth=2;x.stroke();
@@ -2781,17 +2787,17 @@ function jgRound(x,ph,r,y,multi){const W=1080,M=48,CW=W-2*M,cx=W/2;
    x.font=(w&&w===id?'700':'600')+' 25px '+XF;x.fillStyle=id&&T(id)?'#25332B':'#9AA7A0';xLines(x,ln,tx,mid,31,al)});
   const has=sets.length>0,va=!has?'—':bo3?wa:sets[0][0],vb=!has?'—':bo3?wb:sets[0][1];
   [[va,cx-88],[vb,cx+20]].forEach(([v,bx])=>{x.fillStyle='#F3F5F4';xRR(x,bx,mid-32,68,64,14);x.fill();x.strokeStyle='#C9D3CD';x.lineWidth=2;x.stroke();x.fillStyle='#164734';x.font='800 34px '+XF;x.textAlign='center';x.fillText(String(v),bx+34,mid+2)});
-  x.fillStyle='#66756B';x.font='700 26px '+XF;x.textAlign='center';x.fillText('×',cx,mid+1);let ey=y+top+body;
+  x.fillStyle='#5E6D63';x.font='700 26px '+XF;x.textAlign='center';x.fillText('×',cx,mid+1);let ey=y+top+body;
   if(bo3&&sets.length){x.font='500 20px '+XF;x.fillStyle='#25332B';x.fillText(sets.map((g,i)=>'Partida '+(i+1)+': '+g[0]+' × '+g[1]).join('     '),cx,ey+8);ey+=36}
-  if(st!=='done'){x.font='600 18px '+XF;x.fillStyle=st==='live'?'#8A5A00':'#66756B';x.fillText((bo3?'Melhor de 3 · ':'')+ST[st],cx,ey+4)}
+  if(st!=='done'){x.font='600 18px '+XF;x.fillStyle=st==='live'?'#8A5A00':'#5E6D63';x.fillText((bo3?'Melhor de 3 · ':'')+ST[st],cx,ey+4)}
   y+=H+14}
  const notes=[];if((r.byes||[]).length)notes.push('Avançam direto: '+r.byes.map(xName).join('; '));if((r.rest||[]).length)notes.push('Folga nesta rodada: '+r.rest.map(xName).join('; '));
- for(const n of notes){x.font='500 21px '+XF;x.fillStyle='#66756B';const ln=xWrap(x,n,CW-20);xLines(x,ln,cx,y+14+(ln.length-1)*13,26,'center');y+=ln.length*26+14}
+ for(const n of notes){x.font='500 21px '+XF;x.fillStyle='#5E6D63';const ln=xWrap(x,n,CW-20);xLines(x,ln,cx,y+14+(ln.length-1)*13,26,'center');y+=ln.length*26+14}
  return y+(multi?34:10)}
 function jgHead(x,c,ph,title){const cx=540;x.fillStyle='#2ECD71';x.fillRect(0,0,1080,14);x.fillStyle='#DDF5E3';x.beginPath();x.arc(1080,0,150,0,Math.PI*2);x.fill();x.beginPath();x.arc(0,0,96,0,Math.PI*2);x.fill();
  x.fillStyle='#164734';x.font='700 34px '+XF;const ln=xWrap(x,c.name,880);let y=70;xLines(x,ln,cx,y+(ln.length-1)*20,40,'center');y+=ln.length*40+26;
  x.font='800 62px '+XF;x.fillText(title,cx,y+26);y+=74;x.font='500 28px '+XF;x.fillStyle='#30634B';x.fillText(ph.name+' · '+TYPE[ph.type],cx,y+14);return y+56}
-function jgFoot(x,c,H,txt){x.strokeStyle='#DDE4DF';x.lineWidth=2;x.beginPath();x.moveTo(48,H-74);x.lineTo(1032,H-74);x.stroke();x.fillStyle='#66756B';x.font='500 20px '+XF;x.textAlign='center';x.fillText(txt||c.name,540,H-40);x.fillStyle='#2ECD71';x.fillRect(0,H-10,1080,10)}
+function jgFoot(x,c,H,txt){x.strokeStyle='#DDE4DF';x.lineWidth=2;x.beginPath();x.moveTo(48,H-74);x.lineTo(1032,H-74);x.stroke();x.fillStyle='#5E6D63';x.font='500 20px '+XF;x.textAlign='center';x.fillText(txt||c.name,540,H-40);x.fillStyle='#2ECD71';x.fillRect(0,H-10,1080,10)}
 function jogosPages(c,ph,rounds,fmtK){const scr=xCanvas(1080,10)[1],rs=rounds.filter(r=>r.matches.length||(r.byes||[]).length||(r.rest||[]).length);if(!rs.length)return[];
  const multi=rs.length>1,title=multi?'JOGOS DA FASE':'JOGOS DA RODADA',H0=jgHead(scr,c,ph,title),FOOT=96,TARGET=fmtK==='pdf'?1527:1920,hs=rs.map(r=>jgRound(scr,ph,r,0,multi)),pages=[];let cur=[],h=H0;
  rs.forEach((r,i)=>{if(cur.length&&h+hs[i]+FOOT>TARGET){pages.push(cur);cur=[];h=H0}cur.push(i);h+=hs[i]});if(cur.length)pages.push(cur);
