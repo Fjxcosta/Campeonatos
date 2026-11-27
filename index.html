@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-Z8iK9EcKf21l1OCZKNzSatwGcQqU8FzhDfUf56um658='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://wevourgmybqckzarhynq.supabase.co http://localhost:*; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-yAhu15K4+l2uR+poqfq97+7hO2iNRpccTuR4ZOMoisg='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://wevourgmybqckzarhynq.supabase.co http://localhost:*; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Nossa Liga</title>
 <meta name="theme-color" content="#164734">
@@ -690,6 +690,19 @@ table.cls .posb.lead{background:linear-gradient(180deg,#FFE27A,#F5B400)!importan
 @media(pointer:coarse){.rows input[type=checkbox],.slist input[type=checkbox]{width:28px!important;height:28px!important}.top .burger{padding:12px;margin:-6px}}
 
 .attn{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:10px 0 2px}button.attn{width:100%;border:1px solid #F0D58A;background:#FFFBEF;border-radius:12px;padding:8px 10px;cursor:pointer;text-align:left;font:inherit}.attn .ares{margin-left:auto;color:var(--g1);font-size:14px;white-space:nowrap}.achip{font-size:12.5px;font-weight:700;padding:4px 10px;border-radius:999px;white-space:nowrap}.achip.bad{background:#FBE3DF;color:#A3291D}.achip.warn{background:#FFF4D6;color:#7A5A00}.achip.neu{background:#ECEFED;color:#4A5A50}.achip.ok{background:#E4F5EA;color:#15703F}
+
+/* rodapé do jogo: etiquetas à esquerda; botões quebram para a linha de baixo (à direita) quando não cabem */
+.match .mfoot{flex-wrap:wrap;row-gap:8px;min-width:0}.match .mfoot>span:first-child{min-width:0}.mbtns{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;margin-left:auto;max-width:100%}.mbtns:empty{display:none}.mbtns .pill{max-width:100%}
+.tv .mbtns{display:none}
+@media(max-width:560px){.mbtns{flex-basis:100%;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:8px}.mbtns .pill{padding:0 8px;white-space:normal;line-height:1.15;height:auto;min-height:38px;text-align:center}}
+
+/* "Quem é você?": mais compacta no celular e no computador (no computador sem a ampliação de 25% das telas do link) */
+.bindbox{max-width:460px;padding:16px 16px 18px}.bhead{margin-bottom:6px}.bhead img{width:56px;height:56px;border-radius:14px}.bhead b{font-size:18px;margin-top:6px}.bhead small{font-size:12px}
+.bindbox h2{font-size:20px}.bindbox>p.muted{font-size:14px;line-height:1.4;margin:4px 0 10px!important}
+.bindbox [data-i=bindQ]{height:46px;font-size:16px;border-radius:12px;padding-left:40px;background-position:12px center}
+.bindbox .bindp{min-height:44px;font-size:15px;border-radius:12px}
+.bindbox .pill{height:38px;font-size:14px}
+@media(min-width:1100px){.vis .bindbox{zoom:.8}}
 </style>
 </head>
 <body>
@@ -1558,8 +1571,8 @@ function matchCard(m,r,ro){const L=liveOf(m),mv=L?{...m,sets:lvSets(L)}:m,st=sho
  return '<div class="match'+(L?' lv':'')+(mine?' mine':'')+'"><button class="mt l'+na+'" data-a="'+action+'" data-id="'+m.id+'" '+(ro||!canEdit()?'disabled':'')+'>'+nm(m.a)+'</button>'+
  '<button class="score" data-a="'+action+'" data-id="'+m.id+'" '+(can?'':'disabled')+' aria-label="'+(ro?'Informar placar':'Opções do confronto')+'"><span class="sbox'+(myC?' pend':'')+ca+'"'+(myC?' title="Informado pela sua dupla · aguardando a outra"':'')+'>'+va+'</span>×<span class="sbox'+(myC?' pend':'')+cb+'">'+vb+'</span></button>'+
  '<button class="mt r'+nb+'" data-a="'+action+'" data-id="'+m.id+'" '+(ro||!canEdit()?'disabled':'')+'>'+nm(m.b)+'</button>'+
- '<div class="mfoot"><span>'+(mine?'<span class="tag mine">Seu jogo</span> ':'')+'<span class="tag '+st+'">'+ST[st]+'</span> '+(m.lq?'<span class="tag lq">Aguardando envio</span>':m.pending?'<span class="tag pend">Aguardando aprovação</span>':'')+(m.third?' <span class="tag pend">Disputa de 3º lugar</span>':'')+(one?'':' <small class="muted">'+esc(fmt)+'</small>')+'</span>'+
- (ro?(mkS?'<button class="pill sm ghost" data-a="mkOpen" data-id="'+m.id+'">'+(L&&lvDecided(m,L)?'Confirmar placar':'♣ Marcador')+'</button> ':'')+(can?'<button class="pill sm" data-a="mOpen" data-id="'+m.id+'">Informar placar</button>':'')+(!can&&ownFix(cur.c,m)&&linkOK(r)&&statusKey(cur.c)!=='done'&&!/\/telao$/.test(location.hash)?'<button class="pill sm ghost" data-a="mFix" data-id="'+m.id+'">Corrigir meu informe</button>':''):'')+'</div>'+(m.lq||m.pending?'':claimLine(m))+games+'</div>'}
+ '<div class="mfoot"><span>'+(mine?'<span class="tag mine">Seu jogo</span> ':'')+'<span class="tag '+st+'">'+ST[st]+'</span> '+(m.lq?'<span class="tag lq">Aguardando envio</span>':m.pending?'<span class="tag pend">Aguardando aprovação</span>':'')+(m.third?' <span class="tag pend">Disputa de 3º lugar</span>':'')+(one?'':' <small class="muted">'+esc(fmt)+'</small>')+'</span><span class="mbtns">'+
+ (ro?(mkS?'<button class="pill sm ghost" data-a="mkOpen" data-id="'+m.id+'">'+(L&&lvDecided(m,L)?'Confirmar placar':'♣ Marcador')+'</button> ':'')+(can?'<button class="pill sm" data-a="mOpen" data-id="'+m.id+'">Informar placar</button>':'')+(!can&&ownFix(cur.c,m)&&linkOK(r)&&statusKey(cur.c)!=='done'&&!/\/telao$/.test(location.hash)?'<button class="pill sm ghost" data-a="mFix" data-id="'+m.id+'">Corrigir meu informe</button>':''):'')+'</span></div>'+(m.lq||m.pending?'':claimLine(m))+games+'</div>'}
 
 // Confrontos aguardando a confirmação da outra dupla (ou com placares divergentes), em todo o campeonato.
 function confList(c,ro){const out=[];c.phases.forEach(ph=>ph.rounds.forEach(r=>{if(ro&&r.hidden)return;r.matches.forEach(m=>{const cl=m.claims;if(!cl||!m.a||!m.b||mStatus(m)==='done')return;const ks=['A','B'].filter(k=>cl[k]);if(!ks.length)return;
@@ -1730,7 +1743,7 @@ const HELP={
    ['Confira sua dupla','Aparece <b>“Sua dupla é …?”</b>. Se estiver certo, <b>Sim, é minha dupla</b>.'],
    ['Dupla errada?','Toque em <b>Minha dupla está errada</b> e procure o organizador.'],
    ['Crie seu PIN','Logo depois de vincular, crie um PIN de 4 números. Abriu o link em outro navegador ou celular? Toque no seu nome e digite o PIN.']],
-   tip:'Esqueceu o PIN? Peça ao organizador para zerar e crie outro. Até 3 navegadores por jogador.'},
+   tip:'Esqueceu o PIN? Peça ao organizador para zerar e crie outro. Até 4 navegadores por jogador.'},
   {k:'inf',t:'Informar o placar',i:()=>I.edit,d:'Lance o resultado do seu jogo.',s:[
    ['Ache seu jogo','Na aba <b>Jogos</b>, escolha a rodada. ⚠ e ⏳ no seletor indicam rodadas com pendência.'],
    ['Toque em “Informar placar”','Digite o placar das duas duplas e salve. Se aparecer <b>“Quem está informando?”</b>, escolha a sua dupla.'],
@@ -1830,7 +1843,7 @@ async function bindTry(pid,pin,el){const tok=lkTok(),nm=(P(pid)||{}).name||'';le
  if(!r.ok){if(r.reason==='pede_pin')return pinAsk(pid);
   return alertBox('Não foi possível vincular',r.reason==='jogador_ja_vinculado'?'<b>'+esc(nm)+'</b> já está vinculado em outro navegador'+(r.device?' ('+esc(r.device)+(r.at?', desde '+dt(Date.parse(r.at)):'')+')':'')+' e ainda não criou o PIN.<br><br>Abra o link no mesmo navegador em que vinculou, ou peça ao organizador para liberar.'
    :r.reason==='pin_bloqueado'?'PIN bloqueado por muitas tentativas erradas. Tente de novo em '+r.min+' minuto'+(r.min>1?'s':'')+', ou peça ao organizador para zerar o seu PIN.'
-   :r.reason==='limite_aparelhos'?'<b>'+esc(nm)+'</b> já está vinculado em 3 navegadores (o máximo). Peça ao organizador para desvincular os antigos.'
+   :r.reason==='limite_aparelhos'?'<b>'+esc(nm)+'</b> já está vinculado em 4 navegadores (o máximo). Peça ao organizador para desvincular os antigos.'
    :r.reason==='vinculo_fechado'?'A sua dupla já começou a jogar neste campeonato. Para vincular agora, peça ao organizador para liberar.'
    :r.reason==='celular_ja_vinculado'?'Este navegador já está vinculado a outro jogador. Peça ao organizador para alterar.':'Tente novamente.')}
  ui.bindQ='';ui.bindAll=false;ui.watchMem=null;try{localStorage.removeItem('gc_watch:'+tok)}catch(e){}try{await loadShared(tok)}catch(e){}render();
