@@ -678,6 +678,7 @@ table.cls .posb.lead{background:linear-gradient(180deg,#FFE27A,#F5B400)!importan
 .mkpan .err{margin:6px 0 0}
 /* letras com no mínimo 12 px (fica no fim para valer sobre as definições anteriores) */
 .tag,.dtag,.kpi small,.tk small,.posb small,.sidesync,.br-foot small,.br-sub,.br-champ small,.cfv small,.lkb,.cpchip small,.lvc,.lva,.mkb small,.mktr .stp span{font-size:12px}.mks,.mks.lock,.mkfal{font-size:12.5px}
+.mbwarn{background:#FFF4D6;border:1px solid #F0D58A;color:#5A4300;border-radius:12px;padding:10px 12px;font-size:13.5px;line-height:1.45;margin:2px 0 10px}
 /* painel no celular: etiqueta em cima dos nomes, botão à direita — os nomes usam a largura toda */
 @media(max-width:560px){.drow{display:grid;grid-template-columns:1fr auto;column-gap:10px;row-gap:4px}.drow .dtag{justify-self:start;grid-column:1;grid-row:1}.drow .dtx{grid-column:1;grid-row:2}.drow>button{grid-column:2;grid-row:1/3;align-self:center}}
 </style>
@@ -798,8 +799,8 @@ async function getAll(path){const out=[];for(let o=0;;o+=1000){const page=await 
 
 let me={role:CLOUD?null:'master',caixa:true},members=[];const cx={rev:0,busy:false,again:false};
 const ROLE={master:'Master',organizador:'Organizador',placar:'Lançador de placares',leitura:'Somente leitura'};
-const isMaster=()=>me.role==='master',canEdit=()=>me.role==='master'||me.role==='organizador',canScore=()=>canEdit()||me.role==='placar',canCash=()=>!!me.role&&!!me.caixa,canCashEdit=()=>canEdit()&&!!me.caixa;
-const userName=()=>isMaster()?db.user.name:(me.name||me.username||me.email||'Usuário');
+const isMaster=()=>me.role==='master',isCreator=()=>me.role==='master'&&!me.username,canEdit=()=>me.role==='master'||me.role==='organizador',canScore=()=>canEdit()||me.role==='placar',canCash=()=>!!me.role&&!!me.caixa,canCashEdit=()=>canEdit()&&!!me.caixa;
+const userName=()=>isCreator()?db.user.name:(me.name||me.username||me.email||'Usuário');
 const ws={rev:0,last:'',busy:false,again:false,state:'ok',empty:false};let srvRev=new Map(),mut=0,loaded=null,loading=null,shSig='';
 const syncTxt=()=>!CLOUD?'Modo local (dados só neste navegador)':({ok:(ws.dirty?'Pendente · enviando alterações':'Online · sincronizado')+(offConf.length?' · '+offConf.length+' conflito(s)':''),saving:'Sincronizando…',err:'Erro de sincronização — tentando de novo',serr:'Erro de sincronização · '+offPendN()+' pendente(s)',off:'Offline · '+(offPendN()?offPendN()+' alteração(ões) pendente(s)':'dados locais')})[ws.state];
 function setSync(x){ws.state=x;document.querySelectorAll('.syncv').forEach(e=>e.textContent=syncTxt())}
@@ -1349,12 +1350,12 @@ function vRank(){const s=ui.rk;if(s.champ!=='all'&&!db.champs.some(c=>c.id===s.c
  ${podiumHTML(s)}
  <p class="note">${s.mode==='d'?`No Ranking Geral, cada partida vencida vale 3 pontos e a derrota vale 0, em pontos corridos e no mata-mata. Ao finalizar o campeonato, somam-se os bônus de colocação: 1º 15 · 2º 9 · 3º 6 · 4º 3. As ${db.settings.slots} melhores duplas ativas da temporada${db.settings.minP>0?`, entre as que atingem a participação mínima (${db.settings.minP}% das etapas encerradas, para cada jogador),`:''} aparecem com o quadrado da posição em verde (classificadas para a mesa final). Quadrado azul: empate na última vaga, decidido numa partida de desempate. As demais ficam em cinza.${db.settings.minP>0?' Quem está abaixo da participação mínima fica depois de quem atinge, mesmo com mais pontos.':''} Empate em pontos: vitórias → confronto direto → saldo de pontos → melhor colocação em etapa → participação.${rkWhy(s)} Clique em um valor para ver o detalhamento.`:'No ranking individual cada jogador recebe os 3 pontos por partida vencida e o bônus integral da colocação da sua dupla (sem dividir com o parceiro). Não inclui pontos transferidos.'+(db.settings.minP>0&&s.season!=='all'&&s.champ==='all'?' Quem está abaixo da participação mínima ('+db.settings.minP+'%) fica depois de quem atinge.':'')+' Clique em um nome ou valor para ver o detalhamento.'}</p>`}
 function usersHTML(){if(!CLOUD)return'<h2 style="margin-top:26px">Usuários e permissões</h2><p class="note">Disponível quando o sistema está ligado ao banco.</p>';
- return`<h2 style="margin-top:26px">Usuários e permissões</h2><p class="note">Cada pessoa entra com o nome de usuário e a senha que você definir aqui, sem precisar de e-mail. Você (master) continua entrando com o seu e-mail.</p>
+ return`<h2 style="margin-top:26px">Usuários e permissões</h2><p class="note">${isCreator()?'Cada pessoa entra com o nome de usuário e a senha que você definir aqui, sem precisar de e-mail. Você (Criador) continua entrando com o seu e-mail.':'Só o Criador do sistema inclui, altera ou remove usuários.'}</p>
  <div class="tw"><table><thead><tr><th class="l">Nome</th><th class="l">Usuário</th><th>Perfil</th><th>Caixa</th><th></th></tr></thead><tbody>
- <tr><td class="l">${esc(db.user.name)} <span class="tag ok">você</span></td><td class="l">${esc(me.email||'')}</td><td>Master</td><td>Sim</td><td></td></tr>
- ${members.map(m=>`<tr><td class="l">${esc(m.name)}${m.must_change?' <span class="tag pend" title="Ainda não criou a senha pessoal">Aguardando 1º acesso</span>':''}</td><td class="l">${esc(m.username)}</td><td>${ROLE[m.role]}</td><td>${m.caixa?'Sim':'Não'}</td><td><button class="ibtn" data-a="mbEdit" data-e="${esc(m.username)}" aria-label="Editar ${esc(m.name)}">${I.edit}</button><button class="ibtn" data-a="mbDel" data-e="${esc(m.username)}" aria-label="Remover ${esc(m.name)}">${I.trash}</button></td></tr>`).join('')}</tbody></table></div>
- <div class="acts" style="justify-content:flex-start"><button class="pill" data-a="mbEdit" data-e="">Adicionar usuário</button></div>
- <details class="note"><summary>O que cada perfil pode fazer</summary><p><b>Master</b> (você): tudo, incluindo Configurações do campeonato, usuários, regras do ranking e backup.<br><b>Organizador</b>: cadastra jogadores e duplas, cria campeonatos, monta fases e partidas, lança e corrige placares.<br><b>Lançador de placares</b>: consulta tudo e lança ou corrige placares.<br><b>Somente leitura</b>: apenas consulta.<br><b>Caixa</b>: marcado, a pessoa vê o Caixa; para lançar no Caixa também precisa ser Organizador.</p></details>`}
+ <tr><td class="l">${esc(db.user.name)} ${isCreator()?'<span class="tag ok">você</span>':''}</td><td class="l">${isCreator()?esc(me.email||''):'—'}</td><td><b>Criador</b></td><td>Sim</td><td></td></tr>
+ ${members.map(m=>`<tr><td class="l">${esc(m.name)}${m.must_change?' <span class="tag pend" title="Ainda não criou a senha pessoal">Aguardando 1º acesso</span>':''}</td><td class="l">${esc(m.username)}</td><td>${m.role==='master'?'<b>Master</b>':ROLE[m.role]}${m.username===me.username?' <span class="tag ok">você</span>':''}</td><td>${m.caixa?'Sim':'Não'}</td><td>${isCreator()?`<button class="ibtn" data-a="mbEdit" data-e="${esc(m.username)}" aria-label="Editar ${esc(m.name)}">${I.edit}</button><button class="ibtn" data-a="mbDel" data-e="${esc(m.username)}" aria-label="Remover ${esc(m.name)}">${I.trash}</button>`:''}</td></tr>`).join('')}</tbody></table></div>
+ ${isCreator()?'<div class="acts" style="justify-content:flex-start"><button class="pill" data-a="mbEdit" data-e="">Adicionar usuário</button></div>':''}
+ <details class="note"><summary>O que cada perfil pode fazer</summary><p><b>Criador</b>: tudo. É o único que inclui, altera ou remove usuários (inclusive masters) e restaura backup. Ninguém altera ou remove o Criador.<br><b>Master</b>: tudo do sistema (campeonatos, placares, celulares das duplas, Caixa, regras do ranking, notificações e exportar backup), menos usuários e restaurar backup.<br><b>Organizador</b>: cadastra jogadores e duplas, cria campeonatos, monta fases e partidas, lança e corrige placares.<br><b>Lançador de placares</b>: consulta tudo e lança ou corrige placares.<br><b>Somente leitura</b>: apenas consulta.<br><b>Caixa</b>: marcado, a pessoa vê o Caixa; para lançar no Caixa também precisa ser Organizador.</p></details>`}
 // Notificações no celular do master (push). O envio é feito pela função gc-push do Supabase.
 const PUSHFN=()=>SB.url.replace(/\/+$/,'')+'/functions/v1/gc-push';
 const pushOK=()=>'serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window;
@@ -1363,7 +1364,7 @@ async function pushSub(){try{const r=await navigator.serviceWorker.ready;return 
 async function pushPaint(){const el=document.getElementById('pushSt');if(!el)return;if(!pushOK()){el.innerHTML=isIOS()&&!isApp()?'No iPhone, instale o app (Instalar app no menu) e abra pelo ícone para ligar as notificações.':'Este navegador não recebe notificações.';return}
  const sub=await pushSub(),perm=Notification.permission;el.innerHTML=perm==='denied'?'<b class="neg">Notificações bloqueadas neste celular.</b> Libere nas configurações do navegador (Notificações → Permitir) e toque em Ativar de novo.':sub?'<b class="pos">Ligadas neste celular.</b> Você recebe: placar divergente e dupla que falta lançar (depois de '+(db.settings.pushWait||10)+' min).':'Desligadas neste celular.';
  const on=document.getElementById('pushOn'),off=document.getElementById('pushOff'),te=document.getElementById('pushTest');if(on)on.hidden=!!sub;if(off)off.hidden=!sub;if(te)te.hidden=!sub}
-function vUser(){const s=db.settings,who=`<p class="muted">${CLOUD?`Conectado como <b>${esc(me.username||me.email||(sess&&sess.email)||'')}</b> · Perfil: <b>${ROLE[me.role]||''}</b>`:'Modo local, sem login.'}</p>`;
+function vUser(){const s=db.settings,who=`<p class="muted">${CLOUD?`Conectado como <b>${esc(me.username||me.email||(sess&&sess.email)||'')}</b> · Perfil: <b>${isCreator()?'Criador':ROLE[me.role]||''}</b>`:'Modo local, sem login.'}</p>`;
  if(!isMaster())return`<h1>Meu usuário</h1>${who}<p class="note">As regras do ranking, os usuários e a cópia de segurança são gerenciados pelo usuário master.</p>
  ${isMember()?`<h2 style="margin-top:22px">Trocar minha senha</h2><form data-f="pwSave" style="max-width:420px"><label class="field"><span>Senha atual</span>${pwInp('o','current-password')}</label><label class="field"><span>Nova senha (mínimo 6 caracteres)</span>${pwInp('n','new-password')}</label><p class="err" role="alert"></p><div class="acts" style="justify-content:flex-start"><button class="pill">Trocar senha</button></div></form>`:''}`;
  return`<h1>Meu usuário</h1>${who}
@@ -1381,7 +1382,7 @@ function vUser(){const s=db.settings,who=`<p class="muted">${CLOUD?`Conectado co
  <label class="field" style="max-width:420px"><span>Avisar “falta lançar” depois de</span><select data-c="pushWait" style="width:100%">${[5,10,15,20,30].map(n=>`<option value="${n}" ${(db.settings.pushWait||10)===n?'selected':''}>${n} minutos</option>`).join('')}</select></label>
  <p id="pushSt" class="muted">Verificando…</p><div class="acts" style="justify-content:flex-start"><button class="pill" id="pushOn" data-a="pushOn">Ativar neste celular</button><button class="pill ghost" id="pushTest" data-a="pushTest" hidden>Enviar teste</button><button class="pill ghost" id="pushOff" data-a="pushOff" hidden>Desativar neste celular</button></div>`:''}
  <h2 style="margin-top:26px">Cópia de segurança</h2><p class="note">${CLOUD?'Os dados ficam no banco (Supabase). Exportar um arquivo de vez em quando continua sendo uma boa garantia.':'Os dados ficam salvos apenas neste navegador. Exporte um arquivo regularmente.'}</p>
- <div class="acts" style="justify-content:flex-start"><button class="pill ghost" data-a="bkExp">Exportar dados (.json)</button><button class="pill ghost" data-a="bkImp">Importar dados</button><button class="pill red" data-a="wipe">Apagar todos os dados</button></div>`}
+ <div class="acts" style="justify-content:flex-start"><button class="pill ghost" data-a="bkExp">Exportar dados (.json)</button>${isCreator()||!CLOUD?'<button class="pill ghost" data-a="bkImp">Importar dados</button><button class="pill red" data-a="wipe">Apagar todos os dados</button>':''}</div>${isCreator()||!CLOUD?'':'<p class="note">Importar dados e apagar todos os dados: só o Criador do sistema.</p>'}`}
 
 /* ----- caixa ----- */
 const money=n=>(+n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
@@ -1979,12 +1980,12 @@ F.uSave=f=>{const n=clean(f.name.value);if(!n)return setErr(f,'Informe o nome.')
  db.user={name:n,email:clean(f.email.value)};db.settings={ppw:3,pct:Math.min(100,Math.max(0,+f.pct.value||0)),slots:Math.max(1,+f.slots.value||8),minT:db.settings.minT||0,minP:Math.min(100,Math.max(0,Math.floor(+f.minP.value||0))),ties:db.settings.ties||{},pushWait:db.settings.pushWait||10};
  save();render();toast('Dados salvos. Os rankings foram recalculados.')};
 A.bkExp=()=>download(new Blob([JSON.stringify(db,null,1)],{type:'application/json'}),'campeonatos_backup_'+new Date().toISOString().slice(0,10)+'.json');
-A.bkImp=()=>{const i=document.createElement('input');i.type='file';i.accept='.json,application/json';i.onchange=async()=>{let d;try{d=JSON.parse(await i.files[0].text());
+A.bkImp=()=>{if(CLOUD&&!isCreator())return alertBox('Só o Criador do sistema pode fazer isso.');const i=document.createElement('input');i.type='file';i.accept='.json,application/json';i.onchange=async()=>{let d;try{d=JSON.parse(await i.files[0].text());
   if(!Array.isArray(d.players)||!Array.isArray(d.teams)||!Array.isArray(d.champs))throw 0}catch(e){return toast('Arquivo inválido.','err')}
   if(!await confirmBox({title:'Importar dados',msg:`Os dados atuais ${CLOUD?'do banco':'deste navegador'} serão substituídos pelo arquivo. Continuar?`,ok:'Importar',danger:true}))return;
   if(CLOUD)return importData(d);
   localStorage.setItem(KEY,JSON.stringify(d));load();render();toast('Dados importados.')};i.click()};
-A.wipe=async()=>{if(!await confirmBox({title:'Apagar todos os dados',msg:`Todos os jogadores, equipes, campeonatos e resultados serão apagados ${CLOUD?'do banco':'deste navegador'}. Esta ação não poderá ser desfeita.`,ok:'Apagar tudo',danger:true}))return;
+A.wipe=async()=>{if(CLOUD&&!isCreator())return alertBox('Só o Criador do sistema pode fazer isso.');if(!await confirmBox({title:'Apagar todos os dados',msg:`Todos os jogadores, equipes, campeonatos e resultados serão apagados ${CLOUD?'do banco':'deste navegador'}. Esta ação não poderá ser desfeita.`,ok:'Apagar tudo',danger:true}))return;
  if(CLOUD){const u=db.user,st=db.settings;setDb({user:u,settings:st});save();if(canCashEdit())saveCash();return render()}
  localStorage.removeItem(KEY);load();render()};
 
@@ -2029,16 +2030,18 @@ F.cfgPAdd=f=>{const n=clean(f.n.value);if(!n)return setErr(f,'Informe o nome do 
  if(dupP(n))return setErr(f,'Este jogador já está cadastrado. Verifique a lista antes de realizar uma nova inclusão.');
  db.players.push({id:uid(),name:n,pending:null});save();closeModal(true);render();A.cfgPlayers();toast('Jogador cadastrado.')};
 A.sair2=()=>{localSignOut();render()};
+A.mbRole=(d,el)=>{const f=el.form,w=f.querySelector('#mbWarn'),c=f.caixa,sp=c.nextElementSibling,ms=el.value==='master';w.hidden=!ms;if(ms){c.dataset.was=c.checked?'1':'';c.checked=true;c.disabled=true;sp.textContent='Pode acessar o Caixa (Master sempre tem)'}else if(c.disabled){c.disabled=false;c.checked=!!c.dataset.was;sp.textContent='Pode acessar o Caixa'}};
 const mbReload=async()=>{members=((await rpc('gc_load',{}))||{}).accounts||[]};
-A.mbEdit=d=>{const m=members.find(x=>x.username===d.e)||{username:'',name:'',role:'organizador',caixa:false};
+A.mbEdit=d=>{if(CLOUD&&!isCreator())return alertBox('Só o Criador do sistema pode fazer isso.');const m=members.find(x=>x.username===d.e)||{username:'',name:'',role:'organizador',caixa:false};
  modal(`<form data-f="mbSave" autocomplete="off">${mHead(d.e?'Editar usuário':'Adicionar usuário')}<input type="hidden" name="old" value="${esc(m.username)}">
  <label class="field"><span>Nome</span><input class="inp" name="name" value="${esc(m.name)}" maxlength="60" autofocus></label>
  <label class="field"><span>Nome de usuário (para entrar)</span><input class="inp" name="user" value="${esc(m.username)}" maxlength="30" autocapitalize="none" autocomplete="off" placeholder="ex.: joao.silva"></label>
  <label class="field"><span>${d.e?'Nova senha provisória (deixe em branco para manter a atual)':'Senha provisória (mínimo 6 caracteres)'}</span>${pwInp('pw','new-password')}</label>
  <p class="note" style="margin-top:-4px">Sempre que você define uma senha aqui, a pessoa é obrigada a criar a própria senha no próximo acesso, antes de usar o sistema.</p>
- <label class="field"><span>Perfil</span><select name="role" style="width:100%">${['organizador','placar','leitura'].map(r=>`<option value="${r}" ${m.role===r?'selected':''}>${ROLE[r]}</option>`).join('')}</select></label>
+ <label class="field"><span>Perfil</span><select name="role" data-c="mbRole" style="width:100%">${['master','organizador','placar','leitura'].map(r=>`<option value="${r}" ${m.role===r?'selected':''}>${r==='master'?'Master (acesso total)':ROLE[r]}</option>`).join('')}</select></label>
+ <div class="mbwarn" id="mbWarn" ${m.role==='master'?'':'hidden'}><b>⚠ Master tem acesso total:</b> configura e apaga campeonatos, lança e corrige qualquer placar, cuida dos celulares das duplas, do Caixa e exporta o backup. Só dê a quem você confia.<br><b>Não pode</b> incluir, alterar ou remover usuários, nem restaurar backup. Ninguém altera ou remove você (Criador).</div>
  <p class="note" style="margin-top:-4px"><b>Organizador:</b> campeonatos, jogadores, duplas, placares e finalização.<br><b>Lançador de placares:</b> só campeonatos e ranking; lança placar de partida aberta.<br><b>Somente leitura:</b> só consulta campeonatos e ranking.<br>O <b>Caixa</b> aparece apenas para quem tiver a opção de Caixa marcada abaixo.</p>
- <label class="chk"><input type="checkbox" name="caixa" ${m.caixa?'checked':''}><span>Pode acessar o Caixa</span></label>
+ <label class="chk"><input type="checkbox" name="caixa" ${m.caixa||m.role==='master'?'checked':''} ${m.role==='master'?'disabled':''}><span>Pode acessar o Caixa${m.role==='master'?' (Master sempre tem)':''}</span></label>
  <p class="note">Usuário: de 3 a 30 caracteres, só letras sem acento, números, ponto, hífen e sublinhado. Anote a senha: ela não pode ser consultada depois, só trocada.</p>
  <p class="err" role="alert"></p><div class="acts"><button type="button" class="pill ghost" data-a="closeM">Cancelar</button><button class="pill">Salvar</button></div></form>`,{guard:true})};
 F.mbSave=async f=>{const name=clean(f.name.value),user=norm(f.user.value).replace(/\s+/g,''),pw=f.pw.value,old=f.old.value,b=f.querySelector('.acts .pill:not(.ghost)');if(b.disabled)return;
@@ -2051,7 +2054,7 @@ F.mbSave=async f=>{const name=clean(f.name.value),user=norm(f.user.value).replac
   await mbReload()}
  catch(e){b.disabled=false;return setErr(f,errTxt(e))}
  closeModal(true);render();toast(old?'Usuário atualizado.':`Usuário criado. Ele entra com "${user}" e a senha definida.`)};
-A.mbDel=async d=>{const m=members.find(x=>x.username===d.e);if(!m||!await confirmBox({title:'Remover usuário',msg:`<b>${esc(m.name)}</b> (${esc(m.username)}) deixará de ter acesso ao sistema imediatamente.`,ok:'Remover',danger:true}))return;
+A.mbDel=async d=>{if(CLOUD&&!isCreator())return alertBox('Só o Criador do sistema pode fazer isso.');const m=members.find(x=>x.username===d.e);if(!m||!await confirmBox({title:'Remover usuário',msg:`<b>${esc(m.name)}</b> (${esc(m.username)}) deixará de ter acesso ao sistema imediatamente.`,ok:'Remover',danger:true}))return;
  try{await rpc('gc_account_delete',{p_username:m.username});await mbReload()}catch(e){return toast(errTxt(e),'err')}render();toast('Usuário removido.')};
 F.pwSave=async f=>{const b=f.querySelector('.pill');if(b.disabled)return;if(f.n.value.length<6)return setErr(f,'A nova senha precisa ter pelo menos 6 caracteres.');b.disabled=true;
  try{const r=await rpc('gc_change_password',{p_old:f.o.value,p_new:f.n.value});b.disabled=false;if(!r.ok)return setErr(f,'Senha atual incorreta.');olEnroll(f.n.value);f.reset();setErr(f,'');toast('Senha trocada.')}
