@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-Z8iK9EcKf21l1OCZKNzSatwGcQqU8FzhDfUf56um658='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://wevourgmybqckzarhynq.supabase.co http://localhost:*; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Nossa Liga</title>
 <meta name="theme-color" content="#164734">
@@ -687,6 +688,8 @@ table.cls .posb.lead{background:linear-gradient(180deg,#FFE27A,#F5B400)!importan
 
 /* área de toque confortável em telas de toque: caixinhas de seleção 28 px e botão do menu 44 px */
 @media(pointer:coarse){.rows input[type=checkbox],.slist input[type=checkbox]{width:28px!important;height:28px!important}.top .burger{padding:12px;margin:-6px}}
+
+.attn{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:10px 0 2px}button.attn{width:100%;border:1px solid #F0D58A;background:#FFFBEF;border-radius:12px;padding:8px 10px;cursor:pointer;text-align:left;font:inherit}.attn .ares{margin-left:auto;color:var(--g1);font-size:14px;white-space:nowrap}.achip{font-size:12.5px;font-weight:700;padding:4px 10px;border-radius:999px;white-space:nowrap}.achip.bad{background:#FBE3DF;color:#A3291D}.achip.warn{background:#FFF4D6;color:#7A5A00}.achip.neu{background:#ECEFED;color:#4A5A50}.achip.ok{background:#E4F5EA;color:#15703F}
 </style>
 </head>
 <body>
@@ -1307,7 +1310,7 @@ function render(){const root=document.getElementById('root'),h=location.hash.rep
 function vChamps(){const l=[...db.champs].sort((a,b)=>b.createdAt-a.createdAt);
  return`<div class="h1row"><h1>Meus campeonatos</h1>${canEdit()?`<button class="pill ghost" data-a="pShare" title="Um link com todos os campeonatos, inclusive os que forem criados depois">${I.share}Compartilhar</button>`:''}</div>${l.length?`<div class="cards">${l.map(c=>{const ts=champTeams(c),ps=new Set(ts.flatMap(id=>T(id)?.players||[]));
   const sk=statusKey(c),ph=c.phases.find(p=>p.status!=='done'&&p.teamIds.length)||c.phases[c.phases.length-1],ms=ph?phMatches(ph).filter(m=>m.a&&m.b):[],dn=ms.filter(m=>mStatus(m)==='done').length;
-  return`<div class="card ccard"><button class="go" data-a="openC" data-id="${c.id}"><img class="clogo" src="icon-192.png" alt=""><span class="cinfo"><b>${esc(c.name)}</b><small>Temporada ${esc(c.season)} · ${ts.length} ${ts.length===1?'dupla':'duplas'}${c.isFinal?' · Torneio final':''}</small></span><span class="cst ${sk}">${champStatus(c)}</span></button>${ph&&ms.length?`<div class="cprog"><div><span>${esc(ph.name)} · ${TYPE[ph.type]}</span><span>${dn} de ${ms.length} jogos</span></div><i><b style="width:${Math.round(dn/ms.length*100)}%"></b></i></div>`:''}
+  return`<div class="card ccard"><button class="go" data-a="openC" data-id="${c.id}"><img class="clogo" src="icon-192.png" alt=""><span class="cinfo"><b>${esc(c.name)}</b><small>Temporada ${esc(c.season)} · ${ts.length} ${ts.length===1?'dupla':'duplas'}${c.isFinal?' · Torneio final':''}</small></span><span class="cst ${sk}">${champStatus(c)}</span></button>${ph&&ms.length?`<div class="cprog"><div><span>${esc(ph.name)} · ${TYPE[ph.type]}</span><span>${dn} de ${ms.length} jogos</span></div><i><b style="width:${Math.round(dn/ms.length*100)}%"></b></i></div>`:''}${attnChips(c)}
   <div class="cacts"><button class="pill" data-a="openC" data-id="${c.id}" aria-label="Abrir campeonato">Abrir</button><button class="pill ghost" data-a="share" ${canEdit()?'':'hidden'} data-id="${c.id}" title="Compartilhar este campeonato" aria-label="Compartilhar ${esc(c.name)}">Compartilhar</button><button class="pill ghost" data-a="dupC" ${canEdit()?'':'hidden'} data-id="${c.id}" title="Duplicar campeonato" aria-label="Duplicar campeonato">Duplicar</button></div></div>`}).join('')}</div>`
   :'<p class="empty">Nenhum campeonato cadastrado.</p>'}<button class="fab" data-a="newC" ${canEdit()?'':'hidden'} aria-label="Novo campeonato" title="Novo campeonato">${I.plus}</button>`}
 const WARN='<p class="warn">Atenção. Para alterar equipes que já estão em campeonatos é necessário alterar a equipe nas configurações do campeonato.</p>';
@@ -1416,11 +1419,18 @@ function periodLabel(c){const MS=['jan.','fev.','mar.','abr.','mai.','jun.','jul
  if(!A&&!B)return'Não informado';if(!A||!B)return full(A||B);if(c.startDate===c.endDate)return full(A);return(A.y===B.y?A.t:full(A))+' – '+full(B)}
 const firstInitial=n=>{const w=clean(n).split(' ')[0]||'';return Array.from(w)[0]?.toLocaleUpperCase('pt-BR')||'—'};
 // Painel do torneio (tela Início): números do dia, o que precisa de atenção, ao vivo, andamento e próximos jogos. Só consulta.
-function dashHTML(c){const all=c.phases.flatMap(ph=>ph.rounds.flatMap(r=>r.matches.map(m=>({m,r,ph})))).filter(x=>x.m.a&&x.m.b);
+function attnOf(c){const all=c.phases.flatMap(ph=>ph.rounds.flatMap(r=>r.matches.map(m=>({m,r,ph})))).filter(x=>x.m.a&&x.m.b),open=x=>mStatus(x.m)!=='done'&&!x.m.pending,ncl=x=>x.m.claims?Object.keys(x.m.claims).filter(k=>x.m.claims[k]).length:0;
+ return{all,live:all.filter(x=>open(x)&&liveOf(x.m)),wait:all.filter(x=>open(x)&&ncl(x)===1),div:all.filter(x=>open(x)&&ncl(x)===2),appr:all.filter(x=>mStatus(x.m)!=='done'&&x.m.pending)}}
+const attnN=c=>{if(!canEdit()||statusKey(c)==='done')return 0;const a=attnOf(c);return a.div.length+a.appr.length};
+const attnChips=c=>{if(!canEdit()||statusKey(c)==='done')return'';const a=attnOf(c),n=a.div.length+a.appr.length,ch=[];
+ if(a.div.length)ch.push('<span class="achip bad">'+a.div.length+' '+(a.div.length>1?'divergências':'divergência')+'</span>');
+ if(a.appr.length)ch.push('<span class="achip warn">'+a.appr.length+' '+(a.appr.length>1?'aprovações':'aprovação')+'</span>');
+ if(a.wait.length)ch.push('<span class="achip neu">'+a.wait.length+' aguardando</span>');
+ if(a.live.length)ch.push('<span class="achip ok">♣ '+a.live.length+' ao vivo</span>');
+ return ch.length?(n?'<button class="attn go2" data-a="openC" data-id="'+c.id+'" aria-label="Resolver pendências de '+esc(c.name)+'">'+ch.join('')+'<b class="ares">Resolver ›</b></button>':'<div class="attn">'+ch.join('')+'</div>'):''};
+function dashHTML(c){const{all,live,wait,div,appr}=attnOf(c);
  const ph=c.phases.find(p=>p.status!=='done'&&phMatches(p).some(m=>m.a&&m.b))||c.phases.find(p=>phMatches(p).some(m=>m.a&&m.b))||c.phases[0];
- const ms=ph?phMatches(ph).filter(m=>m.a&&m.b):[],dn=ms.filter(m=>mStatus(m)==='done').length,open=x=>mStatus(x.m)!=='done'&&!x.m.pending;
- const live=all.filter(x=>open(x)&&liveOf(x.m)),ncl=x=>x.m.claims?Object.keys(x.m.claims).filter(k=>x.m.claims[k]).length:0;
- const wait=all.filter(x=>open(x)&&ncl(x)===1),div=all.filter(x=>open(x)&&ncl(x)===2),appr=all.filter(x=>mStatus(x.m)!=='done'&&x.m.pending);
+ const ms=ph?phMatches(ph).filter(m=>m.a&&m.b):[],dn=ms.filter(m=>mStatus(m)==='done').length;
  const nm=id=>id&&T(id)?esc(dl(T(id))):'A definir';
  const kpi=(n,l,sub,k)=>'<div class="dk '+k+'"><small>'+l+'</small><b>'+n+'</b><span>'+sub+'</span></div>';
  const row=(x,tag,cls,extra,act)=>'<div class="drow"><span class="dtag '+cls+'">'+tag+'</span><div class="dtx"><b>'+nm(x.m.a)+'</b> × <b>'+nm(x.m.b)+'</b><small>'+esc(x.ph.name)+' · '+esc(x.r.title)+(extra?' · '+extra:'')+'</small></div><button class="pill sm ghost" data-a="'+(act||'mMenu')+'" data-id="'+x.m.id+'">'+(act?'Resolver':'Abrir')+'</button></div>';
@@ -1986,7 +1996,8 @@ F.uSave=f=>{const n=clean(f.name.value);if(!n)return setErr(f,'Informe o nome.')
  db.user={name:n,email:clean(f.email.value)};db.settings={ppw:3,pct:Math.min(100,Math.max(0,+f.pct.value||0)),slots:Math.max(1,+f.slots.value||8),minT:db.settings.minT||0,minP:Math.min(100,Math.max(0,Math.floor(+f.minP.value||0))),ties:db.settings.ties||{},pushWait:db.settings.pushWait||10};
  save();render();toast('Dados salvos. Os rankings foram recalculados.')};
 A.bkExp=()=>download(new Blob([JSON.stringify(db,null,1)],{type:'application/json'}),'campeonatos_backup_'+new Date().toISOString().slice(0,10)+'.json');
-A.bkImp=()=>{if(CLOUD&&!isCreator())return alertBox('Só o Criador do sistema pode fazer isso.');const i=document.createElement('input');i.type='file';i.accept='.json,application/json';i.onchange=async()=>{let d;try{d=JSON.parse(await i.files[0].text());
+const idBad=d=>{const B=/[<>"'`\s&\\]/;let bad=null;const ck=v=>{if(typeof v==='string'&&B.test(v))bad=v};const walk=o=>{if(Array.isArray(o)){o.forEach(walk);return}if(o&&typeof o==='object'){for(const[kk,v]of Object.entries(o)){if(['id','a','b','shareToken','portalToken'].includes(kk)&&typeof v!=='object')ck(v);else if((kk==='teamIds'||kk==='players')&&Array.isArray(v))v.forEach(x=>typeof x==='string'&&ck(x));walk(v)}}};walk(d);return bad};
+A.bkImp=()=>{if(CLOUD&&!isCreator())return alertBox('Só o Criador do sistema pode fazer isso.');const i=document.createElement('input');i.type='file';i.accept='.json,application/json';i.onchange=async()=>{let d;try{d=JSON.parse(await i.files[0].text());if(idBad(d))return alertBox('Arquivo recusado','Este arquivo de backup tem identificadores com caracteres inválidos e pode ter sido alterado. Nada foi importado.');
   if(!Array.isArray(d.players)||!Array.isArray(d.teams)||!Array.isArray(d.champs))throw 0}catch(e){return toast('Arquivo inválido.','err')}
   if(!await confirmBox({title:'Importar dados',msg:`Os dados atuais ${CLOUD?'do banco':'deste navegador'} serão substituídos pelo arquivo. Continuar?`,ok:'Importar',danger:true}))return;
   if(CLOUD)return importData(d);
