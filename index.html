@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-yAhu15K4+l2uR+poqfq97+7hO2iNRpccTuR4ZOMoisg='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://wevourgmybqckzarhynq.supabase.co http://localhost:*; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-M3D4EfWxRf16Ri1ksQX8UpM9zbV8PjjKfScQD/b19ek='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://wevourgmybqckzarhynq.supabase.co http://localhost:*; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Nossa Liga</title>
 <meta name="theme-color" content="#164734">
@@ -1173,7 +1173,7 @@ function standData(ph,all,live){const st=phaseStats(ph,live);
  const secs=all?[{title:ph.groups.length?'Classificação geral':'',ids:[...ph.teamIds]}]:ph.groups.length?ph.groups.map(g=>({title:g.name,groupId:g.id,ids:g.teamIds.filter(id=>ph.teamIds.includes(id))})):[{title:'',ids:[...ph.teamIds]}];
  if(ph.groups.length&&!all){const un=ph.teamIds.filter(id=>!ph.groups.some(g=>g.teamIds.includes(id)));if(un.length)secs.push({title:'Sem grupo',ids:un})}
  return secs.map(s=>{let pos=1;const rows=[];
-  rankGroups(ph,st,s.ids).forEach(g=>{g.map(id=>({pos,tie:g.length>1&&st[id].j>0,id,name:dl(T(id)),s:st[id]})).sort((a,b)=>a.name.localeCompare(b.name)).forEach(r=>rows.push(r));pos+=g.length});
+  rankGroups(ph,st,s.ids).forEach(g=>{g.map(id=>({pos,tie:g.length>1&&st[id].j>0,id,name:dl(T(id)),s:st[id]})).sort((a,b)=>ph.preview?s.ids.indexOf(a.id)-s.ids.indexOf(b.id):a.name.localeCompare(b.name)).forEach(r=>rows.push(r));pos+=g.length});
   return{title:s.title,groupId:s.groupId,ids:s.ids,rows}})}
 
 /* ----- ranking geral (sempre calculado a partir das partidas: nunca duplica) ----- */
@@ -1548,6 +1548,13 @@ function phasePreview(c,ph){const i=c.phases.indexOf(ph),pv=c.phases[i-1];if(i<1
  const tmp=newPhase(i+1,'pc');tmp.id='?p'+ph.id;tmp.cols=ph.cols;tmp.criteria=ph.criteria;tmp.teamIds=sl.map(x=>x.id);
  const prevCls=ui.cls;ui.cls='all';let h=standHTML(tmp);ui.cls=prevCls;
  return note(ph.groups.length?'A divisão em grupos desta fase é feita depois, em Configurações → Grupos':'')+'<div class="preview">'+noAct(h).replace(/<span class="posb">[^<]*(<small>=<\/small>)?<\/span>/g,'<span class="posb">–</span>').replace(/ title="Empatadas em todos os critérios"/g,'')+'</div>'}
+function previewPhaseObj(c,ph){const i=c.phases.indexOf(ph);if(i<1||ph.teamIds.length||ph.type==='elim')return null;const sl=phaseSlots(c,ph);if(!sl.length)return null;
+ const tmp=newPhase(i+1,'pc');tmp.id='?p'+ph.id;tmp.name=ph.name;tmp.cols=ph.cols;tmp.criteria=ph.criteria;tmp.teamIds=sl.map(x=>x.id);tmp.preview=true;
+ const pg=+(ph.plan&&ph.plan.groups)||0;
+ if(pg>1&&!ph.groups.length){const L=[...sl].sort((a,b)=>a.o.pos-b.o.pos||a.o.g-b.o.g),tier={};L.forEach(x=>(tier[x.o.pos]=tier[x.o.pos]||[]).push(x));
+  const lab=x=>{const t=tier[x.o.pos];if(t.length<2)return SLOTT[x.id].name;const k=t.indexOf(x)+1;return(k===1?'Melhor ':k+'º melhor ')+x.o.pos+'º'};
+  const G=planSplit(L,pg,ph.plan.split);G.forEach(g=>g.forEach(x=>{SLOTT[x.id].name=lab(x)}));tmp.groups=G.map((g,gi)=>({id:'?g'+gi,name:gLetter(gi),teamIds:g.map(x=>x.id)}));tmp.teamIds=L.map(x=>x.id)}
+ return tmp}
 const emptyPhase=(c,ph,manage)=>phasePreview(c,ph)||('<div class="center"><span class="muted">'+(c.phases.indexOf(ph)>0?'As duplas desta fase chegam da fase anterior. Defina quantas se classificam em + → Fases → Editar fase.':'Ainda não há duplas.')+'</span>'+(manage&&c.phases.indexOf(ph)===0?'<button class="pill dark big" data-a="cDuplas">ADICIONAR DUPLAS</button>':'')+'</div>');
 function classBlock(c,ph,manage){if(ph.type==='elim')return '<div class="cls-top"><div class="cls-ctl"><select data-c="selPhase" aria-label="Fase">'+c.phases.map(p=>'<option value="'+p.id+'" '+(p===ph?'selected':'')+'>'+esc(p.name)+' — '+TYPE[p.type]+'</option>').join('')+'</select><span class="muted" style="font-size:13px">Chaveamento · '+BOT[ph.bo]+'</span></div>'+(manage?'<div class="panel-plus-row"><button class="panel-plus" data-a="cMenu" aria-label="Gerenciar classificação" title="Gerenciar classificação">+</button></div>':'')+'</div><section class="cls-body" aria-label="Chaveamento">'+(ph.teamIds.length?bracketHTML(ph,!manage&&visitor):emptyPhase(c,ph,manage))+'</section>';const grp=ph.groups.length>0,all=ui.cls==='all'||!grp,Q=qualState(ph,phLive(ph));
  return '<div class="cls-top"><div class="cls-ctl"><select data-c="selPhase" aria-label="Fase">'+c.phases.map(p=>'<option value="'+p.id+'" '+(p===ph?'selected':'')+'>'+esc(p.name)+' — '+TYPE[p.type]+'</option>').join('')+'</select><span class="seg" role="group" aria-label="Visualização"><button class="'+(all?'':'on')+'" data-a="clsView" data-v="g" '+(grp?'':'disabled title="Esta fase não tem grupos"')+'>Por grupo</button><button class="'+(all?'on':'')+'" data-a="clsView" data-v="all">Geral</button></span></div>'+
@@ -2834,11 +2841,11 @@ function clsGroup(x,ph,sec,cols,y){const W=1080,M=40,TW=W-2*M,PW=92,SW=Math.min(
  x.font='700 21px '+XF;x.fillStyle=XNAVY;x.textAlign='center';x.fillText('Pos.',M+PW/2,y+26);x.textAlign='left';x.fillText('Dupla',M+PW+10,y+26);cols.forEach((k,i)=>{x.textAlign='center';x.fillText(COL[k.k][1],M+PW+NWd+SW*i+SW/2,y+26)});y+=52;x.fillStyle=XNAVY;x.fillRect(M,y-2,TW,2);
  if(!sec.rows.length){x.font='500 22px '+XF;x.fillStyle='#555';x.textAlign='center';x.fillText('Sem duplas neste grupo.',cx,y+30);y+=60}
  sec.rows.forEach((r,i)=>{x.font='500 24px '+XF;const ln=xWrap(x,r.name,NWd-24),H=Math.max(58,ln.length*30+24);x.fillStyle=i%2?'#F5F6F8':'#FFFFFF';x.fillRect(M,y,TW,H);x.fillStyle='#E3E6EB';x.fillRect(M,y+H-1,TW,1);
-  x.fillStyle=XNAVY;xRR(x,M+PW/2-27,y+H/2-21,54,42,10);x.fill();x.fillStyle='#fff';x.font='700 20px '+XF;x.textAlign='center';x.fillText(r.pos+'º',M+PW/2,y+H/2+1);
+  x.fillStyle=XNAVY;xRR(x,M+PW/2-27,y+H/2-21,54,42,10);x.fill();x.fillStyle='#fff';x.font='700 20px '+XF;x.textAlign='center';x.fillText(ph.preview?'–':r.pos+'º',M+PW/2,y+H/2+1);
   x.fillStyle='#000';x.font='500 24px '+XF;xLines(x,ln,M+PW+10,y+H/2+1,30,'left');cols.forEach((k,j)=>{x.font=(k.k==='pts'?'700':'500')+' 24px '+XF;x.textAlign='center';x.fillText(String(r.s[k.k]),M+PW+NWd+SW*j+SW/2,y+H/2+1)});y+=H});
  return y+34}
 function clsHead(x,c,ph,sub){x.fillStyle=XNAVY;x.font='700 38px '+XF;const ln=xWrap(x,c.name,960);let y=56;xLines(x,ln,540,y+(ln.length-1)*22,44,'center');y+=ln.length*44+10;x.font='500 26px '+XF;x.fillText(sub,540,y+14);return y+58}
-function classPages(c,ph,fmtK){const all=ui.cls==='all'||!ph.groups.length,secs=standData(ph,all),cols=ph.cols.filter(k=>k.on),scr=xCanvas(1080,10)[1],sub=ph.name+' · Classificação'+(ph.groups.length?(all?' geral':' por grupo'):''),H0=clsHead(scr,c,ph,sub),hs=secs.map(s=>clsGroup(scr,ph,s,cols,0)),BOT=20;
+function classPages(c,ph,fmtK){const all=ui.cls==='all'||!ph.groups.length,secs=standData(ph,all),cols=ph.cols.filter(k=>k.on),scr=xCanvas(1080,10)[1],sub=ph.name+' · Classificação'+(ph.groups.length?(all?' geral':' por grupo'):'')+(ph.preview?' · estrutura prevista':''),H0=clsHead(scr,c,ph,sub),hs=secs.map(s=>clsGroup(scr,ph,s,cols,0)),BOT=20;
  if(!ph.teamIds.length)return[];let pages=[];if(fmtK==='pdf'){let cur=[],h=H0;secs.forEach((s,i)=>{if(cur.length&&h+hs[i]+BOT>1527){pages.push(cur);cur=[];h=H0}cur.push(i);h+=hs[i]});if(cur.length)pages.push(cur)}else pages=[secs.map((_,i)=>i)];
  return pages.map(idx=>{const need=H0+idx.reduce((a,i)=>a+hs[i],0)+BOT,H=fmtK==='pdf'?Math.max(1527,need):need,[cv,x]=xCanvas(1080,H);let y=clsHead(x,c,ph,sub);idx.forEach(i=>{y=clsGroup(x,ph,secs[i],cols,y)});cv.groups=idx.map(i=>secs[i].title);return cv})}
 
@@ -2875,10 +2882,10 @@ function bracketCanvas(c,ph){const src=bracketPhase(c,ph);if(!src)return null;co
   cv.preview=src!==ph;return cv}
  finally{host.remove();try{drawBracket()}catch(e){}}}
 
-A.cExp=()=>{const ph=cur.ph;if(ph.type==='elim'){if(!bracketPhase(cur.c,ph))return alertBox('Não há estrutura para exportar','O chaveamento precisa de pelo menos 2 duplas. Adicione as duplas a esta fase ou defina, na fase anterior, quantas se classificam (+ → Fases → Editar).')}else if(!ph.teamIds.length)return alertBox('Não há classificação para exportar','Adicione duplas a esta fase antes de exportar.');expModal('cExpGo')};
+A.cExp=()=>{const ph=cur.ph;if(ph.type==='elim'){if(!bracketPhase(cur.c,ph))return alertBox('Não há estrutura para exportar','O chaveamento precisa de pelo menos 2 duplas. Adicione as duplas a esta fase ou defina, na fase anterior, quantas se classificam (+ → Fases → Editar).')}else if(!ph.teamIds.length&&!previewPhaseObj(cur.c,ph))return alertBox('Não há classificação para exportar','As duplas desta fase chegam da fase anterior. Defina quantas se classificam (+ → Fases → Editar) para exportar a estrutura prevista.');expModal('cExpGo')};
 A.cExpGo=d=>{const c=cur.c,ph=cur.ph,i=c.phases.indexOf(ph)+1;
  if(ph.type==='elim'){const cv=bracketCanvas(c,ph);if(!cv)return toast('Não foi possível montar o chaveamento.','err');return xDeliver([cv],`MataMata_${slug(c.name)}_${i}Fase`,d.v)}
- xDeliver(classPages(c,ph,d.v),`Classificacao_${slug(c.name)}_${i}Fase`,d.v)};
+ const P=!ph.teamIds.length&&previewPhaseObj(c,ph)||ph;xDeliver(classPages(c,P,d.v),`Classificacao_${slug(c.name)}_${i}Fase${P.preview?'_prevista':''}`,d.v)};
 A.jExp=()=>{if(!cur.r)return toast('Não há rodada para exportar.','err');expModal('jExpPick')};
 A.jExpPick=d=>{const ph=cur.ph,r=cur.r,pdf=d.v==='pdf';modal(mHead('Exportar jogos — '+(pdf?'PDF':'JPEG'),'Escolha o conteúdo do arquivo.')+
  '<label class="radio" style="align-items:flex-start"><input type="radio" name="jx" value="all" style="margin-top:3px"><span><b>'+esc(ph.name)+' — Todas as rodadas</b><br><small class="muted">'+ph.rounds.length+' rodada(s). Cada rodada sai inteira: nunca é dividida entre '+(pdf?'páginas':'imagens')+'.</small></span></label>'+
