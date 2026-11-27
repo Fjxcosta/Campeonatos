@@ -555,7 +555,6 @@ table.rk tr.qt .posb{background:#DBEAFE;color:#1E3A8A;box-shadow:inset 0 0 0 1.5
 .tsearch{width:100%;height:46px;border-radius:14px;padding-left:42px;margin:4px 0 10px;font-size:16px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' fill='none' stroke='%235B6B62' stroke-width='2'%3E%3Ccircle cx='9' cy='9' r='6'/%3E%3Cpath d='m14 14 4 4'/%3E%3C/svg%3E") no-repeat 13px center}
 .tav{width:38px;height:38px;flex:none;border-radius:50%;border:2px solid #1E7A52;background:#E9F5EE;display:grid;place-items:center;font-weight:900;font-size:12px;color:#163F2E}
 .rows.cols3 li button.name{font-weight:800;font-size:15px}
-.tag,.dtag,.kpi small,.tk small,.posb small,.sidesync,.br-foot small,.br-sub,.br-champ small,.cfv small,.lkb,.cpchip small,.lvc,.lva,.mkb small,.mktr .stp span{font-size:12px}.mks,.mks.lock,.mkfal{font-size:12.5px}
 .lkpin{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#EEF7F1;border:1px solid #CFE8D8;border-radius:12px;padding:10px 12px;margin:8px 0}.lkpin span{flex:1;min-width:180px}
 .instbar{display:flex;gap:10px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:14px;padding:8px 10px;margin:0 0 12px}.instbar img{border-radius:10px;flex:none}.instbar span{flex:1;min-width:0;font-size:14px;line-height:1.3}.instbar .ibtn{font-size:20px;line-height:1}
 .insthd{display:flex;gap:12px;align-items:center;margin:4px 0 10px}.insthd img{border-radius:12px;flex:none}.insthd p{margin:0}.inststeps{margin:0 0 10px 18px;padding:0;display:grid;gap:6px}
@@ -677,6 +676,10 @@ table.cls .posb.lead{background:linear-gradient(180deg,#FFE27A,#F5B400)!importan
 .mkgl{margin:0 0 10px;font-size:13px;color:#4A5A50;text-align:center}
 .mkpan .pill{width:100%;justify-content:center;margin-top:8px}
 .mkpan .err{margin:6px 0 0}
+/* letras com no mínimo 12 px (fica no fim para valer sobre as definições anteriores) */
+.tag,.dtag,.kpi small,.tk small,.posb small,.sidesync,.br-foot small,.br-sub,.br-champ small,.cfv small,.lkb,.cpchip small,.lvc,.lva,.mkb small,.mktr .stp span{font-size:12px}.mks,.mks.lock,.mkfal{font-size:12.5px}
+/* painel no celular: etiqueta em cima dos nomes, botão à direita — os nomes usam a largura toda */
+@media(max-width:560px){.drow{display:grid;grid-template-columns:1fr auto;column-gap:10px;row-gap:4px}.drow .dtag{justify-self:start;grid-column:1;grid-row:1}.drow .dtx{grid-column:1;grid-row:2}.drow>button{grid-column:2;grid-row:1/3;align-self:center}}
 </style>
 </head>
 <body>
@@ -858,7 +861,7 @@ function nextCard(c,me){const tm=me.team;let nx=null,nr=null,np=null;
  if(nx){const op=dl(T(nx.a===tm?nx.b:nx.a)),can=linkOK(nr)&&!nx.pending&&teamOK(c,nx),mkk=can&&mkLinkOK(nx);
   body='<div class="op">contra '+esc(op)+'</div><div class="rd">'+esc(np.name)+' · '+esc(nr.title)+' · '+(nx.bo===1?'partida única':'melhor de 3')+'</div>'+
    (can?'<div class="acts">'+(mkk?'<button class="pill gold" data-a="mkOpen" data-id="'+nx.id+'">♣ Marcador</button>':'')+'<button class="pill ghost" data-a="mOpen" data-id="'+nx.id+'">Informar placar</button></div>'
-   :'<div class="msg">'+(nx.pending?'Placar enviado · aguardando a aprovação do organizador.':!linkOK(nr)?'O placar desta rodada é lançado pelo organizador.':'Sua dupla já informou o placar · aguardando a outra dupla confirmar.')+'</div>')}
+   :'<div class="msg">'+(nx.pending?'Placar enviado · aguardando a aprovação do organizador.':!linkOK(nr)?'O placar desta rodada é lançado pelo organizador.':'Sua dupla já informou o placar · aguardando a outra dupla confirmar.')+'</div>'+(ownFix(c,nx)?'<div class="acts"><button class="pill ghost" data-a="mFix" data-id="'+nx.id+'">Corrigir meu informe</button></div>':''))}
  else body='<div class="op">Sem jogo pendente</div><div class="rd">Sua dupla não está em nenhum jogo em aberto. Você pode acompanhar o campeonato normalmente.</div>';
  return'<div class="nxt"><span class="k">SEU PRÓXIMO JOGO</span>'+body+(pos||st.pts||st.v||st.d?'<div class="stt"><div><b>'+(pos||'—')+'</b><span>'+esc(gn||(ph?ph.name:''))+'</span></div><div><b>'+(st.pts||0)+'</b><span>pontos</span></div><div><b>'+(st.v||0)+'–'+(st.d||0)+'</b><span>vitórias–derrotas</span></div></div>':'')+'</div>'}
 function lkBar(c,t){if(!tmOn(c))return'';const me=lkMe();
@@ -1342,7 +1345,7 @@ function vRank(){const s=ui.rk;if(s.champ!=='all'&&!db.champs.some(c=>c.id===s.c
  <label>Ranking<span class="seg"><button class="${s.mode==='d'?'on':''}" data-a="rkMode" data-v="d">Duplas</button><button class="${s.mode==='i'?'on':''}" data-a="rkMode" data-v="i">Individual</button></span></label>
  <label>Pesquisar<input class="inp" style="height:40px;width:200px" type="search" data-i="rkQ" value="${esc(s.q)}" placeholder="Nome da dupla ou jogador"></label>
  ${s.mode==='d'?`<label class="chk" style="flex-direction:row;margin-top:18px"><input type="checkbox" data-a="rkIna" ${s.inactive?'checked':''}>Mostrar duplas inativas</label>`:''}</div>
- ${rkPodium(s)}<div id="rkBody">${rankHTML(s)}</div>
+ <div id="rkBody">${rkPodium(s)}${rankHTML(s)}</div>
  ${podiumHTML(s)}
  <p class="note">${s.mode==='d'?`No Ranking Geral, cada partida vencida vale 3 pontos e a derrota vale 0, em pontos corridos e no mata-mata. Ao finalizar o campeonato, somam-se os bônus de colocação: 1º 15 · 2º 9 · 3º 6 · 4º 3. As ${db.settings.slots} melhores duplas ativas da temporada${db.settings.minP>0?`, entre as que atingem a participação mínima (${db.settings.minP}% das etapas encerradas, para cada jogador),`:''} aparecem com o quadrado da posição em verde (classificadas para a mesa final). Quadrado azul: empate na última vaga, decidido numa partida de desempate. As demais ficam em cinza.${db.settings.minP>0?' Quem está abaixo da participação mínima fica depois de quem atinge, mesmo com mais pontos.':''} Empate em pontos: vitórias → confronto direto → saldo de pontos → melhor colocação em etapa → participação.${rkWhy(s)} Clique em um valor para ver o detalhamento.`:'No ranking individual cada jogador recebe os 3 pontos por partida vencida e o bônus integral da colocação da sua dupla (sem dividir com o parceiro). Não inclui pontos transferidos.'+(db.settings.minP>0&&s.season!=='all'&&s.champ==='all'?' Quem está abaixo da participação mínima ('+db.settings.minP+'%) fica depois de quem atinge.':'')+' Clique em um nome ou valor para ver o detalhamento.'}</p>`}
 function usersHTML(){if(!CLOUD)return'<h2 style="margin-top:26px">Usuários e permissões</h2><p class="note">Disponível quando o sistema está ligado ao banco.</p>';
@@ -1413,8 +1416,8 @@ function dashHTML(c){const all=c.phases.flatMap(ph=>ph.rounds.flatMap(r=>r.match
  const wait=all.filter(x=>open(x)&&ncl(x)===1),div=all.filter(x=>open(x)&&ncl(x)===2),appr=all.filter(x=>mStatus(x.m)!=='done'&&x.m.pending);
  const nm=id=>id&&T(id)?esc(dl(T(id))):'A definir';
  const kpi=(n,l,sub,k)=>'<div class="dk '+k+'"><small>'+l+'</small><b>'+n+'</b><span>'+sub+'</span></div>';
- const row=(x,tag,cls,extra)=>'<div class="drow"><span class="dtag '+cls+'">'+tag+'</span><div class="dtx"><b>'+nm(x.m.a)+'</b> × <b>'+nm(x.m.b)+'</b><small>'+esc(x.ph.name)+' · '+esc(x.r.title)+(extra?' · '+extra:'')+'</small></div><button class="pill sm ghost" data-a="mMenu" data-id="'+x.m.id+'">Abrir</button></div>';
- const att=[...div.map(x=>row(x,'Divergente','bad','placares diferentes')),...appr.map(x=>row(x,'Aprovar','warn','aguarda sua aprovação')),...wait.map(x=>row(x,'Aguardando','warn','falta a outra dupla'))];
+ const row=(x,tag,cls,extra,act)=>'<div class="drow"><span class="dtag '+cls+'">'+tag+'</span><div class="dtx"><b>'+nm(x.m.a)+'</b> × <b>'+nm(x.m.b)+'</b><small>'+esc(x.ph.name)+' · '+esc(x.r.title)+(extra?' · '+extra:'')+'</small></div><button class="pill sm ghost" data-a="'+(act||'mMenu')+'" data-id="'+x.m.id+'">'+(act?'Resolver':'Abrir')+'</button></div>';
+ const att=[...div.map(x=>row(x,'Divergente','bad','placares diferentes','mOpen')),...appr.map(x=>row(x,'Aprovação','warn','aguarda sua aprovação','mOpen')),...wait.map(x=>row(x,'Aguardando','warn','falta a outra dupla'))];
  const nr=ph&&ph.rounds.find(r=>r.matches.some(m=>m.a&&m.b&&mStatus(m)!=='done')),nxt=nr?nr.matches.filter(m=>m.a&&m.b&&mStatus(m)!=='done'&&!liveOf(m)&&!m.pending&&!(m.claims&&Object.keys(m.claims).length)):[];
  const bars=c.phases.map(p=>{const q=phMatches(p).filter(m=>m.a&&m.b),d=q.filter(m=>mStatus(m)==='done').length,t=q.length;return'<div class="dbar"><div><span>'+esc(p.name)+' · '+TYPE[p.type]+'</span><span>'+(t?d+' de '+t:'aguardando a fase anterior')+'</span></div><i><b style="width:'+(t?Math.round(d/t*100):0)+'%"></b></i></div>'}).join('');
  return'<div class="dkpis">'+kpi(ms.length?dn+'/'+ms.length:'—','JOGOS DA FASE',ms.length?Math.round(dn/ms.length*100)+'% concluído':'sem jogos gerados','')+kpi(live.length,'AO VIVO AGORA','no marcador','g')+kpi(wait.length+appr.length,'AGUARDANDO',appr.length?'confirmação ou aprovação':'a outra dupla confirmar','y')+kpi(div.length,'DIVERGÊNCIAS',div.length?'precisam de você':'nenhuma','r')+'</div>'+
@@ -1930,7 +1933,7 @@ F.tUndoGo=f=>{const t=T(f.id.value);if(!t){closeModal(true);return render()}cons
 /* ----- ranking ----- */
 A.rkSet=(d,el)=>{ui.rk[d.k]=el.value;if(d.k==='season')ui.rk.champ='all';render()};
 A.rkMode=d=>{ui.rk.mode=d.v;render()};A.rkIna=(d,el)=>{ui.rk.inactive=el.checked;render()};
-A.rkQ=(d,el)=>{ui.rk.q=el.value;document.getElementById('rkBody').innerHTML=rankHTML(ui.rk)};
+A.rkQ=(d,el)=>{ui.rk.q=el.value;document.getElementById('rkBody').innerHTML=rkPodium(ui.rk)+rankHTML(ui.rk)};
 function champTiers(c){if(statusKey(c)!=='done'||!c.result)return null;const tiers=[],placed=new Set(),put=g=>{g=g.filter(id=>id&&!placed.has(id));if(g.length){tiers.push(g);g.forEach(id=>placed.add(id))}};
  [c.result.champion,c.result.vice,c.result.third,c.result.fourth].forEach(id=>put([id]));
  for(let i=c.phases.length-1;i>=0;i--){const ph=c.phases[i];
